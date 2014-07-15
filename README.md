@@ -7,7 +7,7 @@ This is a modular build seed for custom compiling your own version of WinJS.
 
 
 1. npm install -g requirejs
-1. `TODO once our NPM package is published`
+1. npm install winjs-modules
 1. cp node_modules/winjs-modules/WinJS-custom.js .
 1. cp node_modules/winjs-modules/example.build.js ./build.js
 1. Edit the paths in build.js (if necessary)
@@ -22,5 +22,4 @@ This is a modular build seed for custom compiling your own version of WinJS.
 ## Limitations / Known Issues
 
 *  Currently the modular build doesn't custom-compile CSS since the CSS has not been modularized yet. Pre-built CSS is inside the "css" directory.
-*  Need to publish this repo to NPM and update the above instructions
 *  The build will not complete successfully unless the top-level require-style lines are left in, due to dependencies in the controls.
