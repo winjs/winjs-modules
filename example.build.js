@@ -6,13 +6,13 @@
     "include": "WinJS-custom",
     "out": "bin/WinJS.js",
     "wrap": {
-        "startFile": "node_modules/winjsmodules/build/startWinJS.js",
-        "endFile": "node_modules/winjsmodules//build/endWinJS-custom.js"
+        "startFile": "node_modules/winjs-modules/build/startWinJS.js",
+        "endFile": "node_modules/winjs-modules//build/endWinJS-custom.js"
     },
     "paths": {
-        "amd": "node_modules/winjsmodules/amd",
-        "require-style": "node_modules/winjsmodules/require-style",
-        "WinJS": "node_modules/winjsmodules/WinJS",
+        "amd": "node_modules/winjs-modules/amd",
+        "require-style": "node_modules/winjs-modules/require-style",
+        "WinJS": "node_modules/winjs-modules/WinJS",
         "less-phone": "empty:",
         "less-desktop": "empty:"
     },
