@@ -255,7 +255,7 @@ StringLiteral       7.8.4
         case isIdentifierStartCharacter(code) && code:
         case isDecimalDigit(code) && code:
         return true;
-        
+
         default:
         return false;
         }
@@ -646,10 +646,10 @@ define('WinJS/ControlProcessor/_OptionsParser',[
     "use strict";
 
     var strings = {
-        get invalidOptionsRecord() { return _Resources._getWinJSString("base/invalidOptionsRecord").value; },
-        get unexpectedTokenExpectedToken() { return _Resources._getWinJSString("base/unexpectedTokenExpectedToken").value; },
-        get unexpectedTokenExpectedTokens() { return _Resources._getWinJSString("base/unexpectedTokenExpectedTokens").value; },
-        get unexpectedTokenGeneric() { return _Resources._getWinJSString("base/unexpectedTokenGeneric").value; },
+        get invalidOptionsRecord() { return "Invalid options record: '{0}', expected to be in the format of an object literal. {1}"; },
+        get unexpectedTokenExpectedToken() { return "Unexpected token: {0}, expected token: {1}, at offset {2}"; },
+        get unexpectedTokenExpectedTokens() { return "Unexpected token: {0}, expected one of: {1}, at offset {2}"; },
+        get unexpectedTokenGeneric() { return "Unexpected token: {0}, at offset {1}"; },
     };
 
     /*
@@ -763,10 +763,10 @@ define('WinJS/ControlProcessor/_OptionsParser',[
     }
 
     var imports = _Base.Namespace.defineWithParent(null, null, {
-        lexer: _Base.Namespace._lazy(function() {
+        lexer: _Base.Namespace._lazy(function () {
             return _OptionsLexer._optionsLexer;
         }),
-        tokenType: _Base.Namespace._lazy(function() {
+        tokenType: _Base.Namespace._lazy(function () {
             return _OptionsLexer._optionsLexer.tokenType;
         }),
     });
@@ -929,8 +929,7 @@ define('WinJS/ControlProcessor/_OptionsParser',[
                     var parts = [];
                     if (this._peek(imports.tokenType.thisKeyword) && parts.length === 0) {
                         this._read();
-                    }
-                    else {
+                    } else {
                         parts.push(this._readIdentifier());
                     }
 
@@ -1285,7 +1284,7 @@ define('WinJS/ControlProcessor',[
     }
 
     var strings = {
-        get errorActivatingControl() { return _Resources._getWinJSString("base/errorActivatingControl").value; },
+        get errorActivatingControl() { return "Error activating control: {0}"; },
     };
 
     var markSupportedForProcessing = _BaseUtils.markSupportedForProcessing;
@@ -1403,8 +1402,7 @@ define('WinJS/ControlProcessor',[
                 if (instance) {
                     control = instance.constructor;
                     // already activated, don't need to add to controls array
-                }
-                else {
+                } else {
                     controls[i] = control = getControlHandler(element);
                 }
                 if (control && control.isDeclarativeControlContainer) {
@@ -1479,8 +1477,7 @@ define('WinJS/ControlProcessor',[
                 processedAllCalled = true;
                 return processAllImpl(rootElement, skipRoot);
             });
-        }
-        else {
+        } else {
             return processAllImpl(rootElement, skipRoot);
         }
     }
@@ -1505,8 +1502,7 @@ define('WinJS/ControlProcessor',[
         var handler = getControlHandler(element);
         if (!handler) {
             return Promise.as(); // undefined, no handler
-        }
-        else {
+        } else {
             return activate(element, handler);
         }
     }

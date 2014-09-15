@@ -109,7 +109,7 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                     /// Clears the selection.
                     /// </summary>
                     /// <returns type="Promise" locid="WinJS.UI._Selection.prototype.clear_returnValue">
-                    /// A Promise that is fulfilled when the clear operation completes.  
+                    /// A Promise that is fulfilled when the clear operation completes.
                     /// </returns>
                     /// </signature>
 
@@ -121,16 +121,16 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                 set: function (items) {
                     /// <signature helpKeyword="WinJS.UI._Selection.prototype.set">
                     /// <summary locid="WinJS.UI._Selection.prototype.set">
-                    /// Clears the current selection and replaces it with the specified items. 
+                    /// Clears the current selection and replaces it with the specified items.
                     /// </summary>
                     /// <param name="items" locid="WinJS.UI._Selection.prototype.set_items">
-                    /// The indexes or keys of the items that make up the selection. 
-                    /// You can provide different types of objects for the items parameter: 
-                    /// you can specify an index, a key, or a range of indexes. 
-                    /// It can also be an array that contains one or more of these objects.  
+                    /// The indexes or keys of the items that make up the selection.
+                    /// You can provide different types of objects for the items parameter:
+                    /// you can specify an index, a key, or a range of indexes.
+                    /// It can also be an array that contains one or more of these objects.
                     /// </param>
                     /// <returns type="Promise" locid="WinJS.UI._Selection.prototype.set_returnValue">
-                    /// A Promise that is fulfilled when the operation completes. 
+                    /// A Promise that is fulfilled when the operation completes.
                     /// </returns>
                     /// </signature>
 
@@ -156,16 +156,16 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                 add: function (items) {
                     /// <signature helpKeyword="WinJS.UI._Selection.prototype.add">
                     /// <summary locid="WinJS.UI._Selection.prototype.add">
-                    /// Adds one or more items to the selection. 
+                    /// Adds one or more items to the selection.
                     /// </summary>
                     /// <param name="items" locid="WinJS.UI._Selection.prototype.add_items">
-                    /// The indexes or keys of the items to add. 
-                    /// You can provide different types of objects for the items parameter: 
-                    /// you can specify an index, a key, or a range of indexes. 
-                    /// It can also be an array that contains one or more of these objects. 
+                    /// The indexes or keys of the items to add.
+                    /// You can provide different types of objects for the items parameter:
+                    /// you can specify an index, a key, or a range of indexes.
+                    /// It can also be an array that contains one or more of these objects.
                     /// </param>
                     /// <returns type="Promise" locid="WinJS.UI._Selection.prototype.add_returnValue">
-                    /// A Promise that is fulfilled when the operation completes. 
+                    /// A Promise that is fulfilled when the operation completes.
                     /// </returns>
                     /// </signature>
 
@@ -184,15 +184,15 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                 remove: function (items) {
                     /// <signature helpKeyword="WinJS.UI._Selection.prototype.remove">
                     /// <summary locid="WinJS.UI._Selection.prototype.remove">
-                    /// Removes the specified items from the selection. 
+                    /// Removes the specified items from the selection.
                     /// </summary>
                     /// <param name="items" locid="WinJS.UI._Selection.prototype.remove_items">
-                    /// The indexes or keys of the items to remove. You can provide different types of objects for the items parameter: 
-                    /// you can specify an index, a key, or a range of indexes. 
-                    /// It can also be an array that contains one or more of these objects.  
+                    /// The indexes or keys of the items to remove. You can provide different types of objects for the items parameter:
+                    /// you can specify an index, a key, or a range of indexes.
+                    /// It can also be an array that contains one or more of these objects.
                     /// </param>
                     /// <returns type="Promise" locid="WinJS.UI._Selection.prototype.remove_returnValue">
-                    /// A Promise that is fulfilled when the operation completes. 
+                    /// A Promise that is fulfilled when the operation completes.
                     /// </returns>
                     /// </signature>
 
@@ -205,10 +205,10 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                 selectAll: function () {
                     /// <signature helpKeyword="WinJS.UI._Selection.prototype.selectAll">
                     /// <summary locid="WinJS.UI._Selection.prototype.selectAll">
-                    /// Adds all the items in the ListView to the selection. 
+                    /// Adds all the items in the ListView to the selection.
                     /// </summary>
                     /// <returns type="Promise" locid="WinJS.UI._Selection.prototype.selectAll_returnValue">
-                    /// A Promise that is fulfilled when the operation completes.  
+                    /// A Promise that is fulfilled when the operation completes.
                     /// </returns>
                     /// </signature>
 
@@ -358,7 +358,7 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                         return that._getListBinding().fromIndex(index).retain();
                     }
 
-                    // This method is called when a range needs to be unselected.  It is inspecting every range in the current selection comparing 
+                    // This method is called when a range needs to be unselected.  It is inspecting every range in the current selection comparing
                     // it to the range which is being unselected and it is building an array of new selected ranges
                     var ranges = [];
                     for (var i = 0, len = this._ranges.length; i < len; i++) {
@@ -531,10 +531,10 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                 count: function () {
                     /// <signature helpKeyword="WinJS.UI._SelectionManager.prototype.count">
                     /// <summary locid="WinJS.UI._SelectionManager.prototype.count">
-                    /// Returns the number of items in the selection. 
+                    /// Returns the number of items in the selection.
                     /// </summary>
                     /// <returns type="Number" locid="WinJS.UI._SelectionManager.prototype.count_returnValue">
-                    /// The number of items in the selection.  
+                    /// The number of items in the selection.
                     /// </returns>
                     /// </signature>
                     return this._selected.count();
@@ -546,7 +546,7 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                     /// Returns a list of the indexes for the items in the selection.
                     /// </summary>
                     /// <returns type="Array" locid="WinJS.UI._SelectionManager.prototype.getIndices_returnValue">
-                    /// The list of indexes for the items in the selection as an array of Number objects.  
+                    /// The list of indexes for the items in the selection as an array of Number objects.
                     /// </returns>
                     /// </signature>
                     return this._selected.getIndices();
@@ -558,7 +558,7 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                     /// Returns an array that contains the items in the selection.
                     /// </summary>
                     /// <returns type="Promise" locid="WinJS.UI._SelectionManager.prototype.getItems_returnValue">
-                    /// A Promise that contains an array of the requested IItem objects. 
+                    /// A Promise that contains an array of the requested IItem objects.
                     /// </returns>
                     /// </signature>
 
@@ -571,7 +571,7 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                     /// Gets an array of the index ranges for the selected items.
                     /// </summary>
                     /// <returns type="Array" locid="WinJS.UI._SelectionManager.prototype.getRanges_returnValue">
-                    /// An array that contains an ISelectionRange object for each index range in the selection. 
+                    /// An array that contains an ISelectionRange object for each index range in the selection.
                     /// </returns>
                     /// </signature>
                     return this._selected.getRanges();
@@ -583,7 +583,7 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                     /// Returns a value that indicates whether the selection contains every item in the data source.
                     /// </summary>
                     /// <returns type="Boolean" locid="WinJS.UI._SelectionManager.prototype.isEverything_returnValue">
-                    /// true if the selection contains every item in the data source; otherwise, false. 
+                    /// true if the selection contains every item in the data source; otherwise, false.
                     /// </returns>
                     /// </signature>
                     return this._selected.isEverything();
@@ -592,16 +592,16 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                 set: function (items) {
                     /// <signature helpKeyword="WinJS.UI._SelectionManager.prototype.set">
                     /// <summary locid="WinJS.UI._SelectionManager.prototype.set">
-                    /// Clears the current selection and replaces it with the specified items. 
+                    /// Clears the current selection and replaces it with the specified items.
                     /// </summary>
                     /// <param name="items" locid="WinJS.UI._SelectionManager.prototype.set_items">
-                    /// The indexes or keys of the items that make up the selection. 
-                    /// You can provide different types of objects for the items parameter: 
-                    /// you can specify an index, a key, or a range of indexes. 
-                    /// It can also be an array that contains one or more of these objects.  
+                    /// The indexes or keys of the items that make up the selection.
+                    /// You can provide different types of objects for the items parameter:
+                    /// you can specify an index, a key, or a range of indexes.
+                    /// It can also be an array that contains one or more of these objects.
                     /// </param>
                     /// <returns type="Promise" locid="WinJS.UI._SelectionManager.prototype.set_returnValue">
-                    /// A Promise that is fulfilled when the operation completes. 
+                    /// A Promise that is fulfilled when the operation completes.
                     /// </returns>
                     /// </signature>
                     var that = this,
@@ -628,7 +628,7 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                     /// Clears the selection.
                     /// </summary>
                     /// <returns type="Promise" locid="WinJS.UI._SelectionManager.prototype.clear_returnValue">
-                    /// A Promise that is fulfilled when the clear operation completes.  
+                    /// A Promise that is fulfilled when the clear operation completes.
                     /// </returns>
                     /// </signature>
 
@@ -653,16 +653,16 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                 add: function (items) {
                     /// <signature helpKeyword="WinJS.UI._SelectionManager.prototype.add">
                     /// <summary locid="WinJS.UI._SelectionManager.prototype.add">
-                    /// Adds one or more items to the selection. 
+                    /// Adds one or more items to the selection.
                     /// </summary>
                     /// <param name="items" locid="WinJS.UI._SelectionManager.prototype.add_items">
-                    /// The indexes or keys of the items to add. 
-                    /// You can provide different types of objects for the items parameter: 
-                    /// you can specify an index, a key, or a range of indexes. 
-                    /// It can also be an array that contains one or more of these objects. 
+                    /// The indexes or keys of the items to add.
+                    /// You can provide different types of objects for the items parameter:
+                    /// you can specify an index, a key, or a range of indexes.
+                    /// It can also be an array that contains one or more of these objects.
                     /// </param>
                     /// <returns type="Promise" locid="WinJS.UI._SelectionManager.prototype.add_returnValue">
-                    /// A Promise that is fulfilled when the operation completes. 
+                    /// A Promise that is fulfilled when the operation completes.
                     /// </returns>
                     /// </signature>
                     var that = this,
@@ -686,15 +686,15 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                 remove: function (items) {
                     /// <signature helpKeyword="WinJS.UI._SelectionManager.prototype.remove">
                     /// <summary locid="WinJS.UI._SelectionManager.prototype.remove">
-                    /// Removes the specified items from the selection. 
+                    /// Removes the specified items from the selection.
                     /// </summary>
                     /// <param name="items" locid="WinJS.UI._SelectionManager.prototype.remove_items">
-                    /// The indexes or keys of the items to remove. You can provide different types of objects for the items parameter: 
-                    /// you can specify an index, a key, or a range of indexes. 
-                    /// It can also be an array that contains one or more of these objects.  
+                    /// The indexes or keys of the items to remove. You can provide different types of objects for the items parameter:
+                    /// you can specify an index, a key, or a range of indexes.
+                    /// It can also be an array that contains one or more of these objects.
                     /// </param>
                     /// <returns type="Promise" locid="WinJS.UI._SelectionManager.prototype.remove_returnValue">
-                    /// A Promise that is fulfilled when the operation completes. 
+                    /// A Promise that is fulfilled when the operation completes.
                     /// </returns>
                     /// </signature>
                     var that = this,
@@ -718,10 +718,10 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                 selectAll: function () {
                     /// <signature helpKeyword="WinJS.UI._SelectionManager.prototype.selectAll">
                     /// <summary locid="WinJS.UI._SelectionManager.prototype.selectAll">
-                    /// Adds all the items in the ListView to the selection. 
+                    /// Adds all the items in the ListView to the selection.
                     /// </summary>
                     /// <returns type="Promise" locid="WinJS.UI._SelectionManager.prototype.selectAll_returnValue">
-                    /// A Promise that is fulfilled when the operation completes.  
+                    /// A Promise that is fulfilled when the operation completes.
                     /// </returns>
                     /// </signature>
                     var that = this,
@@ -793,7 +793,7 @@ define('WinJS/Controls/ListView/_SelectionManager',[
                             /// <signature helpKeyword="WinJS.UI.SelectionManager.selectionchanging.setPromise">
                             /// <summary locid="WinJS.UI.SelectionManager.selectionchanging.setPromise">
                             /// Used to inform the ListView that asynchronous work is being performed, and that this
-                            /// event handler should not be considered complete until the promise completes. 
+                            /// event handler should not be considered complete until the promise completes.
                             /// </summary>
                             /// <param name="promise" type="WinJS.Promise" locid="WinJS.UI.SelectionManager.selectionchanging.setPromise_p:promise">
                             /// The promise to wait for.
@@ -869,7 +869,7 @@ define('WinJS/Controls/ListView/_BrowseMode',[
     "use strict";
 
     var transformName = _BaseUtils._browserStyleEquivalents["transform"].scriptName;
-    // This component is responsible for handling input in Browse Mode. 
+    // This component is responsible for handling input in Browse Mode.
     // When the user clicks on an item in this mode itemInvoked event is fired.
     _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
 
@@ -936,7 +936,7 @@ define('WinJS/Controls/ListView/_BrowseMode',[
                         headerAtIndex: function (index) {
                             return site._groups.group(index).header;
                         },
-                        headerFromElement: function(element) {
+                        headerFromElement: function (element) {
                             return site._groups.headerFrom(element);
                         },
                         containerAtIndex: function (index) {
@@ -1194,8 +1194,7 @@ define('WinJS/Controls/ListView/_BrowseMode',[
                             entity.index !== _Constants._INVALID_INDEX) {
                             fireInvokeEventImpl(this.site.groupDataSource, true);
                         }
-                    }
-                    else {
+                    } else {
                         if (this.site._tap !== _UI.TapBehavior.none && entity.index !== _Constants._INVALID_INDEX) {
                             fireInvokeEventImpl(this.site.itemDataSource, false);
                         }
@@ -1552,6 +1551,8 @@ define('WinJS/Controls/ListView/_BrowseMode',[
                     }
                     var that = this;
                     this._exitEventTimer = _Global.setTimeout(function () {
+                        if (that.site._disposed) { return; }
+
                         if (that._pointerLeftRegion) {
                             that.site._layout.dragLeave && that.site._layout.dragLeave();
                             that._pointerLeftRegion = false;
@@ -1749,7 +1750,7 @@ define('WinJS/Controls/ListView/_BrowseMode',[
                 _reorderItems: function (dropIndex, reorderedItems, reorderingUnselectedItem, useMoveBefore, ensureVisibleAtEnd) {
                     var site = this.site;
                     var updateSelection = function updatedSelectionOnDrop(items) {
-                        // Update selection if the items were selected. If there is a range with length > 0 a move operation 
+                        // Update selection if the items were selected. If there is a range with length > 0 a move operation
                         // on the first or last item removes the range.
                         if (!reorderingUnselectedItem) {
                             site._selection.set({ firstKey: items[0].key, lastKey: items[items.length - 1].key });
@@ -2042,7 +2043,7 @@ define('WinJS/Controls/ListView/_BrowseMode',[
                                         // [Group A] [a] [b] [c] [Group B] [d] [e]
                                         // When [d] is focused, right/down arrow reports index: 4, insertAfterIndex: 4, which is right -- it means move [d] after [e].
                                         // Similarily, when [c] is focused and left/up is pressed, we report index: 1, insertAfterIndex: 0 -- move [c] to after [a].
-                                        // Take note that index does not tell us where focus is / what item is being moved. 
+                                        // Take note that index does not tell us where focus is / what item is being moved.
                                         // Like mouse/touch DnD, index tells us what the dragBetween slots would be were we to animate a dragBetween.
                                         // The problem cases are moving backwards into a previous group, or forward into the next group.
                                         // If [c] were focused and the user pressed right/down, we would report index: 3, insertAfterIndex: 3. In other words, move [c] after [d].
@@ -2251,59 +2252,59 @@ define('WinJS/Controls/ListView/_ErrorMessages',[
     _Base.Namespace._moduleDefine(exports, null, {
 
         modeIsInvalid: {
-            get: function () { return _Resources._getWinJSString("ui/modeIsInvalid").value; }
+            get: function () { return "Invalid argument: mode must be one of following values: 'none', 'single' or 'multi'."; }
         },
 
         loadingBehaviorIsDeprecated: {
-            get: function () { return _Resources._getWinJSString("ui/loadingBehaviorIsDeprecated").value; }
+            get: function () { return "Invalid configuration: loadingBehavior is deprecated. The control will default this property to 'randomAccess'. Please refer to the 'ListView loading behaviors' SDK Sample for guidance on how to implement incremental load behavior."; }
         },
 
         pagesToLoadIsDeprecated: {
-            get: function () { return _Resources._getWinJSString("ui/pagesToLoadIsDeprecated").value; }
+            get: function () { return "Invalid configuration: pagesToLoad is deprecated. The control will not use this property. Please refer to the 'ListView loading behaviors' SDK Sample for guidance on how to implement incremental load behavior."; }
         },
 
         pagesToLoadThresholdIsDeprecated: {
-            get: function () { return _Resources._getWinJSString("ui/pagesToLoadThresholdIsDeprecated").value; }
+            get: function () { return "Invalid configuration: pagesToLoadThreshold is deprecated.  The control will not use this property. Please refer to the 'ListView loading behaviors' SDK Sample for guidance on how to implement incremental load behavior."; }
         },
 
         automaticallyLoadPagesIsDeprecated: {
-            get: function () { return _Resources._getWinJSString("ui/automaticallyLoadPagesIsDeprecated").value; }
+            get: function () { return "Invalid configuration: automaticallyLoadPages is deprecated. The control will default this property to false. Please refer to the 'ListView loading behaviors' SDK Sample for guidance on how to implement incremental load behavior."; }
         },
 
         invalidTemplate: {
-            get: function () { return _Resources._getWinJSString("ui/invalidTemplate").value; }
+            get: function () { return "Invalid template: Templates must be created before being passed to the ListView, and must contain a valid tree of elements."; }
         },
 
         loadMorePagesIsDeprecated: {
-            get: function () { return _Resources._getWinJSString("ui/loadMorePagesIsDeprecated").value; }
+            get: function () { return "loadMorePages is deprecated. Invoking this function will not have any effect. Please refer to the 'ListView loading behaviors' SDK Sample for guidance on how to implement incremental load behavior."; }
         },
 
         disableBackdropIsDeprecated: {
-            get: function () { return _Resources._getWinJSString("ui/disableBackdropIsDeprecated").value; }
+            get: function () { return "Invalid configuration: disableBackdrop is deprecated. Style: .win-listview .win-container.win-backdrop { background-color:transparent; } instead."; }
         },
 
         backdropColorIsDeprecated: {
-            get: function () { return _Resources._getWinJSString("ui/backdropColorIsDeprecated").value; }
+            get: function () { return "Invalid configuration: backdropColor is deprecated. Style: .win-listview .win-container.win-backdrop { rgba(155,155,155,0.23); } instead."; }
         },
 
         itemInfoIsDeprecated: {
-            get: function () { return _Resources._getWinJSString("ui/itemInfoIsDeprecated").value; }
+            get: function () { return "GridLayout.itemInfo may be altered or unavailable in future versions. Instead, use CellSpanningLayout."; }
         },
 
         groupInfoIsDeprecated: {
-            get: function () { return _Resources._getWinJSString("ui/groupInfoIsDeprecated").value; }
+            get: function () { return "GridLayout.groupInfo may be altered or unavailable in future versions. Instead, use CellSpanningLayout."; }
         },
 
         resetItemIsDeprecated: {
-            get: function () { return _Resources._getWinJSString("ui/resetItemIsDeprecated").value; }
+            get: function () { return "resetItem may be altered or unavailable in future versions. Instead, mark the element as disposable using WinJS.Utilities.markDisposable."; }
         },
 
         resetGroupHeaderIsDeprecated: {
-            get: function () { return _Resources._getWinJSString("ui/resetGroupHeaderIsDeprecated").value; }
+            get: function () { return "resetGroupHeader may be altered or unavailable in future versions. Instead, mark the header element as disposable using WinJS.Utilities.markDisposable."; }
         },
-        
+
         maxRowsIsDeprecated: {
-            get: function() { return _Resources._getWinJSString("ui/maxRowsIsDeprecated").value; }
+            get: function () { return "GridLayout.maxRows may be altered or unavailable in future versions. Instead, use the maximumRowsOrColumns property."; }
         }
     });
 
@@ -2325,7 +2326,7 @@ define('WinJS/Controls/ListView/_GroupFocusCache',[
                 // We store indices as strings in the cache so index=0 does not evaluate to false as
                 // when we check for the existance of an index in the cache. The index is converted
                 // back into a number when calling getIndexForGroup
-        
+
                 updateCache: function (groupKey, itemKey, itemIndex) {
                     itemIndex = "" + itemIndex;
                     this._itemToIndex[itemKey] = itemIndex;
@@ -3152,18 +3153,17 @@ define('WinJS/Controls/ListView/_Layouts',[
     '../../Utilities/_ElementUtilities',
     '../../Utilities/_SafeHtml',
     '../../Utilities/_UI',
-    '../../Utilities/_UIUtilities',
     '../ItemContainer/_Constants',
     './_ErrorMessages'
-    ], function layouts2Init(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Resources, _WriteProfilerMark, _TransitionAnimation, Promise, Scheduler, _Signal, _Dispose, _ElementUtilities, _SafeHtml, _UI, _UIUtilities, _Constants, _ErrorMessages) {
+    ], function layouts2Init(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Resources, _WriteProfilerMark, _TransitionAnimation, Promise, Scheduler, _Signal, _Dispose, _ElementUtilities, _SafeHtml, _UI, _Constants, _ErrorMessages) {
     "use strict";
 
     var Key = _ElementUtilities.Key,
         uniqueID = _ElementUtilities._uniqueID;
 
     var strings = {
-        get itemInfoIsInvalid() { return _Resources._getWinJSString("ui/itemInfoIsInvalid").value; },
-        get groupInfoResultIsInvalid() { return _Resources._getWinJSString("ui/groupInfoResultIsInvalid").value; }
+        get itemInfoIsInvalid() { return "Invalid argument: An itemInfo function must be provided which returns an object with numeric width and height properties."; },
+        get groupInfoResultIsInvalid() { return "Invalid result: groupInfo result for cell spanning groups must include the following numeric properties: cellWidth and cellHeight."; }
     };
 
     //
@@ -3321,7 +3321,7 @@ define('WinJS/Controls/ListView/_Layouts',[
         }
         return itemsCount;
     }
-    
+
     var environmentDetails = null;
     // getEnvironmentSupportInformation does one-time checks on several browser-specific environment details (both to check the existence of styles,
     // and also to see if some environments have layout bugs the ListView needs to work around).
@@ -3330,7 +3330,7 @@ define('WinJS/Controls/ListView/_Layouts',[
             var surface = _Global.document.createElement("div");
             surface.style.width = "500px";
             surface.style.visibility = "hidden";
-                                                  
+
             // Set up the DOM
             var flexRoot = _Global.document.createElement("div");
             flexRoot.style.cssText += "width: 500px; height: 200px; display: -webkit-flex; display: flex";
@@ -3341,7 +3341,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                     "<div style='width: 100px; height: 100px'></div>" +
                 "</div>");
             surface.appendChild(flexRoot);
-            
+
             // Read from the DOM and detect the bugs
             site.viewport.insertBefore(surface, site.viewport.firstChild);
             var canMeasure = surface.offsetWidth > 0,
@@ -3349,10 +3349,9 @@ define('WinJS/Controls/ListView/_Layouts',[
             if (canMeasure) {
                 // If we can't measure now (e.g. ListView is display:none), leave environmentDetails as null
                 // so that we do the detection later when the app calls recalculateItemPosition/forceLayout.
-                
+
                 environmentDetails = {
-                    supportsCSSGrid: !!(browserStyleEquivalents["grid-row"] && browserStyleEquivalents["grid-rows"] && browserStyleEquivalents["grid-row-span"] &&
-                        browserStyleEquivalents["grid-column"] && browserStyleEquivalents["grid-columns"] && browserStyleEquivalents["grid-column-span"]),
+                    supportsCSSGrid: !!("-ms-grid-row" in _Global.document.documentElement.style),
                     // Detects Chrome flex issue 345433: Incorrect sizing for nested flexboxes
                     // https://code.google.com/p/chromium/issues/detail?id=345433
                     // With nested flexboxes, the inner flexbox's width is proportional to the number of elements intead
@@ -3366,7 +3365,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                     nestedFlexTooSmall: flexRoot.firstElementChild.offsetWidth < expectedWidth
                 };
             }
-            
+
             // Clean up the DOM
             site.viewport.removeChild(surface);
         }
@@ -3413,12 +3412,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                     if (!this._inListMode) {
                         _ElementUtilities.addClass(site.surface, _Constants._gridLayoutClass);
                     }
-                    
-                    this._envInfo = getEnvironmentSupportInformation(site) || {};
-                    
-                    if (!this._envInfo.supportsCSSGrid) {
-                        _ElementUtilities.addClass(site.surface, _Constants._noCSSGrid);
-                    }
+
                     if (this._backdropColorClassName) {
                         _ElementUtilities.addClass(site.surface, this._backdropColorClassName);
                     }
@@ -3761,6 +3755,11 @@ define('WinJS/Controls/ListView/_Layouts',[
                         return updateGroups();
                     }).then(function () {
                         that._syncDomWithGroupHeaderPosition(tree);
+                        var surfaceLength = 0;
+                        if (that._groups.length > 0) {
+                            var lastGroup = that._groups[that._groups.length - 1];
+                            surfaceLength = lastGroup.offset + that._getGroupSize(lastGroup);
+                        }
 
                         // Explicitly set the surface width/height. This maintains backwards
                         // compatibility with the original layouts by allowing the items
@@ -3773,6 +3772,9 @@ define('WinJS/Controls/ListView/_Layouts',[
                             } else {
                                 site.surface.style.height = that._sizes.surfaceContentSize + "px";
                             }
+                            if (that._envInfo.nestedFlexTooLarge || that._envInfo.nestedFlexTooSmall) {
+                                site.surface.style.width = surfaceLength + "px";
+                            }
                         } else {
                             if (that._groupsEnabled && that._groupHeaderPosition === HeaderPosition.top) {
                                 site.surface.style.cssText +=
@@ -3780,6 +3782,9 @@ define('WinJS/Controls/ListView/_Layouts',[
                                     "px;-ms-grid-rows: (" + that._sizes.headerContainerHeight + "px auto)[" + tree.length + "]";
                             } else {
                                 site.surface.style.width = that._sizes.surfaceContentSize + "px";
+                            }
+                            if (that._envInfo.nestedFlexTooLarge || that._envInfo.nestedFlexTooSmall) {
+                                site.surface.style.height = surfaceLength + "px";
                             }
                         }
 
@@ -3947,65 +3952,65 @@ define('WinJS/Controls/ListView/_Layouts',[
                 },
 
                 // Animation cycle:
-                // 
-                // Edits  
+                //
+                // Edits
                 //  ---     UpdateTree        Realize
                 // |   |      ---               /\/\
                 // |   |     |   |             |    |
                 // ------------------------------------------------------- Time
-                //      |   |     |   |   |   |      |   |              
+                //      |   |     |   |   |   |      |   |
                 //       ---      |   |    ---        ---/\/\/\/\/\/\/\/\/
                 //     setupAni   |   | layoutAni    endAni  (animations)
                 //                 ---/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
                 //                layout    (outside realized range)
-                //          
-                // 
-                // When there is a modification to the DataSource, the first thing that happens is setupAnimations is 
+                //
+                //
+                // When there is a modification to the DataSource, the first thing that happens is setupAnimations is
                 // called with the current tree. This allows us to cache the locations of the existing items.
-                // 
-                // The next 3 steps have to be completely synchronous otherwise users will see intermediate states and 
+                //
+                // The next 3 steps have to be completely synchronous otherwise users will see intermediate states and
                 // items will blink or jump between locations.
                 //
-                // ListView modifies the DOM tree. A container is added/removed from the group's itemsContainer for each 
+                // ListView modifies the DOM tree. A container is added/removed from the group's itemsContainer for each
                 // item added/removed to the group. The existing itemBoxes are shuffled between the different containers.
-                // The itemBoxes for the removed items will be removed from the containers completely. Since the DOM tree 
+                // The itemBoxes for the removed items will be removed from the containers completely. Since the DOM tree
                 // has been modified we have to apply a transform to position the itemBoxes at their original location. We
-                // compare the new locations with the cached locations to figure out how far to translate the itemBoxes. 
-                // Also the removed items need to be placed back in the DOM without affecting layout (by using position 
+                // compare the new locations with the cached locations to figure out how far to translate the itemBoxes.
+                // Also the removed items need to be placed back in the DOM without affecting layout (by using position
                 // absolute) so that they also do not jump or blink.
                 //
                 // We only tranform and add back removed items for items which were on screen or are now on screen.
                 //
-                // Now the ListView can realize other items asynchronously. The items to realize are items which have been 
-                // inserted into the DataSource or items which are in the realization range because a removal has occurred 
+                // Now the ListView can realize other items asynchronously. The items to realize are items which have been
+                // inserted into the DataSource or items which are in the realization range because a removal has occurred
                 // or the user has scroll slightly.
                 //
                 // During the realization pass the user may scroll. If they scroll to a range outside of the realization
                 // range the items will just appear in the correct location without any animations. If they scroll to a
                 // location within the old realization range we still have the items and they will animate correctly.
-                // 
+                //
                 // During the realization pass another data source edit can occur. A realization pass is unable to run when
-                // the tree and layout are out of sync. Otherwise it may try to request item at index X and get item at 
-                // index X + 1. This means that if another data source edit occurs before endAnimations is called we 
+                // the tree and layout are out of sync. Otherwise it may try to request item at index X and get item at
+                // index X + 1. This means that if another data source edit occurs before endAnimations is called we
                 // restart the whole animation cycle. To group the animations between the two edits we do not reset the
                 // caches of item box locations. We could add to it if there were items outside of the range however they
                 // will only play half of the animation and will probably look just as ugly as not playing the animation at
                 // all. This means setupAnimations will just be a no op in this scenario.
-                // 
-                // This also shows that batching data source edits and only changing the data source when in loadingstate 
+                //
+                // This also shows that batching data source edits and only changing the data source when in loadingstate
                 // "complete" is still a large performance win.
-                // 
-                // Once the realization pass has finished ListView calls executeAnimations. This is where the layout 
+                //
+                // Once the realization pass has finished ListView calls executeAnimations. This is where the layout
                 // effectively fades out the removed items (and then removes them from the dom), moves the itemBoxes back
                 // to translate(0,0), and fades in the inserted itemBoxes. ListView waits for the executeAnimations promise
                 // to complete before allowing more data source edits to trigger another animation cycle.
                 //
-                // If a resize occurs during the animation cycle the animations will be canceled and items will jump to 
+                // If a resize occurs during the animation cycle the animations will be canceled and items will jump to
                 // their final positions.
 
                 setupAnimations: function _LayoutCommon_setupAnimations() {
                     // This function is called after a data source change so that we can cache the locations
-                    // of the realized items. 
+                    // of the realized items.
 
                     if (this._groups.length === 0) {
                         // No animations if we haven't measured before
@@ -4351,7 +4356,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                         currentAnimationPromise = Promise.join(pendingTransitionPromises);
                         currentAnimationPromise.done(function () {
                             pendingTransitionPromises = [];
-                            // The success is called even if the animations are canceled due to the WinJS.UI.executeTransition 
+                            // The success is called even if the animations are canceled due to the WinJS.UI.executeTransition
                             // API. To deal with that we check the animationSignal variable. If it is null the animations were
                             // canceled so we shouldn't continue.
                             if (animationSignal) {
@@ -5045,7 +5050,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                         for (var i = 0, len = cachedRecordKeys.length; i < len; i++) {
                             var key = cachedRecordKeys[i],
                                 record = cachedRecords[key];
-                            // We need to filter out containers which were removed from the DOM. If container's item 
+                            // We need to filter out containers which were removed from the DOM. If container's item
                             // wasn't realized container can be removed without adding record to modifiedItems.
                             if (!record.element || existingContainers[uniqueID(record.element)]) {
                                 updatedCachedRecords[key] = record;
@@ -5350,9 +5355,9 @@ define('WinJS/Controls/ListView/_Layouts',[
                     }
                     // First, convert the key into a virtual form based off of horizontal layouts.
                     // In a horizontal layout, left/right keys switch between columns (AKA "bars"), and
-                    // up/down keys switch between rows (AKA "slots"). 
+                    // up/down keys switch between rows (AKA "slots").
                     // In vertical mode, we want up/down to switch between rows (AKA "bars" when vertical),
-                    // and left/right to switch between columns (AKA "slots" when vertical). 
+                    // and left/right to switch between columns (AKA "slots" when vertical).
                     // The first step is to convert keypresses in vertical so that up/down always correspond to moving between slots,
                     // and left/right moving between bars.
                     if (!this._horizontal) {
@@ -5689,13 +5694,26 @@ define('WinJS/Controls/ListView/_Layouts',[
                     return this._measuringElements;
                 },
 
+                _ensureEnvInfo: function _LayoutCommon_ensureEnvInfo() {
+                    if (!this._envInfo) {
+                        this._envInfo = getEnvironmentSupportInformation(this._site);
+                        if (this._envInfo && !this._envInfo.supportsCSSGrid) {
+                            _ElementUtilities.addClass(this._site.surface, _Constants._noCSSGrid);
+                        }
+                    }
+                    return !!this._envInfo;
+                },
+
                 _createMeasuringSurface: function _LayoutCommon_createMeasuringSurface() {
                     var surface = _Global.document.createElement("div");
 
                     surface.style.cssText =
                         "visibility: hidden" +
                         ";-ms-grid-columns: auto" +
-                        ";-ms-grid-rows: auto";
+                        ";-ms-grid-rows: auto" +
+                        ";-ms-flex-align: start" +
+                        ";-webkit-align-items: flex-start" +
+                        ";align-items: flex-start";
                     surface.className = _Constants._scrollableClass + " " + (this._inListMode ? _Constants._listLayoutClass : _Constants._gridLayoutClass);
                     if (!this._envInfo.supportsCSSGrid) {
                         _ElementUtilities.addClass(surface, _Constants._noCSSGrid);
@@ -5855,7 +5873,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                             // Use the same for list mode when headers are inline with item containers.
                             // When headers are to the left of a vertical list, or above a horizontal list, put the rows/columns they would be in when laid out normally
                             // into the CSS text for measuring. We have to do this because list item containers should take up 100% of the space left over in the surface
-                            // once the group's header is laid out. 
+                            // once the group's header is laid out.
                             var itemsContainerRow = 1,
                                 itemsContainerColumn = 1,
                                 headerContainerRow = 2,
@@ -5930,7 +5948,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                             } else {
                                 var sizes = that._sizes = measurements.sizes;
 
-                                // Wrappers for orientation-specific properties. 
+                                // Wrappers for orientation-specific properties.
                                 // Sizes prefaced with "cross" refer to the sizes orthogonal to the current layout orientation. Sizes without a preface are in the orientation's direction.
                                 Object.defineProperties(sizes, {
                                     surfaceOuterCrossSize: {
@@ -6016,7 +6034,12 @@ define('WinJS/Controls/ListView/_Layouts',[
                         // handler is executed (measuringPromise is referenced within measureItemImpl).
                         var promiseStoredSignal = new _Signal();
                         that._measuringPromise = measuringPromise = promiseStoredSignal.promise.then(function () {
-                            return measureItemImpl(index);
+                            if (that._ensureEnvInfo()) {
+                                return measureItemImpl(index);
+                            } else {
+                                // Couldn't get envInfo. ListView is invisible. Bail out.
+                                return Promise.cancel;
+                            }
                         }).then(function () {
                             site._writeProfilerMark(perfId + ":complete,info");
                             site._writeProfilerMark(perfId + ",StopTM");
@@ -6265,6 +6288,8 @@ define('WinJS/Controls/ListView/_Layouts',[
                     if (this._groupsEnabled) {
                         if (this._horizontal) {
                             if (this._groupHeaderPosition === HeaderPosition.top) {
+                                // Horizontal with headers above
+                                //
                                 var headerContainerMinContentWidth = sizes.headerContainerMinWidth - sizes.headerContainerOuterWidth,
                                     itemsContainerContentWidth = group.getItemsContainerSize() - sizes.headerContainerOuterWidth;
                                 headerContainer.style.maxWidth = Math.max(headerContainerMinContentWidth, itemsContainerContentWidth) + "px";
@@ -6281,16 +6306,21 @@ define('WinJS/Controls/ListView/_Layouts',[
                                 // itemsContainers only get the _groupLeaderClass when header position is top.
                                 _ElementUtilities.addClass(itemsContainer, _Constants._groupLeaderClass);
                             } else {
+                                // Horizontal with headers on the left
+                                //
                                 if (this._envInfo.supportsCSSGrid) {
                                     headerContainer.style.msGridColumn = index * 2 + 1;
                                     itemsContainer.style.msGridColumn = index * 2 + 2;
                                 } else {
+                                    headerContainer.style.width = sizes.headerContainerWidth - sizes.headerContainerOuterWidth + "px";
                                     headerContainer.style.height = (groupCrossSize - sizes.headerContainerOuterHeight) + "px";
                                     itemsContainer.style.height = (groupCrossSize - sizes.itemsContainerOuterHeight) + "px";
                                 }
                             }
                         } else {
                             if (this._groupHeaderPosition === HeaderPosition.left) {
+                                // Vertical with headers on the left
+                                //
                                 var headerContainerMinContentHeight = sizes.headerContainerMinHeight - sizes.headerContainerOuterHeight,
                                     itemsContainerContentHeight = group.getItemsContainerSize() - sizes.headerContainerOuterHeight;
                                 headerContainer.style.maxHeight = Math.max(headerContainerMinContentHeight, itemsContainerContentHeight) + "px";
@@ -6308,6 +6338,8 @@ define('WinJS/Controls/ListView/_Layouts',[
                                 // itemsContainers only get the _groupLeaderClass when header position is left.
                                 _ElementUtilities.addClass(itemsContainer, _Constants._groupLeaderClass);
                             } else {
+                                // Vertical with headers above
+                                //
                                 headerContainer.style.msGridRow = index * 2 + 1;
                                 // It's important to explicitly set the container height in vertical list mode with headers above, since we use flow layout.
                                 // When the header's content is taken from the DOM, the headerContainer will shrink unless it has a height set.
@@ -6317,6 +6349,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                                     if (this._envInfo.supportsCSSGrid) {
                                         itemsContainer.style.msGridRow = index * 2 + 2;
                                     } else {
+                                        headerContainer.style.height = sizes.headerContainerHeight - sizes.headerContainerOuterHeight + "px";
                                         headerContainer.style.width = (groupCrossSize - sizes.headerContainerOuterWidth) + "px";
                                         itemsContainer.style.width = (groupCrossSize - sizes.itemsContainerOuterWidth) + "px";
                                     }
@@ -6356,7 +6389,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                         return this._backdropDisabled || false;
                     },
                     set: function _LegacyLayout_disableBackdrop_set(value) {
-                        _UIUtilities._deprecated(_ErrorMessages.disableBackdropIsDeprecated);
+                        _ElementUtilities._deprecated(_ErrorMessages.disableBackdropIsDeprecated);
                         value = !!value;
                         if (this._backdropDisabled !== value) {
                             this._backdropDisabled = value;
@@ -6388,7 +6421,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                         return this._backdropColor || "rgba(155,155,155,0.23)";
                     },
                     set: function _LegacyLayout_backdropColor_set(value) {
-                        _UIUtilities._deprecated(_ErrorMessages.backdropColorIsDeprecated);
+                        _ElementUtilities._deprecated(_ErrorMessages.backdropColorIsDeprecated);
                         if (value && this._backdropColor !== value) {
                             this._backdropColor = value;
                             if (this._backdropColorClassName) {
@@ -6422,7 +6455,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                 /// </returns>
                 /// </signature>
                 options = options || {};
-                // Executing setters to display compatibility warning 
+                // Executing setters to display compatibility warning
                 this.itemInfo = options.itemInfo;
                 this.groupInfo = options.groupInfo;
                 this._maxRowsOrColumns = 0;
@@ -6443,7 +6476,7 @@ define('WinJS/Controls/ListView/_Layouts',[
 
                 /// <field type="Number" integer="true" locid="WinJS.UI.GridLayout.maximumRowsOrColumns" helpKeyword="WinJS.UI.GridLayout.maximumRowsOrColumns">
                 /// Gets the maximum number of rows or columns, depending on the orientation, that should present before it introduces wrapping to the layout.
-                /// A value of 0 indicates that there is no maximum. The default value is 0. 
+                /// A value of 0 indicates that there is no maximum. The default value is 0.
                 /// </field>
                 maximumRowsOrColumns: {
                     get: function () {
@@ -6465,7 +6498,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                         return this.maximumRowsOrColumns;
                     },
                     set: function (maxRows) {
-                        _UIUtilities._deprecated(_ErrorMessages.maxRowsIsDeprecated);
+                        _ElementUtilities._deprecated(_ErrorMessages.maxRowsIsDeprecated);
                         this.maximumRowsOrColumns = maxRows;
                     }
                 },
@@ -6483,7 +6516,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                         return this._itemInfo;
                     },
                     set: function (itemInfo) {
-                        itemInfo && _UIUtilities._deprecated(_ErrorMessages.itemInfoIsDeprecated);
+                        itemInfo && _ElementUtilities._deprecated(_ErrorMessages.itemInfoIsDeprecated);
                         this._itemInfo = itemInfo;
                         this._invalidateLayout();
                     }
@@ -6501,7 +6534,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                         return this._groupInfo;
                     },
                     set: function (groupInfo) {
-                        groupInfo && _UIUtilities._deprecated(_ErrorMessages.groupInfoIsDeprecated);
+                        groupInfo && _ElementUtilities._deprecated(_ErrorMessages.groupInfoIsDeprecated);
                         this._groupInfo = groupInfo;
                         this._invalidateLayout();
                     }
@@ -6555,7 +6588,7 @@ define('WinJS/Controls/ListView/_Layouts',[
 
                     // insertAfterIndex is determined by which half of the target element the mouse cursor is currently in.
                     // The trouble is that we can cut the element in half horizontally or cut it in half vertically.
-                    // Which one we choose depends on the order that elements are laid out in the grid. 
+                    // Which one we choose depends on the order that elements are laid out in the grid.
                     // A horizontal grid with multiple rows per column will lay items out starting from top to bottom, and move left to right.
                     // A vertical list is just a horizontal grid with an infinite number of rows per column, so it follows the same order.
                     // In both of these cases, each item is cut in half horizontally, since for any item n, n-1 should be above it and n+1 below (ignoring column changes).
@@ -7268,8 +7301,8 @@ define('WinJS/Controls/ListView/_Layouts',[
                 /// Creates a new ListLayout object.
                 /// </summary>
                 /// <param name="options" type="Object" locid="WinJS.UI.ListLayout_p:options">
-                /// An object that contains one or more property/value pairs to apply to the new control. Each property of the options 
-                /// object corresponds to one of the object's properties or events. Event names must begin with "on". 
+                /// An object that contains one or more property/value pairs to apply to the new control. Each property of the options
+                /// object corresponds to one of the object's properties or events. Event names must begin with "on".
                 /// </param>
                 /// <returns type="WinJS.UI.ListLayout" locid="WinJS.UI.ListLayout_returnValue">
                 /// The new ListLayout object.
@@ -7344,15 +7377,15 @@ define('WinJS/Controls/ListView/_Layouts',[
 
                 numberOfItemsPerItemsBlock: {
                     get: function ListLayout_getNumberOfItemsPerItemsBlock() {
-                        if (this._envInfo.nestedFlexTooLarge || this._envInfo.nestedFlexTooSmall) {
-                            this._usingStructuralNodes = false;
-                        } else {
-                            this._usingStructuralNodes = exports.ListLayout._numberOfItemsPerItemsBlock > 0;
-                        }
                         var that = this;
                         // Measure when numberOfItemsPerItemsBlock is called so that we measure before ListView has created the full tree structure
                         // which reduces the trident layout required by measure.
                         return this._measureItem(0).then(function () {
+                            if (that._envInfo.nestedFlexTooLarge || that._envInfo.nestedFlexTooSmall) {
+                                that._usingStructuralNodes = false;
+                            } else {
+                                that._usingStructuralNodes = exports.ListLayout._numberOfItemsPerItemsBlock > 0;
+                            }
                             return (that._usingStructuralNodes ? exports.ListLayout._numberOfItemsPerItemsBlock : null);
                         });
                     }
@@ -7372,8 +7405,8 @@ define('WinJS/Controls/ListView/_Layouts',[
                 /// Creates a new CellSpanningLayout object.
                 /// </summary>
                 /// <param name="options" type="Object" locid="WinJS.UI.CellSpanningLayout_p:options">
-                /// An object that contains one or more property/value pairs to apply to the new object. Each property of the options 
-                /// object corresponds to one of the object's properties or events. Event names must begin with "on". 
+                /// An object that contains one or more property/value pairs to apply to the new object. Each property of the options
+                /// object corresponds to one of the object's properties or events. Event names must begin with "on".
                 /// </param>
                 /// <returns type="WinJS.UI.CellSpanningLayout" locid="WinJS.UI.CellSpanningLayout_returnValue">
                 /// The new CellSpanningLayout object.
@@ -7401,14 +7434,14 @@ define('WinJS/Controls/ListView/_Layouts',[
                 },
 
                 /// <field type="Function" locid="WinJS.UI.CellSpanningLayout.itemInfo" helpKeyword="WinJS.UI.CellSpanningLayout.itemInfo">
-                /// Gets or sets a function that returns the width and height of an item, as well as whether 
-                /// it should  appear in a new column. Setting this function improves performance because 
-                /// the ListView can allocate space for an item without having to measure it first. 
-                /// The function takes a single parameter: the index of the item to render. 
-                /// The function returns an object that has three properties: 
+                /// Gets or sets a function that returns the width and height of an item, as well as whether
+                /// it should  appear in a new column. Setting this function improves performance because
+                /// the ListView can allocate space for an item without having to measure it first.
+                /// The function takes a single parameter: the index of the item to render.
+                /// The function returns an object that has three properties:
                 /// width: The  total width of the item.
                 /// height: The total height of the item.
-                /// newColumn: Set to true to create a column break; otherwise, false. 
+                /// newColumn: Set to true to create a column break; otherwise, false.
                 /// </field>
                 itemInfo: {
                     enumerable: true,
@@ -7424,9 +7457,9 @@ define('WinJS/Controls/ListView/_Layouts',[
                 /// <field type="Function" locid="WinJS.UI.CellSpanningLayout.groupInfo" helpKeyword="WinJS.UI.CellSpanningLayout.groupInfo">
                 /// Gets or sets a function that enables cell-spanning and establishes base cell dimensions.
                 /// The function returns an object that has these properties:
-                /// enableCellSpanning: Set to true to allow the ListView to contain items of multiple sizes. 
+                /// enableCellSpanning: Set to true to allow the ListView to contain items of multiple sizes.
                 /// cellWidth: The width of the base cell.
-                /// cellHeight: The height of the base cell. 
+                /// cellHeight: The height of the base cell.
                 /// </field>
                 groupInfo: {
                     enumerable: true,
@@ -7706,7 +7739,7 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                     if (+timeout !== timeout) {
                         timeout = _VirtualizeContentsView._waitForSeZoTimeoutDuration;
                     }
-                    //To improve SeZo's zoom animation and pinch detection perf, we want to ensure unimportant task 
+                    //To improve SeZo's zoom animation and pinch detection perf, we want to ensure unimportant task
                     //is only run while zooming or pinching is not in progress.
                     return Promise.timeout(_VirtualizeContentsView._waitForSeZoIntervalDuration).then(function () {
                         timeout -= _VirtualizeContentsView._waitForSeZoIntervalDuration;
@@ -7935,7 +7968,7 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                         if (ignoreGaps) {
                             return;
                         }
-                        // If we realized items 0 through 20 and then scrolled so that items 25 - 30 are on screen when we 
+                        // If we realized items 0 through 20 and then scrolled so that items 25 - 30 are on screen when we
                         // append them to the dom we should remove items 0 - 20 from the dom so there are no gaps between the
                         // two realized spots.
 
@@ -8244,7 +8277,7 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                         }
 
                         // Anything left in _previousRealizationPendingItemPromises can be canceled here.
-                        // Note: we are doing this synchronously. If we didn't do it synchronously we would have had to merge 
+                        // Note: we are doing this synchronously. If we didn't do it synchronously we would have had to merge
                         // _previousRealizationPendingItemPromises and _pendingItemPromises together. This also has the great
                         // benefit to cancel item promises in the backOffScreenArea which are much less important.
                         for (var i = 0, handles = Object.keys(this._previousRealizationPendingItemPromises), len = handles.length; i < len; i++) {
@@ -8254,7 +8287,7 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                         this._previousRealizationPendingItemPromises = {};
 
 
-                        // Handle existing items in the second pass to make sure that raising ready signal is added to the queues after creating items 
+                        // Handle existing items in the second pass to make sure that raising ready signal is added to the queues after creating items
                         handleExistingRange(that._onscreenJob, firstInView, lastInView);
                         if (direction === "left") {
                             handleExistingRange(that._frontOffscreenJob, begin, firstInView - 1);
@@ -8340,8 +8373,7 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                                 return Promise._cancelBlocker(Promise.join(promises));
                             })
                         };
-                    }
-                    else {
+                    } else {
                         that._listView._writeProfilerMark(perfId + ",StopTM");
                         return {
                             viewportItemsRealized: Promise.wrap(),
@@ -8798,7 +8830,7 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                         that.deferredActionCancelToken = -1;
                     }
 
-                    this.deferTimeout = this._lazilyRemoveRedundantItemsBlocks().then(function() {
+                    this.deferTimeout = this._lazilyRemoveRedundantItemsBlocks().then(function () {
                             return Promise.timeout(_Constants._DEFERRED_ACTION);
                         }).
                         then(function () {
@@ -8891,11 +8923,13 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                         index = this._listView._groups.index(item);
                         type = _UI.ObjectType.groupHeader;
                         _ElementUtilities._setAttribute(item, "role", this._listView._headerRole);
+                        _ElementUtilities._setAttribute(item, "tabindex", this._listView._tabIndex);
                     } else {
                         index = this.items.index(item);
                         _ElementUtilities._setAttribute(item, "aria-setsize", count);
                         _ElementUtilities._setAttribute(item, "aria-posinset", index + 1);
                         _ElementUtilities._setAttribute(item, "role", this._listView._itemRole);
+                        _ElementUtilities._setAttribute(item, "tabindex", this._listView._tabIndex);
                     }
 
                     if (type === _UI.ObjectType.groupHeader) {
@@ -9314,16 +9348,35 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                         var count = that.containers.length;
 
                         if (count) {
-                            // While the zoom animation is played we want to minimize the # of pages 
+                            // While the zoom animation is played we want to minimize the # of pages
                             // being fetched to improve TtFF for SeZo scenarios
                             var pagesToPrefetch = _VirtualizeContentsView._pagesToPrefetch;
+                            var customPagesToPrefetchMax = _VirtualizeContentsView._customPagesToPrefetchMax;
+                            var customPagesToPrefetchMin = _VirtualizeContentsView._customPagesToPrefetchMin;
                             if (that._listView._zooming) {
                                 pagesToPrefetch = 0;
+                                customPagesToPrefetchMax = 0;
+                                customPagesToPrefetchMin = 0;
                             }
 
-                            var viewportLength = that._listView._getViewportLength(),
-                                beginningOffset = Math.max(0, that._scrollbarPos - pagesToPrefetch * viewportLength),
-                                endingOffset = that._scrollbarPos + (1 + pagesToPrefetch) * viewportLength;
+                            var viewportLength = that._listView._getViewportLength();
+                            var pagesBefore, pagesAfter;
+
+                            if (_BaseUtils._isiOS && !_VirtualizeContentsView._disableCustomPagesPrefetch) {
+                                pagesBefore = (that._direction === "left" ? customPagesToPrefetchMax : customPagesToPrefetchMin);
+
+                                // Optimize the beginning of the list such that if you scroll, then change direction and start going back towards the beginning of the list,
+                                // we maintain a remainder of pages that can be added to pagesAfter. This ensures that at beginning of the list, which is the common case,
+                                // we always have customPagesToPrefetchMax ahead, even when the scrolling direction is constantly changing.
+                                var pagesShortBehind = Math.max(0, (pagesBefore - (that._scrollbarPos / viewportLength)));
+                                pagesAfter = Math.min(customPagesToPrefetchMax, pagesShortBehind + (that._direction === "right" ? customPagesToPrefetchMax : customPagesToPrefetchMin));
+                            } else {
+                                pagesBefore = pagesToPrefetch;
+                                pagesAfter = pagesToPrefetch;
+                            }
+
+                            var beginningOffset = Math.max(0, that._scrollbarPos - pagesBefore * viewportLength),
+                                  endingOffset = that._scrollbarPos + (1 + pagesAfter) * viewportLength;
 
                             var range = that._listView._layout.itemsFromRange(beginningOffset, endingOffset - 1);
                             if ((range.firstIndex < 0 || range.firstIndex >= count) && (range.lastIndex < 0 || range.lastIndex >= count)) {
@@ -9406,7 +9459,7 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                                     that._unrealizeExcessiveItems();
 
                                 } else if (!that.lastRealizePass) {
-                                    // We are currently in the "itemsLoading" state and need to get back to "complete". The 
+                                    // We are currently in the "itemsLoading" state and need to get back to "complete". The
                                     // previous realize pass has been completed so proceed to the other states.
                                     finish(count);
                                 } else {
@@ -10289,6 +10342,9 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                 }
             },{
                 _pagesToPrefetch: 2,
+                _customPagesToPrefetchMax: 6,
+                _customPagesToPrefetchMin: 2,
+                _disableCustomPagesPrefetch: false,
                 _waitForSeZoIntervalDuration: 100,
                 _waitForSeZoTimeoutDuration: 500,
                 _chunkSize: 500,
@@ -10307,7 +10363,7 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
             function nop() { }
 
             /*
-            View is in this state before reload is called so during startup, after datasource change etc. 
+            View is in this state before reload is called so during startup, after datasource change etc.
             */
 
             var CreatedState = _Base.Class.define(function CreatedState_ctor(view) {
@@ -10336,12 +10392,12 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                 updateTree: nop
             });
 
-            /* 
-            In this state View is building its DOM tree with win-container element for each item in the data set. 
-            To build the tree the view needs to know items count or for grouped case the count of groups and the 
-            count of items in each group. The view enters this state when the tree needs to be built during 
+            /*
+            In this state View is building its DOM tree with win-container element for each item in the data set.
+            To build the tree the view needs to know items count or for grouped case the count of groups and the
+            count of items in each group. The view enters this state when the tree needs to be built during
             startup or rebuild after data source change and etc.
-            
+
             BuildingState => LayingoutState | CreatedState
             */
             var BuildingState = _Base.Class.define(function BuildingState_ctor(view) {
@@ -10394,10 +10450,10 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                 updateTree: nop
             });
 
-            /* 
-            In this state View waits for the layout to lay out win-container elements. The view enters this state 
+            /*
+            In this state View waits for the layout to lay out win-container elements. The view enters this state
             after edits or resize.
-                
+
             LayingoutState => RealizingState | BuildingState | CanceledState | CompletedState | LayoutCanceledState
             */
             var LayingoutState = _Base.Class.define(function LayingoutState_ctor(view, NextStateType) {
@@ -10497,9 +10553,9 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
             });
 
 
-            /* 
+            /*
             View enters this state when layout is canceled.
-                    
+
             LayoutCanceledState => LayingoutState | BuildingState
             */
             var LayoutCanceledState = _Base.Class.define(function LayoutCanceledState_ctor(view) {
@@ -10528,10 +10584,10 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                 }
             });
 
-            /* 
-            Contents of items in the current viewport and prefetch area is realized during this stage. 
+            /*
+            Contents of items in the current viewport and prefetch area is realized during this stage.
             The view enters this state when items needs to be realized for instance during initialization, edits and resize.
-                    
+
             RealizingState => RealizingAnimatingState | UnrealizingState | LayingoutState | BuildingState | CanceledState
             */
             var RealizingState = _Base.Class.define(function RealizingState_ctor(view) {
@@ -10605,10 +10661,10 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
             });
 
             /*
-            The view enters this state when the realize pass, animations or unrealizing was canceled or after newContainers have been laid out. 
+            The view enters this state when the realize pass, animations or unrealizing was canceled or after newContainers have been laid out.
             In this state view waits for the next call from ListViewImpl. It can be scroll, edit etc.
-            
-            CanceledState => RealizingState | ScrollingState | LayingoutState | BuildingState 
+
+            CanceledState => RealizingState | ScrollingState | LayingoutState | BuildingState
             */
             var CanceledState = _Base.Class.define(function CanceledState_ctor(view) {
                 this.view = view;
@@ -10643,9 +10699,9 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
             });
 
             /*
-            This state is almost identical with RealizingState. Currently the difference is that in this state loadingStateChanged events aren’t 
+            This state is almost identical with RealizingState. Currently the difference is that in this state loadingStateChanged events aren’t
             raised and after complete the state is switched to ScrollingPausedState to wait until end of scrolling.
-            
+
             ScrollingState => RealizingAnimatingState | ScrollingPausedState | LayingoutState | BuildingState | CanceledState
             */
             var ScrollingState = _Base.Class.derive(RealizingState, function ScrollingState_ctor(view) {
@@ -10659,8 +10715,8 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
             });
 
             /*
-            The view waits in this state for end of scrolling which for touch is signaled by MSManipulationStateChanged event and for mouse it is timeout. 
-            
+            The view waits in this state for end of scrolling which for touch is signaled by MSManipulationStateChanged event and for mouse it is timeout.
+
             ScrollingPausedState => RealizingAnimatingState | ScrollingPausedState | LayingoutState | BuildingState | CanceledState
             */
             var ScrollingPausedState = _Base.Class.derive(CanceledState, function ScrollingPausedState_ctor(view) {
@@ -10680,9 +10736,9 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                 },
             });
 
-            /* 
+            /*
             In this state, view unrealizes not needed items and then waits for all renderers to complete.
-                            
+
             UnrealizingState => CompletedState | RealizingState | ScrollingState | LayingoutState | BuildingState | CanceledState
             */
             var UnrealizingState = _Base.Class.define(function UnrealizingState_ctor(view) {
@@ -10728,7 +10784,7 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
 
             /*
             We enter this state, when there are animations to execute, and we have already fired the viewportloaded event
-            
+
             RealizingAnimatingState => RealizingState | UnrealizingState | LayingoutState | BuildingState | CanceledState
             */
             var RealizingAnimatingState = _Base.Class.define(function RealizingStateAnimating_ctor(view, realizePromise) {
@@ -10841,10 +10897,10 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                 }
             });
 
-            /* 
-            The view enters this state when the tree is built, layout and realized after animations have 
-            finished. The layout can still laying out items outside of realized view during this stage. 
-                        
+            /*
+            The view enters this state when the tree is built, layout and realized after animations have
+            finished. The layout can still laying out items outside of realized view during this stage.
+
             CompletedState => RealizingState | ScrollingState | LayingoutState | BuildingState | LayingoutNewContainersState
             */
             var CompletedState = _Base.Class.derive(CanceledState, function CompletedState_ctor(view) {
@@ -10879,9 +10935,9 @@ define('WinJS/Controls/ListView/_VirtualizeContentsView',[
                 }
             });
 
-            /* 
+            /*
             The view waits in this state for previous layout pass to finish.
-            
+
             LayingoutNewContainersState => RealizingState | ScrollingState | LayingoutState | BuildingState
             */
             var LayingoutNewContainersState = _Base.Class.derive(CanceledState, function LayingoutNewContainersState(view) {
@@ -10941,11 +10997,11 @@ define('WinJS/Controls/ListView',[
     '../Utilities/_Control',
     '../Utilities/_Dispose',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_Hoverable',
     '../Utilities/_ItemsManager',
     '../Utilities/_SafeHtml',
     '../Utilities/_TabContainer',
     '../Utilities/_UI',
-    '../Utilities/_UIUtilities',
     '../Utilities/_VersionManager',
     './ItemContainer/_Constants',
     './ItemContainer/_ItemEventsHandler',
@@ -10960,7 +11016,7 @@ define('WinJS/Controls/ListView',[
     './ListView/_VirtualizeContentsView',
     'require-style!less/desktop/controls',
     'require-style!less/phone/controls'
-    ], function listViewImplInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, _TransitionAnimation, BindingList, Promise, Scheduler, _Signal, _Control, _Dispose, _ElementUtilities, _ItemsManager, _SafeHtml, _TabContainer, _UI, _UIUtilities, _VersionManager, _Constants, _ItemEventsHandler, _BrowseMode, _ErrorMessages, _GroupFocusCache, _GroupsContainer, _Helpers, _ItemsContainer, _Layouts, _SelectionManager, _VirtualizeContentsView) {
+    ], function listViewImplInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, _TransitionAnimation, BindingList, Promise, Scheduler, _Signal, _Control, _Dispose, _ElementUtilities, _Hoverable, _ItemsManager, _SafeHtml, _TabContainer, _UI, _VersionManager, _Constants, _ItemEventsHandler, _BrowseMode, _ErrorMessages, _GroupFocusCache, _GroupsContainer, _Helpers, _ItemsContainer, _Layouts, _SelectionManager, _VirtualizeContentsView) {
     "use strict";
 
     var transformNames = _BaseUtils._browserStyleEquivalents["transform"];
@@ -10995,8 +11051,8 @@ define('WinJS/Controls/ListView',[
     var AnimationHelper = _Helpers._ListViewAnimationHelper;
 
     var strings = {
-        get notCompatibleWithSemanticZoom() { return _Resources._getWinJSString("ui/notCompatibleWithSemanticZoom").value; },
-        get listViewInvalidItem() { return _Resources._getWinJSString("ui/listViewInvalidItem").value; },
+        get notCompatibleWithSemanticZoom() { return "ListView can only be used with SemanticZoom if randomAccess loading behavior is specified."; },
+        get listViewInvalidItem() { return "Item must provide index, key or description of corresponding item."; },
         get listViewViewportAriaLabel() { return _Resources._getWinJSString("ui/listViewViewportAriaLabel").value; }
     };
 
@@ -11054,9 +11110,9 @@ define('WinJS/Controls/ListView',[
         /// <part name="selectioncheckmark" class="win-selectioncheckmark" locid="WinJS.UI.ListView_part:selectioncheckmark">A selection checkmark.</part>
         /// <part name="groupHeader" class="win-groupheader" locid="WinJS.UI.ListView_part:groupHeader">The header of a group.</part>
         /// <part name="progressbar" class="win-progress" locid="WinJS.UI.ListView_part:progressbar">The progress indicator of the ListView.</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         ListView: _Base.Namespace._lazy(function () {
             var AffectedRange = _Base.Class.define(function () {
                 this.clear();
@@ -11132,10 +11188,10 @@ define('WinJS/Controls/ListView',[
                 },
 
                 pinching: {
-                    get: function() {
+                    get: function () {
                         return this._listView._pinching;
                     },
-                    set: function(value) {
+                    set: function (value) {
                         this._listView._pinching = value;
                     }
                 }
@@ -11160,6 +11216,10 @@ define('WinJS/Controls/ListView',[
                 /// </returns>
                 /// </signature>
                 element = element || _Global.document.createElement("div");
+                if (_ElementUtilities._supportsTouchActionCrossSlide) {
+                    element.classList.add(_Constants._listViewSupportsCrossSlideClass);
+                }
+
                 this._id = element.id || "";
                 this._writeProfilerMark("constructor,StartTM");
 
@@ -11286,7 +11346,7 @@ define('WinJS/Controls/ListView',[
                         return (_VirtualizeContentsView._VirtualizeContentsView._pagesToPrefetch * 2) + 1;
                     },
                     set: function () {
-                        _UIUtilities._deprecated(_ErrorMessages.pagesToLoadIsDeprecated);
+                        _ElementUtilities._deprecated(_ErrorMessages.pagesToLoadIsDeprecated);
                     }
                 },
 
@@ -11304,7 +11364,7 @@ define('WinJS/Controls/ListView',[
                         return 0;
                     },
                     set: function () {
-                        _UIUtilities._deprecated(_ErrorMessages.pagesToLoadThresholdIsDeprecated);
+                        _ElementUtilities._deprecated(_ErrorMessages.pagesToLoadThresholdIsDeprecated);
                     }
                 },
 
@@ -11376,7 +11436,7 @@ define('WinJS/Controls/ListView',[
                         return false;
                     },
                     set: function () {
-                        _UIUtilities._deprecated(_ErrorMessages.automaticallyLoadPagesIsDeprecated);
+                        _ElementUtilities._deprecated(_ErrorMessages.automaticallyLoadPagesIsDeprecated);
                     }
                 },
 
@@ -11391,7 +11451,7 @@ define('WinJS/Controls/ListView',[
                         return "randomAccess";
                     },
                     set: function () {
-                        _UIUtilities._deprecated(_ErrorMessages.loadingBehaviorIsDeprecated);
+                        _ElementUtilities._deprecated(_ErrorMessages.loadingBehaviorIsDeprecated);
                     }
                 },
 
@@ -11523,7 +11583,7 @@ define('WinJS/Controls/ListView',[
                         return this._itemRelease;
                     },
                     set: function (release) {
-                        _UIUtilities._deprecated(_ErrorMessages.resetItemIsDeprecated);
+                        _ElementUtilities._deprecated(_ErrorMessages.resetItemIsDeprecated);
                         this._itemRelease = release;
                     }
                 },
@@ -11560,7 +11620,7 @@ define('WinJS/Controls/ListView',[
                         return this._groupHeaderRelease;
                     },
                     set: function (release) {
-                        _UIUtilities._deprecated(_ErrorMessages.resetGroupHeaderIsDeprecated);
+                        _ElementUtilities._deprecated(_ErrorMessages.resetGroupHeaderIsDeprecated);
                         this._groupHeaderRelease = release;
                     }
                 },
@@ -11948,7 +12008,7 @@ define('WinJS/Controls/ListView',[
                     /// </deprecated>
                     /// </summary>
                     /// </signature>
-                    _UIUtilities._deprecated(_ErrorMessages.loadMorePagesIsDeprecated);
+                    _ElementUtilities._deprecated(_ErrorMessages.loadMorePagesIsDeprecated);
                 },
 
                 recalculateItemPosition: function ListView_recalculateItemPosition() {
@@ -12014,6 +12074,24 @@ define('WinJS/Controls/ListView',[
                             _ElementUtilities.addClass(this._canvas, _Constants._selectionModeClass);
                         } else {
                             _ElementUtilities.removeClass(this._canvas, _Constants._selectionModeClass);
+                        }
+                    }
+                },
+
+                _lastScrollPosition: {
+                    get: function () {
+                        return this._lastScrollPositionValue;
+                    },
+                    set: function (position) {
+                        if (position === 0) {
+                            this._lastDirection = "right";
+                            this._direction  = "right";
+                            this._lastScrollPositionValue = 0;
+                        } else {
+                            var currentDirection = position < this._lastScrollPositionValue ? "left" : "right";
+                            this._direction = this._scrollDirection(position);
+                            this._lastDirection = currentDirection;
+                            this._lastScrollPositionValue = position;
                         }
                     }
                 },
@@ -13617,8 +13695,9 @@ define('WinJS/Controls/ListView',[
                     if (currentScrollPosition !== this._lastScrollPosition) {
                         this._pendingScroll = _Global.requestAnimationFrame(this._checkScroller.bind(this));
 
-                        var direction = (currentScrollPosition < this._lastScrollPosition) ? "left" : "right";
                         currentScrollPosition = Math.max(0, currentScrollPosition);
+                        var direction =  this._scrollDirection(currentScrollPosition);
+
                         this._lastScrollPosition = currentScrollPosition;
                         this._raiseViewLoading(true);
                         var that = this;
@@ -13632,6 +13711,16 @@ define('WinJS/Controls/ListView',[
                     } else {
                         this._pendingScroll = null;
                     }
+                },
+
+                _scrollDirection: function ListView_scrollDirectionl(currentScrollPosition) {
+                    var currentDirection = currentScrollPosition < this._lastScrollPosition ? "left" : "right";
+
+                    // When receiving a sequence of scroll positions, the browser may give us one scroll position
+                    // which doesn't fit (e.g. the scroll positions were increasing but just this one is decreasing).
+                    // To filter out this noise, _scrollDirection and _direction are stubborn -- they only change
+                    // when we've received a sequence of 3 scroll position which all indicate the same direction.
+                    return currentDirection === this._lastDirection ? currentDirection : this._direction;
                 },
 
                 _onTabEnter: function ListView_onTabEnter() {
@@ -15234,11 +15323,3 @@ define('WinJS/Controls/ListView',[
 
 });
 
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

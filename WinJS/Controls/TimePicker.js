@@ -13,10 +13,11 @@ define('WinJS/Controls/TimePicker',[
     '../Core/_Resources',
     '../Utilities/_Control',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_Hoverable',
     '../Utilities/_Select',
     'require-style!less/desktop/controls',
     'require-style!less/phone/controls'
-    ], function timePickerInit(_Global, _WinRT, _Base, _BaseUtils, _Events, _Resources, _Control, _ElementUtilities, _Select) {
+    ], function timePickerInit(_Global, _WinRT, _Base, _BaseUtils, _Events, _Resources, _Control, _ElementUtilities, _Hoverable, _Select) {
     "use strict";
 
     _Base.Namespace.define("WinJS.UI", {
@@ -29,9 +30,9 @@ define('WinJS/Controls/TimePicker',[
         /// <icon src="ui_winjs.ui.timepicker.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.TimePicker"></div>]]></htmlSnippet>
         /// <event name="change" locid="WinJS.UI.TimePicker_e:change">Occurs when the time changes.</event>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         TimePicker: _Base.Namespace._lazy(function () {
             // Constants definition
             var DEFAULT_MINUTE_PATTERN = "{minute.integer(2)}",
@@ -547,9 +548,13 @@ define('WinJS/Controls/TimePicker',[
                     }
 
                     order.sort(function (a, b) {
-                        if (indexes[a] < indexes[b]) { return -1; }
-                        else if (indexes[a] > indexes[b]) { return 1; }
-                        else { return 0; }
+                        if (indexes[a] < indexes[b]) {
+                            return -1;
+                        } else if (indexes[a] > indexes[b]) {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
                     });
 
                     return { minutes: minutes, hours: hours, clock: computedClock, periods: periods, order: order, forceLanguage: hourMinuteFormatter.resolvedLanguage, isRTL: isRTL };
@@ -590,11 +595,3 @@ define('WinJS/Controls/TimePicker',[
 
 });
 
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

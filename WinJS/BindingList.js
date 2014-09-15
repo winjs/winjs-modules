@@ -736,12 +736,12 @@ define('WinJS/BindingList/_BindingListDataSource',[
                 },
 
                 //
-                // insert* and change are not implemented as I don't understand how they are 
+                // insert* and change are not implemented as I don't understand how they are
                 //  used by the controls since it is hard to fathom how they would be able
                 //  to make up unique keys. Manual editing of the List is meant to go through
                 //  the list itself.
                 //
-                // move* are implemented only if the underlying list supports move(). The 
+                // move* are implemented only if the underlying list supports move(). The
                 //  GroupsListProjection for instance does not.
                 //
                 moveAfter: undefined,
@@ -775,8 +775,8 @@ define('WinJS/BindingList',[
     "use strict";
 
     var strings = {
-        get sparseArrayNotSupported() { return _Resources._getWinJSString("base/sparseArrayNotSupported").value; },
-        get illegalListLength() { return _Resources._getWinJSString("base/illegalListLength").value; },
+        get sparseArrayNotSupported() { return "Sparse arrays are not supported with proxy: true"; },
+        get illegalListLength() { return "List length must be assigned a finite positive number"; },
     };
 
     function copyargs(args) {

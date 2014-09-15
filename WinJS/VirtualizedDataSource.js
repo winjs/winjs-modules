@@ -31,15 +31,15 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
             // Private statics
 
             var strings = {
-                get listDataAdapterIsInvalid() { return _Resources._getWinJSString("ui/listDataAdapterIsInvalid").value; },
-                get indexIsInvalid() { return _Resources._getWinJSString("ui/indexIsInvalid").value; },
-                get keyIsInvalid() { return _Resources._getWinJSString("ui/keyIsInvalid").value; },
-                get invalidItemReturned() { return _Resources._getWinJSString("ui/undefinedItemReturned").value; },
-                get invalidKeyReturned() { return _Resources._getWinJSString("ui/invalidKeyReturned").value; },
-                get invalidIndexReturned() { return _Resources._getWinJSString("ui/invalidIndexReturned").value; },
-                get invalidCountReturned() { return _Resources._getWinJSString("ui/invalidCountReturned").value; },
-                get invalidRequestedCountReturned() { return _Resources._getWinJSString("ui/invalidRequestedCountReturned").value; },
-                get refreshCycleIdentified() { return _Resources._getWinJSString("ui/refreshCycleIdentified").value; },
+                get listDataAdapterIsInvalid() { return "Invalid argument: listDataAdapter must be an object or an array."; },
+                get indexIsInvalid() { return "Invalid argument: index must be a non-negative integer."; },
+                get keyIsInvalid() { return "Invalid argument: key must be a string."; },
+                get invalidItemReturned() { return "Error: data adapter returned item that is not an object."; },
+                get invalidKeyReturned() { return "Error: data adapter returned item with undefined or null key."; },
+                get invalidIndexReturned() { return "Error: data adapter should return undefined, null or a non-negative integer for the index."; },
+                get invalidCountReturned() { return "Error: data adapter should return undefined, null, CountResult.unknown, or a non-negative integer for the count."; },
+                get invalidRequestedCountReturned() { return "Error: data adapter should return CountResult.unknown, CountResult.failure, or a non-negative integer for the count."; },
+                get refreshCycleIdentified() { return "refresh cycle found, likely data inconsistency"; },
             };
 
             var statusChangedEvent = "statuschanged";
@@ -50,7 +50,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                 /// Initializes the VirtualizedDataSource base class of a custom data source.
                 /// </summary>
                 /// <param name="listDataAdapter" type="IListDataAdapter" locid="WinJS.UI.VirtualizedDataSource._baseDataSourceConstructor_p:itemIndex">
-                /// An object that implements IListDataAdapter and supplies data to the VirtualizedDataSource.  
+                /// An object that implements IListDataAdapter and supplies data to the VirtualizedDataSource.
                 /// </param>
                 /// <param name="options" optional="true" type="Object" locid="WinJS.UI.VirtualizedDataSource._baseDataSourceConstructor_p:options">
                 /// An object that contains properties that specify additonal options for the VirtualizedDataSource:
@@ -1124,7 +1124,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                                 delete fetchListeners[listenerID];
 
                                 // See if there are any other listeners
-                                if(Object.keys(fetchListeners).length > 0) {
+                                if (Object.keys(fetchListeners).length > 0) {
                                     return;
                                 }
                                 delete slot[listenersProperty];
@@ -2547,8 +2547,8 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                 // Refresh
 
                 function identifyRefreshCycle() {
-                    // find refresh cycles, find the first beginRefresh in the refreshHistory and see whether it 
-                    // matches the next beginRefresh, if so then move the data source into an error state and stop 
+                    // find refresh cycles, find the first beginRefresh in the refreshHistory and see whether it
+                    // matches the next beginRefresh, if so then move the data source into an error state and stop
                     // refreshing.
                     var start = 0;
                     for (; start < refreshHistory.length; start++) {
@@ -4474,7 +4474,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     /// <signature helpKeyword="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler">
                     /// <summary locid="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler">
                     /// An implementation of IListDataNotificationHandler that is passed to the
-                    /// IListDataAdapter.setNotificationHandler method. 
+                    /// IListDataAdapter.setNotificationHandler method.
                     /// </summary>
                     /// </signature>
 
@@ -4504,7 +4504,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         /// <signature helpKeyword="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.reload">
                         /// <summary locid="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.reload">
                         /// Notifies the list data source that the list data has changed so much that it is better
-                        /// to reload the data from scratch. 
+                        /// to reload the data from scratch.
                         /// </summary>
                         /// </signature>
 
@@ -4541,7 +4541,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     this.beginNotifications = function () {
                         /// <signature helpKeyword="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.beginNotifications">
                         /// <summary locid="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.beginNotifications">
-                        /// Indicates the start of a notification batch. 
+                        /// Indicates the start of a notification batch.
                         /// Call it before a sequence of other notification calls to minimize the number of countChanged and
                         /// indexChanged notifications sent to the client of the VirtualizedDataSource. You must pair it with a call
                         /// to endNotifications, and pairs can't be nested.
@@ -4566,7 +4566,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         /// Raises a notification that an item was inserted.
                         /// </summary>
                         /// <param name="newItem" type="Object" locid="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.inserted_p:newItem">
-                        /// The inserted item. It must have a key and a data property (it must implement the IItem interface). 
+                        /// The inserted item. It must have a key and a data property (it must implement the IItem interface).
                         /// </param>
                         /// <param name="previousKey" mayBeNull="true" type="String" locid="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.inserted_p:previousKey">
                         /// The key of the item before the insertion point, or null if the item was inserted at the start of the
@@ -4629,7 +4629,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                                 }
                             }
 
-                            // If one of the adjacent keys or indicies has only just been requested - rare, 
+                            // If one of the adjacent keys or indicies has only just been requested - rare,
                             //  and easier to deal with in a refresh.
                             //
                             if ((slotPrev && (slotPrev.keyRequested || slotPrev.indexRequested)) ||
@@ -4658,7 +4658,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     this.changed = function (item) {
                         /// <signature helpKeyword="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.changed">
                         /// <summary locid="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.changed">
-                        /// Raises a notification that an item changed. 
+                        /// Raises a notification that an item changed.
                         /// </summary>
                         /// <param name="item" type="Object" locid="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.changed_p:item">
                         /// An IItem that represents the item that changed.
@@ -4692,10 +4692,10 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     this.moved = function (item, previousKey, nextKey, oldIndex, newIndex) {
                         /// <signature helpKeyword="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.moved">
                         /// <summary locid="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.moved">
-                        /// Raises a notfication that an item was moved. 
+                        /// Raises a notfication that an item was moved.
                         /// </summary>
                         /// <param name="item" type="Object" locid="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.moved_p:item">
-                        /// The item that was moved. 
+                        /// The item that was moved.
                         /// </param>
                         /// <param name="previousKey" mayBeNull="true" type="String" locid="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.moved_p:previousKey">
                         /// The key of the item before the insertion point, or null if the item was moved to the beginning of the list.
@@ -4785,7 +4785,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         /// The key of the item that was removed.
                         /// </param>
                         /// <param name="index" optional="true" type="Number" integer="true" locid="WinJS.UI.VirtualizedDataSource.ListDataNotificationHandler.removed_p:index">
-                        /// The index of the item that was removed. 
+                        /// The index of the item that was removed.
                         /// </param>
                         /// </signature>
 
@@ -4989,7 +4989,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     /// </summary>
                     /// <param name="notificationHandler" optional="true" locid="WinJS.UI.IListDataSource.createListBinding_p:notificationHandler">
                     /// An object that implements the IListNotificationHandler interface.  If you omit this parameter,
-                    /// change notifications won't be available. 
+                    /// change notifications won't be available.
                     /// </param>
                     /// <returns type="IListBinding" locid="WinJS.UI.IListDataSource.createListBinding_returnValue">
                     /// An object that implements the IListBinding interface.
@@ -5166,7 +5166,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     /// <summary locid="WinJS.UI.IListBinding">
                     /// An interface that enables a client to read from the list and receive notifications for changes that affect
                     /// those portions of the list that the client already read.  IListBinding can also enumerate through lists
-                    /// that can change at any time. 
+                    /// that can change at any time.
                     /// </summary>
                     /// </signature>
                     var listBinding = {
@@ -5181,10 +5181,10 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         jumpToItem: function (item) {
                             /// <signature helpKeyword="WinJS.UI.IListBinding.jumpToItem">
                             /// <summary locid="WinJS.UI.IListBinding.jumpToItem">
-                            /// Makes the specified item the current item. 
+                            /// Makes the specified item the current item.
                             /// </summary>
                             /// <param name="item" type="Object" locid="WinJS.UI.IListBinding.jumpToItem_p:item">
-                            /// The IItem or IItemPromise to make the current item. 
+                            /// The IItem or IItemPromise to make the current item.
                             /// </param>
                             /// <returns type="IItemPromise" locid="WinJS.UI.IListBinding.jumpToItem_returnValue">
                             /// An object that implements the IItemPromise interface and serves as a promise for the specified item.  If
@@ -5257,8 +5257,8 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         release: function () {
                             /// <signature helpKeyword="WinJS.UI.IListBinding.release">
                             /// <summary locid="WinJS.UI.IListBinding.release">
-                            /// Releases resources, stops notifications, and cancels outstanding promises 
-                            /// for all tracked items that this IListBinding returned. 
+                            /// Releases resources, stops notifications, and cancels outstanding promises
+                            /// for all tracked items that this IListBinding returned.
                             /// </summary>
                             /// </signature>
 
@@ -5296,7 +5296,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         listBinding.first = function () {
                             /// <signature helpKeyword="WinJS.UI.IListBinding.first">
                             /// <summary locid="WinJS.UI.IListBinding.first">
-                            /// Retrieves the first item in the list and makes it the current item. 
+                            /// Retrieves the first item in the list and makes it the current item.
                             /// </summary>
                             /// <returns type="IItemPromise" locid="WinJS.UI.IListBinding.first_returnValue">
                             /// An IItemPromise that serves as a promise for the requested item.
@@ -5312,7 +5312,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         listBinding.last = function () {
                             /// <signature helpKeyword="WinJS.UI.IListBinding.last">
                             /// <summary locid="WinJS.UI.IListBinding.last">
-                            /// Retrieves the last item in the list and makes it the current item. 
+                            /// Retrieves the last item in the list and makes it the current item.
                             /// </summary>
                             /// <returns type="IItemPromise" locid="WinJS.UI.IListBinding.last_returnValue">
                             /// An IItemPromise that serves as a promise for the requested item.
@@ -5328,13 +5328,13 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         listBinding.fromKey = function (key, hints) {
                             /// <signature helpKeyword="WinJS.UI.IListBinding.fromKey">
                             /// <summary locid="WinJS.UI.IListBinding.fromKey">
-                            /// Retrieves the item with the specified key and makes it the current item. 
+                            /// Retrieves the item with the specified key and makes it the current item.
                             /// </summary>
                             /// <param name="key" type="String" locid="WinJS.UI.IListBinding.fromKey_p:key">
                             /// The key of the requested item. It must be a non-empty string.
                             /// </param>
                             /// <param name="hints" locid="WinJS.UI.IListBinding.fromKey_p:hints">
-                            /// Domain-specific hints to the IListDataAdapter 
+                            /// Domain-specific hints to the IListDataAdapter
                             /// about the location of the item to improve retrieval time.
                             /// </param>
                             /// <returns type="IItemPromise" locid="WinJS.UI.IListBinding.fromKey_returnValue">
@@ -5351,10 +5351,10 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         listBinding.fromIndex = function (index) {
                             /// <signature helpKeyword="WinJS.UI.IListBinding.fromIndex">
                             /// <summary locid="WinJS.UI.IListBinding.fromIndex">
-                            /// Retrieves the item with the specified index and makes it the current item. 
+                            /// Retrieves the item with the specified index and makes it the current item.
                             /// </summary>
                             /// <param name="index" type="Nunmber" integer="true" locid="WinJS.UI.IListBinding.fromIndex_p:index">
-                            /// A value greater than or equal to 0 that is the index of the item to retrieve. 
+                            /// A value greater than or equal to 0 that is the index of the item to retrieve.
                             /// </param>
                             /// <returns type="IItemPromise" locid="WinJS.UI.IListBinding.fromIndex_returnValue">
                             /// An IItemPromise that serves as a promise for the requested item.
@@ -5370,7 +5370,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         listBinding.fromDescription = function (description) {
                             /// <signature helpKeyword="WinJS.UI.IListBinding.fromDescription">
                             /// <summary locid="WinJS.UI.IListBinding.fromDescription">
-                            /// Retrieves the item with the specified description and makes it the current item. 
+                            /// Retrieves the item with the specified description and makes it the current item.
                             /// </summary>
                             /// <param name="description" locid="WinJS.UI.IListDataSource.fromDescription_p:description">
                             /// The domain-specific description of the requested item, to be interpreted by the list data adapter.
@@ -5392,7 +5392,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     /// <signature helpKeyword="WinJS.UI.IListDataSource.invalidateAll">
                     /// <summary locid="WinJS.UI.IListDataSource.invalidateAll">
                     /// Makes the data source refresh its cached items by re-requesting them from the data adapter.
-                    /// The data source generates notifications if the data has changed. 
+                    /// The data source generates notifications if the data has changed.
                     /// </summary>
                     /// <returns type="Promise" locid="WinJS.UI.IListDataSource.invalidateAll_returnValue">
                     /// A Promise that completes when the data has been completely refreshed and all change notifications have been
@@ -5457,7 +5457,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                 this.getCount = function () {
                     /// <signature helpKeyword="WinJS.UI.IListDataSource.getCount">
                     /// <summary locid="WinJS.UI.IListDataSource.getCount">
-                    /// Retrieves the number of items in the data source. 
+                    /// Retrieves the number of items in the data source.
                     /// </summary>
                     /// </signature>
 
@@ -5495,7 +5495,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                                     }
                                 );
 
-                                // Every time we make a new request for the count we can consider the 
+                                // Every time we make a new request for the count we can consider the
                                 //  countDelta to be invalidated
                                 //
                                 countDelta = 0;
@@ -5545,7 +5545,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                             return Promise.wrapError(error);
                         });
                     } else {
-                        // If the data adapter doesn't support the count method, return the VirtualizedDataSource's 
+                        // If the data adapter doesn't support the count method, return the VirtualizedDataSource's
                         //  reckoning of the count.
                         return Promise.wrap(knownCount);
                     }
@@ -5561,12 +5561,12 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         /// The key of the requested item. It must be a non-empty string.
                         /// </param>
                         /// <param name="hints" locid="WinJS.UI.IListDataSource.itemFromKey_p:hints">
-                        /// Domain-specific hints to IListDataAdapter about the location of the item 
+                        /// Domain-specific hints to IListDataAdapter about the location of the item
                         /// to improve the retrieval time.
                         /// </param>
                         /// <returns type="Promise" locid="WinJS.UI.IListDataSource.itemFromKey_returnValue">
                         /// A Promise for the requested item. If the list doesn't contain an item with the specified key,
-                        /// the Promise completes with a value of null. 
+                        /// the Promise completes with a value of null.
                         /// </returns>
                         /// </signature>
 
@@ -5585,7 +5585,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         /// </param>
                         /// <returns type="Promise" locid="WinJS.UI.IListDataSource.itemFromIndex_returnValue">
                         /// A Promise for the requested item. If the list doesn't contain an item with the specified index,
-                        /// the Promise completes with a value of null. 
+                        /// the Promise completes with a value of null.
                         /// </returns>
                         /// </signature>
 
@@ -5600,11 +5600,11 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         /// Retrieves the item with the specified description.
                         /// </summary>
                         /// <param name="description" locid="WinJS.UI.IListDataSource.itemFromDescription_p:description">
-                        /// Domain-specific info that describes the item to retrieve, to be interpreted by the IListDataAdapter, 
+                        /// Domain-specific info that describes the item to retrieve, to be interpreted by the IListDataAdapter,
                         /// </param>
                         /// <returns type="Promise" locid="WinJS.UI.IListDataSource.itemFromDescription_returnValue">
                         /// A Promise for the requested item. If the list doesn't contain an item with the specified description,
-                        /// the Promise completes with a value of null. 
+                        /// the Promise completes with a value of null.
                         /// </returns>
                         /// </signature>
 
@@ -5629,10 +5629,10 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     this.insertAtStart = function (key, data) {
                         /// <signature helpKeyword="WinJS.UI.IListDataSource.insertAtStart">
                         /// <summary locid="WinJS.UI.IListDataSource.insertAtStart">
-                        /// Adds an item to the beginning of the data source. 
+                        /// Adds an item to the beginning of the data source.
                         /// </summary>
                         /// <param name="key" mayBeNull="true" type="String" locid="WinJS.UI.IListDataSource.insertAtStart_p:key">
-                        /// The key of the item to insert, if known; otherwise, null. 
+                        /// The key of the item to insert, if known; otherwise, null.
                         /// </param>
                         /// <param name="data" locid="WinJS.UI.IListDataSource.insertAtStart_p:data">
                         /// The data for the item to add.
@@ -5664,13 +5664,13 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         /// Inserts an item before another item.
                         /// </summary>
                         /// <param name="key" mayBeNull="true" type="String" locid="WinJS.UI.IListDataSource.insertBefore_p:key">
-                        /// The key of the item to insert, if known; otherwise, null. 
+                        /// The key of the item to insert, if known; otherwise, null.
                         /// </param>
                         /// <param name="data" locid="WinJS.UI.IListDataSource.insertBefore_p:data">
                         /// The data for the item to insert.
                         /// </param>
                         /// <param name="nextKey" type="String" locid="WinJS.UI.IListDataSource.insertBefore_p:nextKey">
-                        /// The key of an item in the data source. The new data is inserted before this item. 
+                        /// The key of an item in the data source. The new data is inserted before this item.
                         /// </param>
                         /// <returns type="Promise" locid="WinJS.UI.IListDataSource.insertBefore_returnValue">
                         /// A Promise that contains the IItem that was added or an EditError if an error occurred.
@@ -5701,13 +5701,13 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                         /// Inserts an item after another item.
                         /// </summary>
                         /// <param name="key" mayBeNull="true" type="String" locid="WinJS.UI.IListDataSource.insertAfter_p:key">
-                        /// The key of the item to insert, if known; otherwise, null. 
+                        /// The key of the item to insert, if known; otherwise, null.
                         /// </param>
                         /// <param name="data" locid="WinJS.UI.IListDataSource.insertAfter_p:data">
                         /// The data for the item to insert.
                         /// </param>
                         /// <param name="previousKey" type="String" locid="WinJS.UI.IListDataSource.insertAfter_p:previousKey">
-                        /// The key for an item in the data source. The new item is added after this item. 
+                        /// The key for an item in the data source. The new item is added after this item.
                         /// </param>
                         /// <returns type="Promise" locid="WinJS.UI.IListDataSource.insertAfter_returnValue">
                         /// A Promise that contains the IItem that was added or an EditError if an error occurred.
@@ -5735,10 +5735,10 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     this.insertAtEnd = function (key, data) {
                         /// <signature helpKeyword="WinJS.UI.IListDataSource.insertAtEnd">
                         /// <summary locid="WinJS.UI.IListDataSource.insertAtEnd">
-                        /// Adds an item to the end of the data source. 
+                        /// Adds an item to the end of the data source.
                         /// </summary>
                         /// <param name="key" mayBeNull="true" type="String" locid="WinJS.UI.IListDataSource.insertAtEnd_p:key">
-                        /// The key of the item to insert, if known; otherwise, null. 
+                        /// The key of the item to insert, if known; otherwise, null.
                         /// </param>
                         /// <param name="data" locid="WinJS.UI.IListDataSource.insertAtEnd_data">
                         /// The data for the item to insert.
@@ -5767,13 +5767,13 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     this.change = function (key, newData) {
                         /// <signature helpKeyword="WinJS.UI.IListDataSource.change">
                         /// <summary locid="WinJS.UI.IListDataSource.change">
-                        /// Overwrites the data of the specified item. 
+                        /// Overwrites the data of the specified item.
                         /// </summary>
                         /// <param name="key" type="String" locid="WinJS.UI.IListDataSource.change_p:key">
-                        /// The key for the item to replace. 
+                        /// The key for the item to replace.
                         /// </param>
                         /// <param name="newData" type="Object" locid="WinJS.UI.IListDataSource.change_p:newData">
-                        /// The new data for the item. 
+                        /// The new data for the item.
                         /// </param>
                         /// <returns type="Promise" locid="WinJS.UI.IListDataSource.change_returnValue">
                         /// A Promise that contains the IItem that was updated or an EditError if an error occurred.
@@ -5830,7 +5830,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     this.moveToStart = function (key) {
                         /// <signature helpKeyword="WinJS.UI.IListDataSource.moveToStart">
                         /// <summary locid="WinJS.UI.IListDataSource.moveToStart">
-                        /// Moves the specified item to the beginning of the data source. 
+                        /// Moves the specified item to the beginning of the data source.
                         /// </summary>
                         /// <param name="key" type="String" locid="WinJS.UI.IListDataSource.moveToStart_p:key">
                         /// The key of the item to move.
@@ -5860,14 +5860,14 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     this.moveBefore = function (key, nextKey) {
                         /// <signature helpKeyword="WinJS.UI.IListDataSource.moveBefore">
                         /// <summary locid="WinJS.UI.IListDataSource.moveBefore">
-                        /// Moves the specified item before another item. 
+                        /// Moves the specified item before another item.
                         /// </summary>
                         /// <param name="key" type="String" locid="WinJS.UI.IListDataSource.moveBefore_p:key">
                         /// The key of the item to move.
                         /// </param>
                         /// <param name="nextKey" type="String" locid="WinJS.UI.IListDataSource.moveBefore_p:nextKey">
                         /// The key of another item in the data source. The item specified by the key parameter
-                        /// is moved to a position immediately before this item. 
+                        /// is moved to a position immediately before this item.
                         /// </param>
                         /// <returns type="Promise" locid="WinJS.UI.IListDataSource.moveBefore_returnValue">
                         /// A Promise that contains the IItem that was moved or an EditError if an error occurred.
@@ -5895,14 +5895,14 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     this.moveAfter = function (key, previousKey) {
                         /// <signature helpKeyword="WinJS.UI.IListDataSource.moveAfter">
                         /// <summary locid="WinJS.UI.IListDataSource.moveAfter">
-                        /// Moves an item after another item. 
+                        /// Moves an item after another item.
                         /// </summary>
                         /// <param name="key" type="String" locid="WinJS.UI.IListDataSource.moveAfter_p:key">
                         /// The key of the item to move.
                         /// </param>
                         /// <param name="previousKey" type="String" locid="WinJS.UI.IListDataSource.moveAfter_p:previousKey">
                         /// The key of another item in the data source. The item specified by the key parameter will
-                        /// is moved to a position immediately after this item. 
+                        /// is moved to a position immediately after this item.
                         /// </param>
                         /// <returns type="Promise" locid="WinJS.UI.IListDataSource.moveAfter_returnValue">
                         /// A Promise that contains the IItem that was moved or an EditError if an error occurred.
@@ -5930,7 +5930,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     this.moveToEnd = function (key) {
                         /// <signature helpKeyword="WinJS.UI.IListDataSource.moveToEnd">
                         /// <summary locid="WinJS.UI.IListDataSource.moveToEnd">
-                        /// Moves an item to the end of the data source. 
+                        /// Moves an item to the end of the data source.
                         /// </summary>
                         /// <param name="key" type="String" locid="WinJS.UI.IListDataSource.moveToEnd_p:key">
                         /// The key of the item to move.
@@ -5960,7 +5960,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
                     this.remove = function (key) {
                         /// <signature helpKeyword="WinJS.UI.IListDataSource.remove">
                         /// <summary locid="WinJS.UI.IListDataSource.remove">
-                        /// Removes an item from the data source. 
+                        /// Removes an item from the data source.
                         /// </summary>
                         /// <param name="key" type="String" locid="WinJS.UI.IListDataSource.remove_p:key">
                         /// The key of the item to remove.
@@ -6032,7 +6032,7 @@ define('WinJS/VirtualizedDataSource/_VirtualizedDataSourceImpl',[
             var VDS = _Base.Class.define(function () {
                 /// <signature helpKeyword="WinJS.UI.VirtualizedDataSource">
                 /// <summary locid="WinJS.UI.VirtualizedDataSource">
-                /// Use as a base class when defining a custom data source. Do not instantiate directly. 
+                /// Use as a base class when defining a custom data source. Do not instantiate directly.
                 /// </summary>
                 /// <event name="statuschanged" locid="WinJS.UI.VirtualizedDataSource_e:statuschanged">
                 /// Raised when the status of the VirtualizedDataSource changes between ready, waiting, and failure states.
@@ -6925,34 +6925,34 @@ define('WinJS/VirtualizedDataSource/_GroupedItemDataSource',[
             /// of this data source evaluates to yet another data source that enumerates the groups themselves.
             /// </summary>
             /// <param name="listDataSource" type="VirtualizedDataSource" locid="WinJS.UI.computeDataSourceGroups_p:listDataSource">
-            /// The data source for the individual items to group. 
+            /// The data source for the individual items to group.
             /// </param>
             /// <param name="groupKey" type="Function" locid="WinJS.UI.computeDataSourceGroups_p:groupKey">
             /// A callback function that takes an item in the list as an argument. The function is called
-            /// for each item in the list and returns the group key for the item as a string. 
+            /// for each item in the list and returns the group key for the item as a string.
             /// </param>
             /// <param name="groupData" type="Function" locid="WinJS.UI.computeDataSourceGroups_p:groupData">
-            /// A callback function that takes an item in the IListDataSource as an argument. 
-            /// The function is called on one item in each group and returns 
-            /// an object that represents the header of that group. 
+            /// A callback function that takes an item in the IListDataSource as an argument.
+            /// The function is called on one item in each group and returns
+            /// an object that represents the header of that group.
             /// </param>
             /// <param name="options" type="Object" locid="WinJS.UI.computeDataSourceGroups_p:options">
-            /// An object that can contain properties that specify additional options: 
+            /// An object that can contain properties that specify additional options:
             ///
             /// groupCountEstimate:
-            /// A Number value that is the initial estimate for the number of groups. If you specify -1, 
+            /// A Number value that is the initial estimate for the number of groups. If you specify -1,
             /// this function returns no result is until the actual number of groups
             /// has been determined.
             ///
             /// batchSize:
-            /// A Number greater than 0 that specifies the number of items to fetch during each processing pass when 
+            /// A Number greater than 0 that specifies the number of items to fetch during each processing pass when
             /// searching for groups. (In addition to the number specified, one item from the previous batch
-            /// is always included.)  
+            /// is always included.)
             /// </param>
             /// <returns type="IListDataSource" locid="WinJS.UI.computeDataSourceGroups_returnValue">
             /// An IListDataSource that contains the items in the original data source and provides additional
             /// group info in a "groups" property. The "groups" property returns another
-            /// IListDataSource that enumerates the different groups in the list. 
+            /// IListDataSource that enumerates the different groups in the list.
             /// </returns>
             /// </signature>
 
@@ -6988,7 +6988,7 @@ define('WinJS/VirtualizedDataSource/_GroupedItemDataSource',[
 
             groupedItemDataSource.createListBinding = function (notificationHandler) {
                 var groupedNotificationHandler;
-            
+
                 if (notificationHandler) {
                     groupedNotificationHandler = Object.create(notificationHandler);
 
@@ -7088,7 +7088,7 @@ define('WinJS/VirtualizedDataSource/_GroupedItemDataSource',[
             });
 
             var groupDataSource = null;
-    
+
             Object.defineProperty(groupedItemDataSource, "groups", {
                 get: function () {
                     if (!groupDataSource) {
@@ -7234,7 +7234,7 @@ define('WinJS/VirtualizedDataSource/_StorageDataSource',[
                     var first = (index - countBefore),
                         count = (countBefore + 1 + countAfter);
                     var that = this;
-                    // Fetch a minimum of 32 items on the first request for smoothness. Otherwise 
+                    // Fetch a minimum of 32 items on the first request for smoothness. Otherwise
                     // listview displays 2 items first and then the rest of the page.
                     if (that.firstDataRequest) {
                         that.firstDataRequest = false;
@@ -7324,7 +7324,7 @@ define('WinJS/VirtualizedDataSource/_StorageDataSource',[
                 /// The object to enumerate. It must support IStorageQueryResultBase.
                 /// </param>
                 /// <param name="options" mayBeNull="true" optional="true" type="Object" locid="WinJS.UI.StorageDataSource_p:options">
-                /// An object that specifies options for the data source. This parameter is optional. It can contain these properties: 
+                /// An object that specifies options for the data source. This parameter is optional. It can contain these properties:
                 ///
                 /// mode:
                 /// A Windows.Storage.FileProperties.ThumbnailMode - a value that specifies whether to request
@@ -7361,7 +7361,7 @@ define('WinJS/VirtualizedDataSource/_StorageDataSource',[
                     var thumbnailUpdateHandler,
                         thumbnailPromise,
                         shouldRespondToThumbnailUpdate = false;
-            
+
                     return new Promise(function (complete) {
                         // Load a thumbnail if it exists. The promise completes when a full quality thumbnail is visible.
                         var tagSupplied = (image ? true : false);
@@ -7389,9 +7389,7 @@ define('WinJS/VirtualizedDataSource/_StorageDataSource',[
                                             return imagePromise;
                                         });
                                     });
-                                }
-                                    // Otherwise, replace the existing version without animation.
-                                else {
+                                } else { // Otherwise, replace the existing version without animation.
                                     thumbnailPromise = thumbnailPromise.then(function (image) {
                                         return item.loadImage(url, image);
                                     });
@@ -7420,7 +7418,7 @@ define('WinJS/VirtualizedDataSource/_StorageDataSource',[
                         };
                         item.data.addEventListener("thumbnailupdated", thumbnailUpdateHandler);
                         shouldRespondToThumbnailUpdate = true;
-                
+
                         // If we already have a thumbnail we should render it now.
                         processThumbnail(item.data.thumbnail);
                     }, function () {
@@ -7446,7 +7444,7 @@ define('WinJS/VirtualizedDataSource',[
     './VirtualizedDataSource/_GroupDataSource',
     './VirtualizedDataSource/_GroupedItemDataSource',
     './VirtualizedDataSource/_StorageDataSource'
-     ], function() {
+     ], function () {
 
     //wrapper module
 });

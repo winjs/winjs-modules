@@ -18,12 +18,12 @@ define('WinJS/Controls/SettingsFlyout',[
     '../Utilities/_Dispose',
     '../Utilities/_ElementUtilities',
     '../Utilities/_ElementListUtilities',
-    '../Utilities/_UIUtilities',
+    '../Utilities/_Hoverable',
     './AppBar/_Constants',
     './Flyout/_Overlay',
     'require-style!less/desktop/controls',
     'require-style!less/phone/controls'
-    ], function settingsFlyoutInit(_Global,_WinRT, _Base, _BaseUtils, _ErrorFromName, _Resources, _WriteProfilerMark, Animations, Pages, Promise, _Dispose, _ElementUtilities, _ElementListUtilities, _UIUtilities, _Constants, _Overlay) {
+    ], function settingsFlyoutInit(_Global,_WinRT, _Base, _BaseUtils, _ErrorFromName, _Resources, _WriteProfilerMark, Animations, Pages, Promise, _Dispose, _ElementUtilities, _ElementListUtilities, _Hoverable, _Constants, _Overlay) {
     "use strict";
 
     _Base.Namespace.define("WinJS.UI", {
@@ -48,9 +48,9 @@ define('WinJS/Controls/SettingsFlyout',[
         /// <event name="beforehide" locid="WinJS.UI.SettingsFlyout_e:beforehide">Raised just before hiding a SettingsFlyout.</event>
         /// <event name="afterhide" locid="WinJS.UI.SettingsFlyout_e:afterhide">Raised immediately after a SettingsFlyout is fully hidden.</event>
         /// <part name="settings" class="win-settingsflyout" locid="WinJS.UI.SettingsFlyout_part:settings">The SettingsFlyout control itself.</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         SettingsFlyout: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -73,7 +73,7 @@ define('WinJS/Controls/SettingsFlyout',[
             // Get the settings control by matching the settingsCommandId
             // if no match we'll try to match element id
             function _getChildSettingsControl(parentElement, id) {
-                var settingElements = parentElement.querySelectorAll(_Constants.settingsFlyoutSelector);
+                var settingElements = parentElement.querySelectorAll("." + _Constants.settingsFlyoutClass);
                 var retValue,
                     control;
                 for (var i = 0; i < settingElements.length; i++) {
@@ -170,7 +170,7 @@ define('WinJS/Controls/SettingsFlyout',[
                     },
 
                     set: function (value) {
-                        _UIUtilities._deprecated(strings.widthDeprecationMessage);
+                        _ElementUtilities._deprecated(strings.widthDeprecationMessage);
                         if (value === this._width) {
                             return;
                         }
@@ -620,9 +620,9 @@ define('WinJS/Controls/SettingsFlyout',[
 
             var strings = {
                 get ariaLabel() { return _Resources._getWinJSString("ui/settingsFlyoutAriaLabel").value; },
-                get badReference() { return _Resources._getWinJSString("ui/badReference").value; },
+                get badReference() { return "Invalid argument: Invalid href to settings flyout fragment"; },
                 get backbuttonAriaLabel() { return _Resources._getWinJSString("ui/backbuttonarialabel").value; },
-                get widthDeprecationMessage() { return _Resources._getWinJSString("ui/settingsFlyoutWidthIsDeprecated").value; },
+                get widthDeprecationMessage() { return "SettingsFlyout.width may be altered or unavailable in future versions. Instead, style the CSS width property on elements with the .win-settingsflyout class."; },
             };
 
             return SettingsFlyout;
@@ -632,11 +632,3 @@ define('WinJS/Controls/SettingsFlyout',[
 
 });
 
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

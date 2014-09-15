@@ -12,9 +12,10 @@ define('WinJS/Controls/BackButton',[
     '../Navigation',
     '../Utilities/_Control',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_Hoverable',
     'require-style!less/desktop/controls',
     'require-style!less/phone/controls'
-    ], function backButtonInit(_Global, _Base, _ErrorFromName, _Resources, Navigation, _Control, _ElementUtilities) {
+    ], function backButtonInit(_Global, _Base, _ErrorFromName, _Resources, Navigation, _Control, _ElementUtilities, _Hoverable) {
     "use strict";
 
     var Key = _ElementUtilities.Key;
@@ -35,13 +36,13 @@ define('WinJS/Controls/BackButton',[
         function hookUpBackButtonGlobalEventHandlers() {
             // Subscribes to global events on the window object
             _Global.addEventListener('keyup', backButtonGlobalKeyUpHandler, false);
-            _Global.addEventListener('pointerup', backButtonGlobalMSPointerUpHandler, false);
+            _ElementUtilities._addEventListener(_Global, 'pointerup', backButtonGlobalMSPointerUpHandler, false);
         }
 
         function unHookBackButtonGlobalEventHandlers() {
             // Unsubscribes from global events on the window object
             _Global.removeEventListener('keyup', backButtonGlobalKeyUpHandler, false);
-            _Global.removeEventListener('pointerup', backButtonGlobalMSPointerUpHandler, false);
+            _ElementUtilities._removeEventListener(_Global, 'pointerup', backButtonGlobalMSPointerUpHandler, false);
         }
 
         function backButtonGlobalKeyUpHandler(event) {
@@ -95,15 +96,15 @@ define('WinJS/Controls/BackButton',[
         /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.BackButton"></button>]]></htmlSnippet>
         /// <part name="BackButton" class="win-navigation-backbutton" locid="WinJS.UI.BackButton_part:BackButton">The BackButton control itself</part>
         /// <part name="BackArrowGlyph" class="win-back" locid="WinJS.UI.BackButton_part:BackArrowGlyph">The Back Arrow glyph</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         BackButton: _Base.Namespace._lazy(function () {
             // Statics
             var strings = {
                 get ariaLabel() { return _Resources._getWinJSString("ui/backbuttonarialabel").value; },
-                get duplicateConstruction() { return _Resources._getWinJSString("ui/duplicateConstruction").value; },
-                get badButtonElement() { return _Resources._getWinJSString("ui/badButtonElement").value; }
+                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
+                get badButtonElement() { return "Invalid argument: For a button, toggle, or flyout command, the element must be null or a button element"; }
             };
 
             var BackButton = _Base.Class.define(function BackButton_ctor(element, options) {
@@ -246,11 +247,3 @@ define('WinJS/Controls/BackButton',[
 
 });
 
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

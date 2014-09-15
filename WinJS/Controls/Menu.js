@@ -21,7 +21,7 @@ define('WinJS/Controls/Menu/_Command',[
     _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
         /// <field>
         /// <summary locid="WinJS.UI.MenuCommand">
-        /// Represents a command to be displayed in a Menu. MenuCommand objects provide button, toggle button, flyout button, 
+        /// Represents a command to be displayed in a Menu. MenuCommand objects provide button, toggle button, flyout button,
         /// or separator functionality for Menu controls.
         /// </summary>
         /// <compatibleWith platform="Windows" minVersion="8.0"/>
@@ -30,9 +30,9 @@ define('WinJS/Controls/Menu/_Command',[
         /// <icon src="ui_winjs.ui.menucommand.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.MenuCommand" data-win-options="{type:'button',label:'Button'}"></button>]]></htmlSnippet>
         /// <part name="MenuCommand" class="win-command" locid="WinJS.UI.MenuCommand_name">The MenuCommand control itself</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         MenuCommand: _Base.Namespace._lazy(function () {
 
             function _handleMenuClick(event) {
@@ -120,10 +120,10 @@ define('WinJS/Controls/Menu/_Command',[
 
             var strings = {
                 get ariaLabel() { return _Resources._getWinJSString("ui/menuCommandAriaLabel").value; },
-                get duplicateConstruction() { return _Resources._getWinJSString("ui/duplicateConstruction").value; },
-                get badClick() { return _Resources._getWinJSString("ui/badClick").value; },
-                get badHrElement() { return _Resources._getWinJSString("ui/badHrElement").value; },
-                get badButtonElement() { return _Resources._getWinJSString("ui/badButtonElement").value; }
+                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
+                get badClick() { return "Invalid argument: The onclick property for an {0} must be a function"; },
+                get badHrElement() { return "Invalid argument: For a separator, the element must be null or an hr element"; },
+                get badButtonElement() { return "Invalid argument: For a button, toggle, or flyout command, the element must be null or a button element"; }
             };
 
             return _Base.Class.define(function MenuCommand_ctor(element, options) {
@@ -281,7 +281,7 @@ define('WinJS/Controls/Menu/_Command',[
                 },
 
                 /// <field type="Object" locid="WinJS.UI.MenuCommand.flyout" helpKeyword="WinJS.UI.MenuCommand.flyout">
-                /// For flyout type MenuCommands, this property  returns the WinJS.UI.Flyout that this command invokes. When setting this property, you can set 
+                /// For flyout type MenuCommands, this property  returns the WinJS.UI.Flyout that this command invokes. When setting this property, you can set
                 /// it to the string ID of the Flyout, the DOM object that hosts the Flyout, or the Flyout object itself.
                 /// <compatibleWith platform="Windows" minVersion="8.0"/>
                 /// </field>
@@ -429,7 +429,7 @@ define('WinJS/Controls/Menu/_Command',[
                 addEventListener: function (type, listener, useCapture) {
                     /// <signature helpKeyword="WinJS.UI.MenuCommand.addEventListener">
                     /// <summary locid="WinJS.UI.MenuCommand.addEventListener">
-                    /// Registers an event handler for the specified event. 
+                    /// Registers an event handler for the specified event.
                     /// </summary>
                     /// <param name="type" type="String" locid="WinJS.UI.MenuCommand.addEventListener_p:type">The name of the event to register.</param>
                     /// <param name="listener" type="Function" locid="WinJS.UI.MenuCommand.addEventListener_p:listener">The function that handles the event.</param>
@@ -444,7 +444,7 @@ define('WinJS/Controls/Menu/_Command',[
                 removeEventListener: function (type, listener, useCapture) {
                     /// <signature helpKeyword="WinJS.UI.MenuCommand.removeEventListener">
                     /// <summary locid="WinJS.UI.MenuCommand.removeEventListener">
-                    /// Removes the specified event handler that the addEventListener method registered. 
+                    /// Removes the specified event handler that the addEventListener method registered.
                     /// </summary>
                     /// <param name="type" type="String" locid="WinJS.UI.MenuCommand.removeEventListener_p:type">The name of the event to remove.</param>
                     /// <param name="listener" type="Function" locid="WinJS.UI.MenuCommand.removeEventListener_p:listener">The event handler function to remove.</param>
@@ -505,13 +505,14 @@ define('WinJS/Controls/Menu',[
     '../Core/_Resources',
     '../Core/_WriteProfilerMark',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_Hoverable',
     './AppBar/_Constants',
     './Flyout',
     './Flyout/_Overlay',
     './Menu/_Command',
     'require-style!less/desktop/controls',
     'require-style!less/phone/controls'
-    ], function menuInit(_Global,_Base, _BaseUtils, _ErrorFromName, _Resources, _WriteProfilerMark, _ElementUtilities, _Constants, Flyout, _Overlay, _Command) {
+    ], function menuInit(_Global,_Base, _BaseUtils, _ErrorFromName, _Resources, _WriteProfilerMark, _ElementUtilities, _Hoverable, _Constants, Flyout, _Overlay, _Command) {
     "use strict";
 
     _Base.Namespace.define("WinJS.UI", {
@@ -530,16 +531,16 @@ define('WinJS/Controls/Menu',[
         /// <event name="beforehide" locid="WinJS.UI.Menu_e:beforehide">Raised just before hiding a menu.</event>
         /// <event name="afterhide" locid="WinJS.UI.Menu_e:afterhide">Raised immediately after a menu is fully hidden.</event>
         /// <part name="menu" class="win-menu" locid="WinJS.UI.Menu_part:menu">The Menu control itself</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         Menu: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
             var strings = {
                 get ariaLabel() { return _Resources._getWinJSString("ui/menuAriaLabel").value; },
-                get requiresCommands() { return _Resources._getWinJSString("ui/requiresCommands").value; },
-                get nullCommand() { return _Resources._getWinJSString("ui/nullCommand").value; },
+                get requiresCommands() { return "Invalid argument: commands must not be empty"; },
+                get nullCommand() { return "Invalid argument: command must not be null"; },
             };
 
             var Menu = _Base.Class.derive(Flyout.Flyout, function Menu_ctor(element, options) {
@@ -876,11 +877,3 @@ define('WinJS/Controls/Menu',[
 
 });
 
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

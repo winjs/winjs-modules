@@ -135,8 +135,9 @@ define('WinJS/Utilities/_ElementUtilities',[
     '../Core/_Global',
     '../Core/_Base',
     '../Core/_BaseUtils',
+    '../Promise',
     '../Scheduler'
-], function elementUtilities(exports, _Global, _Base, _BaseUtils, Scheduler) {
+], function elementUtilities(exports, _Global, _Base, _BaseUtils, Promise, Scheduler) {
     "use strict";
 
     // not supported in WebWorker
@@ -144,7 +145,7 @@ define('WinJS/Utilities/_ElementUtilities',[
         return;
     }
 
-    var zoomToDuration = 167;
+    var _zoomToDuration = 167;
 
     function removeEmpties(arr) {
         var len = arr.length;
@@ -161,8 +162,7 @@ define('WinJS/Utilities/_ElementUtilities',[
         var name = e.className || "";
         if (typeof (name) === "string") {
             return name;
-        }
-        else {
+        } else {
             return name.baseVal || "";
         }
     }
@@ -173,8 +173,7 @@ define('WinJS/Utilities/_ElementUtilities',[
         var name = e.className || "";
         if (typeof (name) === "string") {
             e.className = value;
-        }
-        else {
+        } else {
             e.className.baseVal = value;
         }
         return e;
@@ -227,8 +226,7 @@ define('WinJS/Utilities/_ElementUtilities',[
                 if (namesToAdd.length > 0) {
                     toAdd = namesToAdd.join(" ");
                 }
-            }
-            else {
+            } else {
                 var saw = false;
                 for (var i = 0; i < l; i++) {
                     if (names[i] === name) {
@@ -242,8 +240,7 @@ define('WinJS/Utilities/_ElementUtilities',[
             if (toAdd) {
                 if (l > 0 && names[0].length > 0) {
                     setClassName(e, className + " " + toAdd);
-                }
-                else {
+                } else {
                     setClassName(e, toAdd);
                 }
             }
@@ -286,8 +283,7 @@ define('WinJS/Utilities/_ElementUtilities',[
             if (name.indexOf(" ") >= 0) {
                 namesToRemove = name.split(" ");
                 namesToRemoveLen = removeEmpties(namesToRemove);
-            }
-            else {
+            } else {
                 // early out for the case where you ask to remove a single
                 // name and that name isn't found.
                 //
@@ -346,20 +342,16 @@ define('WinJS/Utilities/_ElementUtilities',[
             if (!found) {
                 if (l > 0 && names[0].length > 0) {
                     setClassName(e, className + " " + name);
-                }
-                else {
+                } else {
                     setClassName(e, className + name);
                 }
-            }
-            else {
+            } else {
                 setClassName(e, names.reduce(function (r, e) {
                     if (e === name) {
                         return r;
-                    }
-                    else if (r && r.length > 0) {
+                    } else if (r && r.length > 0) {
                         return r + " " + e;
-                    }
-                    else {
+                    } else {
                         return e;
                     }
                 }, ""));
@@ -545,7 +537,7 @@ define('WinJS/Utilities/_ElementUtilities',[
 
     // Custom pointer events
     //
-    
+
     // Sets the properties in *overrideProperties* on the object. Delegates all other
     // property accesses to *eventObject*.
     //
@@ -561,7 +553,7 @@ define('WinJS/Utilities/_ElementUtilities',[
             });
         });
     };
-    
+
     // Define PointerEventProxy properties which should be delegated to the original eventObject.
     [
         "altKey", "AT_TARGET", "bubbles", "BUBBLING_PHASE", "button", "buttons",
@@ -573,7 +565,7 @@ define('WinJS/Utilities/_ElementUtilities',[
         "pointerId", "pointerType", "pressure", "preventDefault", "relatedTarget",
         "rotation", "screenX", "screenY", "shiftKey", "srcElement", "stopImmediatePropagation",
         "stopPropagation", "target", "tiltX", "tiltY", "timeStamp", "toElement", "type",
-        "view", "which", "width", "x", "y", "_normalizedType"
+        "view", "which", "width", "x", "y", "_normalizedType", "_fakedBySemanticZoom"
     ].forEach(function (propertyName) {
         Object.defineProperty(PointerEventProxy.prototype, propertyName, {
             get: function () {
@@ -587,7 +579,11 @@ define('WinJS/Utilities/_ElementUtilities',[
     function touchEventTranslator(callback, eventObject) {
         var changedTouches = eventObject.changedTouches,
             retVal = null;
-        
+
+        if (!changedTouches) {
+            return retVal;
+        }
+
         for (var i = 0, len = changedTouches.length; i < len; i++) {
             var touchObject = changedTouches[i];
             var pointerEventObject = new PointerEventProxy(eventObject, {
@@ -603,7 +599,8 @@ define('WinJS/Utilities/_ElementUtilities',[
                 force: touchObject.force,
                 _currentTouch: touchObject
             });
-            retVal = retVal || callback(pointerEventObject);
+            var newRetVal = callback(pointerEventObject);
+            retVal = retVal || newRetVal;
         }
         return retVal;
     }
@@ -635,7 +632,7 @@ define('WinJS/Utilities/_ElementUtilities',[
             mouse: "mousemove"
         },
         pointerenter: {
-            touch: null,
+            touch: "touchenter",
             mspointer: "MSPointerEnter",
             mouse: "mouseenter"
         },
@@ -645,7 +642,7 @@ define('WinJS/Utilities/_ElementUtilities',[
             mouse: "mouseover"
         },
         pointerout: {
-            touch: null,
+            touch: "touchleave",
             mspointer: "MSPointerOut",
             mouse: "mouseout"
         },
@@ -875,6 +872,83 @@ define('WinJS/Utilities/_ElementUtilities',[
         }
     );
 
+
+    var GlobalListener = new (_Base.Class.define(
+        function GlobalListener_ctor() {
+            this.capture = {};
+            this.bubble = {};
+        },
+        {
+            addEventListener: function GlobalListener_addEventListener(element, name, listener, capture) {
+                name = name.toLowerCase();
+                var handlers = this._getHandlers(capture);
+                var handler = handlers[name];
+
+                if (!handler) {
+                    handler = this._getListener(name, capture);
+                    handler.refCount = 0;
+                    handlers[name] = handler;
+
+                    exports._addEventListener(_Global, name, handler, capture);
+                }
+
+                handler.refCount++;
+                element.addEventListener(this._getEventName(name, capture), listener);
+                addClass(element, this._getClassName(name, capture));
+            },
+            removeEventListener: function GlobalListener_removeEventListener(element, name, listener, capture) {
+                name = name.toLowerCase();
+                var handlers = this._getHandlers(capture);
+                var handler = handlers[name];
+
+                if (handler) {
+                    handler.refCount--;
+                    if (handler.refCount === 0) {
+                        exports._removeEventListener(_Global, name, handler, capture);
+                    }
+                    delete handlers[name];
+                }
+
+                removeClass(element, this._getClassName(name, capture));
+                element.removeEventListener(this._getEventName(name, capture), listener);
+            },
+
+            _getHandlers: function GlobalListener_getHandlers(capture) {
+                if (capture) {
+                    return this.capture;
+                } else {
+                    return this.bubble;
+                }
+            },
+
+            _getClassName: function GlobalListener_getClassName(name, capture) {
+                var captureSuffix = capture ? 'capture' : 'bubble';
+                return 'win-global-event-' + name + captureSuffix;
+            },
+
+            _getEventName: function GlobalListener_getEventName(name, capture) {
+                var captureSuffix = capture ? 'capture' : 'bubble';
+                return 'WinJSGlobalEvent-' + name + captureSuffix;
+            },
+
+            _getListener: function GlobalListener_getListener(name, capture) {
+                var listener = function GlobalListener_generatedListener(ev) {
+
+                    var targets = _Global.document.querySelectorAll('.' + this._getClassName(name, capture));
+                    var length = targets.length;
+                    for (var i = 0; i < length; i++) {
+                        var event = _Global.document.createEvent("Event");
+                        event.initEvent(this._getEventName(name, capture), false, true);
+                        event.detail = { originalEvent: ev };
+                        targets[i].dispatchEvent(event);
+                    }
+                };
+
+                return listener.bind(this);
+            }
+        }
+    ))();
+
     var determinedRTLEnvironment = false,
         usingWebkitScrollCoordinates = false,
         usingFirefoxScrollCoordinates = false;
@@ -972,22 +1046,6 @@ define('WinJS/Utilities/_ElementUtilities',[
     var supportsZoomTo = !!_Global.HTMLElement.prototype.msZoomTo;
     var supportsTouchDetection = !!(_Global.MSPointerEvent || _Global.TouchEvent);
 
-    // Snap point feature detection is special - On most platforms it is enough to check if 'scroll-snap-type'
-    // is a valid style, however, IE10 and WP IE claim that they are valid styles but don't support them.
-    var supportsSnapPoints = false;
-    var snapTypeStyle = _BaseUtils._browserStyleEquivalents["scroll-snap-type"];
-    if (snapTypeStyle) {
-        if (snapTypeStyle.cssName.indexOf("-ms-") === 0) {
-            // We are on a Microsoft platform, if zoomTo isn't supported then we know we are on IE10 and WP IE.
-            if (supportsZoomTo) {
-                supportsSnapPoints = true;
-            }
-        } else {
-            // We are on a non-Microsoft platform, we assume that if the style is valid, it is supported.
-            supportsSnapPoints = true;
-        }
-    }
-
     var uniqueElementIDCounter = 0;
 
     function uniqueID(e) {
@@ -1031,12 +1089,6 @@ define('WinJS/Utilities/_ElementUtilities',[
     _Base.Namespace._moduleDefine(exports, "WinJS.Utilities", {
         _dataKey: _dataKey,
 
-        _supportsSnapPoints: {
-            get: function () {
-                return supportsSnapPoints;
-            }
-        },
-
         _supportsTouchDetection: {
             get: function () {
                 return supportsTouchDetection;
@@ -1072,6 +1124,65 @@ define('WinJS/Utilities/_ElementUtilities',[
                 addPointer: doNothing,
                 stop: doNothing
             };
+        },
+
+        _supportsTouchActionCrossSlide: {
+            get: function () {
+                if (this._supportsTouchActionCrossSlideValue === undefined) {
+                    this._supportsTouchActionCrossSlideValue = false;
+                    var touchActionStyle = _BaseUtils._browserStyleEquivalents["touch-action"];
+                    if (touchActionStyle) {
+                        var div = _Global.document.createElement("div");
+                        div.style.touchAction = "cross-slide-x";
+                        _Global.document.body.appendChild(div);
+                        this._supportsTouchActionCrossSlideValue = _Global.getComputedStyle(div).touchAction === "cross-slide-x";
+                        _Global.document.body.removeChild(div);
+                    }
+                }
+                return this._supportsTouchActionCrossSlideValue;
+            }
+        },
+
+        _detectSnapPointsSupport: function () {
+            // Snap point feature detection is special - On most platforms it is enough to check if 'msZoomTo'
+            // is available, however, Windows Phone IEs claim that they support it but don't really do so we
+            // test by creating a scroller with mandatory snap points and test against ManipulationStateChanged events.
+            if (!this._snapPointsDetectionPromise) {
+                if (!_Global.HTMLElement.prototype.msZoomTo) {
+                    this._snapPointsDetectionPromise = Promise.wrap(false);
+                } else {
+                    this._snapPointsDetectionPromise = new Promise(function (c) {
+                        var scroller = _Global.document.createElement("div");
+                        scroller.style.width = "100px";
+                        scroller.style.overflowX = "scroll";
+                        scroller.style.msScrollSnapType = "mandatory";
+                        scroller.style.position = "absolute";
+                        scroller.style.opacity = "0";
+                        scroller.style.visibility = "hidden";
+                        var handler = function (e) {
+                            scroller.removeEventListener("MSManipulationStateChanged", handler);
+                            _Global.clearTimeout(timeoutHandle);
+                            _Global.document.body.removeChild(scroller);
+                            c(true);
+                        };
+                        scroller.addEventListener("MSManipulationStateChanged", handler);
+
+                        var content = _Global.document.createElement("div");
+                        content.style.width = content.style.height = "200px";
+                        scroller.appendChild(content);
+
+                        _Global.document.body.appendChild(scroller);
+                        scroller.msZoomTo({ contentX: 90 });
+
+                        var timeoutHandle = _Global.setTimeout(function () {
+                            scroller.removeEventListener("MSManipulationStateChanged", handler);
+                            _Global.document.body.removeChild(scroller);
+                            c(false);
+                        }, 50);
+                    });
+                }
+            }
+            return this._snapPointsDetectionPromise;
         },
 
         _MSGestureEvent: _MSGestureEvent,
@@ -1151,7 +1262,7 @@ define('WinJS/Utilities/_ElementUtilities',[
         _initPointerEvent: function (event) {
             this._initEventImpl.apply(this, ["Pointer", event].concat(Array.prototype.slice.call(arguments, 1)));
         },
-        
+
         _PointerEventProxy: PointerEventProxy,
 
         _bubbleEvent: bubbleEvent,
@@ -1169,6 +1280,8 @@ define('WinJS/Utilities/_ElementUtilities',[
         },
 
         _MSPointerEvent: _MSPointerEvent,
+
+        _zoomToDuration: _zoomToDuration,
 
         _zoomTo: function _zoomTo(element, args) {
             if (element.msZoomTo) {
@@ -1206,14 +1319,14 @@ define('WinJS/Utilities/_ElementUtilities',[
 
                     var thisZoomToId = element._zoomToId;
                     var start = _BaseUtils._now();
-                    var xFactor = (element._zoomToDestX - initialPos.scrollLeft) / zoomToDuration;
-                    var yFactor = (element._zoomToDestY - initialPos.scrollTop) / zoomToDuration;
+                    var xFactor = (element._zoomToDestX - initialPos.scrollLeft) / _zoomToDuration;
+                    var yFactor = (element._zoomToDestY - initialPos.scrollTop) / _zoomToDuration;
 
                     var update = function () {
                         var t = _BaseUtils._now() - start;
                         if (element._zoomToId !== thisZoomToId) {
                             return;
-                        } else if (t > zoomToDuration) {
+                        } else if (t > _zoomToDuration) {
                             setAdjustedScrollPosition(element, element._zoomToDestX, element._zoomToDestY);
                             element._zoomToDestX = null;
                             element._zoomToDestY = null;
@@ -1273,15 +1386,15 @@ define('WinJS/Utilities/_ElementUtilities',[
             }
         },
 
+        _globalListener: GlobalListener,
+
         // Appends a hidden child to the given element that will listen for being added
         // to the DOM. When the hidden element is added to the DOM, it will dispatch a
         // "WinJSNodeInserted" event on the provided element.
         _addInsertedNotifier: function (element) {
             var hiddenElement = _Global.document.createElement("div");
-            hiddenElement.style["animation-name"] = "WinJS-node-inserted";
-            hiddenElement.style["animation-duration"] = "0.01s";
-            hiddenElement.style["-webkit-animation-name"] = "WinJS-node-inserted";
-            hiddenElement.style["-webkit-animation-duration"] = "0.01s";
+            hiddenElement.style[_BaseUtils._browserStyleEquivalents["animation-name"].scriptName] = "WinJS-node-inserted";
+            hiddenElement.style[_BaseUtils._browserStyleEquivalents["animation-duration"].scriptName] = "0.01s";
             hiddenElement.style["position"] = "absolute";
             element.appendChild(hiddenElement);
 
@@ -1303,14 +1416,17 @@ define('WinJS/Utilities/_ElementUtilities',[
             var styleObject = element.style;
             if (typeof flexParams.grow !== "undefined") {
                 styleObject.msFlexPositive = flexParams.grow;
+                styleObject.webkitFlexGrow = flexParams.grow;
                 styleObject.flexGrow = flexParams.grow;
             }
             if (typeof flexParams.shrink !== "undefined") {
                 styleObject.msFlexNegative = flexParams.shrink;
+                styleObject.webkitFlexShrink = flexParams.shrink;
                 styleObject.flexShrink = flexParams.shrink;
             }
             if (typeof flexParams.basis !== "undefined") {
                 styleObject.msFlexPreferredSize = flexParams.basis;
+                styleObject.webkitFlexBasis = flexParams.basis;
                 styleObject.flexBasis = flexParams.basis;
             }
         },
@@ -2142,7 +2258,239 @@ define('WinJS/Utilities/_ElementUtilities',[
             }
 
             return false;
+        },
+
+        //UI Utilities
+        _deprecated: function (message) {
+            _Global.console && _Global.console.warn(message);
+        },
+
+        // Take a renderer which may be a function (signature: (data) => element) or a WinJS.Binding.Template
+        //  and return a function with a unified synchronous contract which is:
+        //
+        //  (data, container) => element
+        //
+        // Where:
+        //
+        //  1) if you pass container the content will be rendered into the container and the
+        //     container will be returned.
+        //
+        //  2) if you don't pass a container the content will be rendered and returned.
+        //
+        _syncRenderer: function (renderer, tagName) {
+            tagName = tagName || "div";
+            if (typeof renderer === "function") {
+                return function (data, container) {
+                    if (container) {
+                        container.appendChild(renderer(data));
+                        return container;
+                    } else {
+                        return renderer(data);
+                    }
+                };
+            }
+
+            var template;
+            if (typeof renderer.render === "function") {
+                template = renderer;
+            } else if (renderer.winControl && typeof renderer.winControl.render === "function") {
+                template = renderer.winControl;
+            }
+
+            return function (data, container) {
+                var host = container || _Global.document.createElement(tagName);
+                template.render(data, host);
+                if (container) {
+                    return container;
+                } else {
+                    // The expectation is that the creation of the DOM elements happens synchronously
+                    //  and as such we steal the first child and make it the root element.
+                    //
+                    var element = host.firstElementChild;
+
+                    // Because we have changed the "root" we may need to move the dispose method
+                    //  created by the template to the child and do a little switcheroo on dispose.
+                    //
+                    if (element && host.dispose) {
+                        var prev = element.dispose;
+                        element.dispose = function () {
+                            element.dispose = prev;
+                            host.appendChild(element);
+                            host.dispose();
+                        };
+                    }
+                    return element;
+                }
+            };
+        },
+
+
+        _getLowestTabIndexInList: function Utilities_getLowestTabIndexInList(elements) {
+            // Returns the lowest positive tabIndex in a list of elements.
+            // Returns 0 if there are no positive tabIndices.
+            var lowestTabIndex = 0;
+            var elmTabIndex;
+            for (var i = 0; i < elements.length; i++) {
+                elmTabIndex = parseInt(elements[i].getAttribute("tabIndex"), 10);
+                if ((0 < elmTabIndex)
+                 && ((elmTabIndex < lowestTabIndex) || !lowestTabIndex)) {
+                    lowestTabIndex = elmTabIndex;
+                }
+            }
+
+            return lowestTabIndex;
+        },
+
+        _getHighestTabIndexInList: function Utilities_getHighestTabIndexInList(elements) {
+            // Returns 0 if any element is explicitly set to 0. (0 is the highest tabIndex)
+            // Returns the highest tabIndex in the list of elements.
+            // Returns 0 if there are no positive tabIndices.
+            var highestTabIndex = 0;
+            var elmTabIndex;
+            for (var i = 0; i < elements.length; i++) {
+                elmTabIndex = parseInt(elements[i].getAttribute("tabIndex"), 10);
+                if (elmTabIndex === 0) {
+                    return elmTabIndex;
+                } else if (highestTabIndex < elmTabIndex) {
+                    highestTabIndex = elmTabIndex;
+                }
+            }
+
+            return highestTabIndex;
+        },
+
+        _trySetActive: function Utilities_trySetActive(elem, scroller) {
+            return this._tryFocus(elem, true, scroller);
+        },
+
+        _tryFocus: function Utilities_tryFocus(elem, useSetActive, scroller) {
+            var previousActiveElement = _Global.document.activeElement;
+
+            if (elem === previousActiveElement) {
+                return true;
+            }
+
+            var simpleLogicForValidTabStop = (exports.getTabIndex(elem) >= 0);
+            if (!simpleLogicForValidTabStop) {
+                return false;
+            }
+
+            if (useSetActive) {
+                exports._setActive(elem, scroller);
+            } else {
+                elem.focus();
+            }
+
+            if (previousActiveElement !== _Global.document.activeElement) {
+                return true;
+            }
+            return false;
+        },
+
+        _setActiveFirstFocusableElement: function Utilities_setActiveFirstFocusableElement(rootEl, scroller) {
+            return this._focusFirstFocusableElement(rootEl, true, scroller);
+        },
+
+        _focusFirstFocusableElement: function Utilities_focusFirstFocusableElement(rootEl, useSetActive, scroller) {
+            var _elms = rootEl.getElementsByTagName("*");
+
+            // Get the tabIndex set to the firstDiv (which is the lowest)
+            var _lowestTabIndex = this._getLowestTabIndexInList(_elms);
+            var _nextLowestTabIndex = 0;
+
+            // If there are positive tabIndices, set focus to the element with the lowest tabIndex.
+            // Keep trying with the next lowest tabIndex until all tabIndices have been exhausted.
+            // Otherwise set focus to the first focusable element in DOM order.
+            var i;
+            while (_lowestTabIndex) {
+                for (i = 0; i < _elms.length; i++) {
+                    if (_elms[i].tabIndex === _lowestTabIndex) {
+                        if (this._tryFocus(_elms[i], useSetActive, scroller)) {
+                            return true;
+                        }
+                    } else if ((_lowestTabIndex < _elms[i].tabIndex)
+                            && ((_elms[i].tabIndex < _nextLowestTabIndex) || (_nextLowestTabIndex === 0))) {
+                        // Here if _lowestTabIndex < _elms[i].tabIndex < _nextLowestTabIndex
+                        _nextLowestTabIndex = _elms[i].tabIndex;
+                    }
+                }
+
+                // We weren't able to set focus to anything at that tabIndex
+                // If we found a higher valid tabIndex, try that now
+                _lowestTabIndex = _nextLowestTabIndex;
+                _nextLowestTabIndex = 0;
+            }
+
+            // Wasn't able to set focus to anything with a positive tabIndex, try everything now.
+            // This is where things with tabIndex of 0 will be tried.
+            for (i = 0; i < _elms.length; i++) {
+                if (this._tryFocus(_elms[i], useSetActive, scroller)) {
+                    return true;
+                }
+            }
+
+            return false;
+        },
+
+        _setActiveLastFocusableElement: function Utilities_setActiveLastFocusableElement(rootEl, scroller) {
+            return this._focusLastFocusableElement(rootEl, true, scroller);
+        },
+
+        _focusLastFocusableElement: function Utilities_focusLastFocusableElement(rootEl, useSetActive, scroller) {
+            var _elms = rootEl.getElementsByTagName("*");
+            // Get the tabIndex set to the finalDiv (which is the highest)
+            var _highestTabIndex = this._getHighestTabIndexInList(_elms);
+            var _nextHighestTabIndex = 0;
+
+            // Try all tabIndex 0 first. After this conditional the _highestTabIndex
+            // should be equal to the highest positive tabIndex.
+            var i;
+            if (_highestTabIndex === 0) {
+                for (i = _elms.length - 1; i >= 0; i--) {
+                    if (_elms[i].tabIndex === _highestTabIndex) {
+                        if (this._tryFocus(_elms[i], useSetActive, scroller)) {
+                            return true;
+                        }
+                    } else if (_nextHighestTabIndex < _elms[i].tabIndex) {
+                        _nextHighestTabIndex = _elms[i].tabIndex;
+                    }
+                }
+
+                _highestTabIndex = _nextHighestTabIndex;
+                _nextHighestTabIndex = 0;
+            }
+
+            // If there are positive tabIndices, set focus to the element with the highest tabIndex.
+            // Keep trying with the next highest tabIndex until all tabIndices have been exhausted.
+            // Otherwise set focus to the last focusable element in DOM order.
+            while (_highestTabIndex) {
+                for (i = _elms.length - 1; i >= 0; i--) {
+                    if (_elms[i].tabIndex === _highestTabIndex) {
+                        if (this._tryFocus(_elms[i], useSetActive, scroller)) {
+                            return true;
+                        }
+                    } else if ((_nextHighestTabIndex < _elms[i].tabIndex) && (_elms[i].tabIndex < _highestTabIndex)) {
+                        // Here if _nextHighestTabIndex < _elms[i].tabIndex < _highestTabIndex
+                        _nextHighestTabIndex = _elms[i].tabIndex;
+                    }
+                }
+
+                // We weren't able to set focus to anything at that tabIndex
+                // If we found a lower valid tabIndex, try that now
+                _highestTabIndex = _nextHighestTabIndex;
+                _nextHighestTabIndex = 0;
+            }
+
+            // Wasn't able to set focus to anything with a tabIndex, try everything now
+            for (i = _elms.length - 2; i > 0; i--) {
+                if (this._tryFocus(_elms[i], useSetActive, scroller)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
+
     });
 });
 
@@ -2197,7 +2545,7 @@ define('WinJS/Utilities/_Dispose',[
         if (!element) {
             return;
         }
-        
+
         _WriteProfilerMark("WinJS.Utilities.disposeSubTree,StartTM");
         var query = element.querySelectorAll(".win-disposable");
 
@@ -2242,7 +2590,7 @@ define('WinJS/Utilities/_Dispose',[
             disposeSubTree(element);
         }
     }
-    
+
     _Base.Namespace._moduleDefine(exports, "WinJS.Utilities", {
 
         markDisposable: markDisposable,
@@ -2692,6 +3040,34 @@ define('WinJS/Utilities/_ElementListUtilities',[
 });
 
 // Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+define('WinJS/Utilities/_Hoverable',[
+    'exports',
+    '../Core/_Global'
+], function hoverable(exports, _Global) {
+    "use strict";
+
+    // not supported in WebWorker
+    if (!_Global.document) {
+        return;
+    }
+
+    _Global.document.documentElement.classList.add("win-hoverable");
+    exports.isHoverable = true;
+
+    if (!_Global.MSPointerEvent) {
+        var touchStartHandler = function () {
+            _Global.document.removeEventListener("touchstart", touchStartHandler);
+            // Remove win-hoverable CSS class fromstartt . <html> to avoid :hover styles in webkit when there is
+            // touch support.
+            _Global.document.documentElement.classList.remove("win-hoverable");
+            exports.isHoverable = false;
+        };
+
+        _Global.document.addEventListener("touchstart", touchStartHandler);
+    }
+});
+
+// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 define('WinJS/Utilities/_ParallelWorkQueue',[
     'exports',
     '../Core/_Base',
@@ -2713,10 +3089,10 @@ define('WinJS/Utilities/_ParallelWorkQueue',[
                 function runNext() {
                     running--;
                     // if we have fallen out of this loop, then we know we are already
-                    // async, so "post" is OK. If we are still in the loop, then the 
-                    // loop will continue to run, so we don't need to "post" or 
+                    // async, so "post" is OK. If we are still in the loop, then the
+                    // loop will continue to run, so we don't need to "post" or
                     // recurse. This avoids stack overflow in the sync case.
-                    // 
+                    //
                     if (!processing) {
                         Scheduler.schedule(run, Scheduler.Priority.normal,
                             null, "WinJS._ParallelWorkQueue.runNext");
@@ -2741,11 +3117,10 @@ define('WinJS/Utilities/_ParallelWorkQueue',[
                                 // this will only get hit if there is a queued item that
                                 // fails to return something that conforms to the Promise
                                 // contract
-                                // 
+                                //
                                 runNext();
                             }
-                        }
-                        else {
+                        } else {
                             break;
                         }
                     }
@@ -2764,8 +3139,7 @@ define('WinJS/Utilities/_ParallelWorkQueue',[
                             workItems[id] = w;
                             if (first) {
                                 workQueue.unshift(id);
-                            }
-                            else {
+                            } else {
                                 workQueue.push(id);
                             }
                             run();
@@ -2839,7 +3213,7 @@ define('WinJS/Utilities/_VersionManager',[
                     this._checkLocked();
                     this._updateCount++;
                 },
-                endUpdating: function() {
+                endUpdating: function () {
                     this._updateCount--;
                     this._checkUnlocked();
                 },
@@ -2948,13 +3322,11 @@ define('WinJS/Utilities/_ItemsManager',[
                 if (typeof v === "object" && v.element) {
                     var elementPromise = Promise.as(v.element);
                     return elementPromise.then(function (e) { return { element: e, renderComplete: Promise.as(v.renderComplete) }; });
-                }
-                else {
+                } else {
                     var elementPromise = Promise.as(v);
                     return elementPromise.then(function (e) { return { element: e, renderComplete: Promise.as() }; });
                 }
-            }
-            else {
+            } else {
                 return { element: null, renderComplete: Promise.as() };
             }
         },
@@ -2965,9 +3337,9 @@ define('WinJS/Utilities/_ItemsManager',[
     // Private statics
 
     var strings = {
-        get listDataSourceIsInvalid() { return _Resources._getWinJSString("ui/listDataSourceIsInvalid").value; },
-        get itemRendererIsInvalid() { return _Resources._getWinJSString("ui/itemRendererIsInvalid").value; },
-        get itemIsInvalid() { return _Resources._getWinJSString("ui/itemIsInvalid").value; },
+        get listDataSourceIsInvalid() { return "Invalid argument: dataSource must be an object."; },
+        get itemRendererIsInvalid() { return "Invalid argument: itemRenderer must be a function."; },
+        get itemIsInvalid() { return "Invalid argument: item must be a DOM element that was returned by the Items Manager, and has not been replaced or released."; },
     };
 
     var imageLoader;
@@ -3243,8 +3615,7 @@ define('WinJS/Utilities/_ItemsManager',[
                         if (possiblePlaceholder) {
                             if (!that.isPlaceholder(possiblePlaceholder)) {
                                 c(possiblePlaceholder);
-                            }
-                            else {
+                            } else {
                                 var placeholderID = uniqueID(possiblePlaceholder);
                                 var callbacks = that.$pipeline_callbacksMap[placeholderID];
                                 if (!callbacks) {
@@ -3253,8 +3624,7 @@ define('WinJS/Utilities/_ItemsManager',[
                                     callbacks.push(c);
                                 }
                             }
-                        }
-                        else {
+                        } else {
                             c(possiblePlaceholder);
                         }
                     });
@@ -3690,7 +4060,7 @@ define('WinJS/Utilities/_ItemsManager',[
                 },
 
                 _moved: function (itemPromise, previousHandle, nextHandle) {
-                    // no check for haveHandle, as we get move notification for items we 
+                    // no check for haveHandle, as we get move notification for items we
                     // are "next" to, so we handle the "null element" cases below
                     //
                     var element = this._elementFromHandle(itemPromise.handle);
@@ -3854,688 +4224,6 @@ define('WinJS/Utilities/_ItemsManager',[
 
 
 // Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-define('WinJS/Utilities/_KeyboardBehavior',[
-    'exports',
-    '../Core/_Global',
-    '../Core/_Base',
-    './_Control',
-    './_ElementUtilities'
-    ], function KeyboardBehaviorInit(exports, _Global, _Base, _Control, _ElementUtilities) {
-    "use strict";
-
-    // not supported in WebWorker
-    if (!_Global.document) {
-        return;
-    }
-
-    var _keyboardSeenLast = false;
-
-    _Global.addEventListener("pointerdown", function () {
-        if (_keyboardSeenLast) {
-            _keyboardSeenLast = false;
-        }
-    }, true);
-
-    _Global.addEventListener("keydown", function () {
-        if (!_keyboardSeenLast) {
-            _keyboardSeenLast = true;
-        }
-    }, true);
-
-    _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
-        _keyboardSeenLast : {
-            get: function _keyboardSeenLast_get() {
-                return _keyboardSeenLast;
-            },
-            set: function _keyboardSeenLast_set(value) {
-                _keyboardSeenLast = value;
-            }
-        },
-        _WinKeyboard: function (element) {
-            // Win Keyboard behavior is a solution that would be similar to -ms-keyboard-focus.
-            // It monitors the last input (keyboard/mouse) and adds/removes a win-keyboard class
-            // so that you can style .foo.win-keyboard:focus vs .foo:focus to add a keyboard rect
-            // on an item only when the last input method was keyboard.
-            // Reminder: Touch edgy does not count as an input method.
-            element.addEventListener("pointerdown", function (ev) {
-                // In case pointer down came on the active element.
-                _ElementUtilities.removeClass(ev.target, "win-keyboard");
-            }, true);
-            element.addEventListener("keydown", function (ev) {
-                _ElementUtilities.addClass(ev.target, "win-keyboard");
-            }, true);
-            _ElementUtilities._addEventListener(element, "focusin", function (ev) {
-                exports._keyboardSeenLast && _ElementUtilities.addClass(ev.target, "win-keyboard");
-            }, false);
-            _ElementUtilities._addEventListener(element, "focusout", function (ev) {
-                _ElementUtilities.removeClass(ev.target, "win-keyboard");
-            }, false);
-        },
-        _KeyboardBehavior: _Base.Namespace._lazy(function () {
-            var Key = _ElementUtilities.Key;
-
-            var _KeyboardBehavior = _Base.Class.define(function KeyboardBehavior_ctor(element, options) {
-                // KeyboardBehavior allows you to easily convert a bunch of tabable elements into a single tab stop with 
-                // navigation replaced by keyboard arrow (Up/Down/Left/Right) + Home + End + Custom keys.
-                //
-                // Example use cases:
-                //
-                // 1 Dimensional list: FixedDirection = height and FixedSize = 1;
-                // [1] [ 2 ] [  3  ] [4] [  5  ]...
-                //
-                // 2 Dimensional list: FixedDirection = height and FixedSize = 2;
-                // [1] [3] [5] [7] ...
-                // [2] [4] [6] [8]
-                //
-                // 1 Dimensional list: FixedDirection = width and FixedSize = 1;
-                // [ 1 ]
-                // -   -
-                // |   |
-                // | 2 |
-                // |   |
-                // -   -
-                // [ 3 ]
-                // [ 4 ]
-                //  ...
-                //
-                // 2 Dimensional list: FixedDirection = width and FixedSize = 2;
-                // [1][2]
-                // [3][4]
-                // [5][6]
-                // ...
-                //
-                // Currently it is a "behavior" instead of a "control" so it can be attached to the same element as a 
-                // winControl. The main scenario for this would be to attach it to the same element as a repeater.
-                //
-                // It also blocks "Portaling" where you go off the end of one column and wrap around to the other 
-                // column. It also blocks "Carousel" where you go from the end of the list to the beginning.
-                //
-                // Keyboarding behavior supports nesting. It supports your tab stops having sub tab stops. If you want
-                // an interactive element within the tab stop you need to use the win-interactive classname or during the
-                // keydown event stop propogation so that the event is skipped.
-                //
-                // If you have custom keyboarding the getAdjacent API is provided. This can be used to enable keyboarding 
-                // in multisize 2d lists or custom keyboard commands. PageDown and PageUp are the most common since this 
-                // behavior does not detect scrollers.
-                //
-                // It also allows developers to show/hide keyboard focus rectangles themselves.
-                // 
-                // It has an API called currentIndex so that Tab (or Shift+Tab) or a developer imitating Tab will result in
-                // the correct item having focus.
-                //
-                // It also allows an element to be represented as 2 arrow stops (commonly used for a split button) by calling
-                // the _getFocusInto API on the child element's winControl if it exists.
-
-                element = element || _Global.document.createElement("DIV");
-                options = options || {};
-
-                element._keyboardBehavior = this;
-                this._element = element;
-
-                this._fixedDirection = _KeyboardBehavior.FixedDirection.width;
-                this._fixedSize = 1;
-                this._currentIndex = 0;
-
-                _Control.setOptions(this, options);
-
-                this._element.addEventListener('keydown', this._keyDownHandler.bind(this));
-                this._element.addEventListener('pointerdown', this._MSPointerDownHandler.bind(this));
-                this._element.addEventListener("beforeactivate", this._beforeActivateHandler.bind(this));
-            }, {
-                element: {
-                    get: function () {
-                        return this._element;
-                    }
-                },
-
-                fixedDirection: {
-                    get: function () {
-                        return this._fixedDirection;
-                    },
-                    set: function (value) {
-                        this._fixedDirection = value;
-                    }
-                },
-
-                fixedSize: {
-                    get: function () {
-                        return this._fixedSize;
-                    },
-                    set: function (value) {
-                        if (+value === value) {
-                            value = Math.max(1, value);
-                            this._fixedSize = value;
-                        }
-                    }
-                },
-
-                currentIndex: {
-                    get: function () {
-                        if (this._element.children.length > 0) {
-                            return this._currentIndex;
-                        }
-                        return -1;
-                    },
-                    set: function (value) {
-                        if (+value === value) {
-                            var length = this._element.children.length;
-                            value = Math.max(0, Math.min(length - 1, value));
-                            this._currentIndex = value;
-                        }
-                    }
-                },
-
-                getAdjacent: {
-                    get: function () {
-                        return this._getAdjacent;
-                    },
-                    set: function (value) {
-                        this._getAdjacent = value;
-                    }
-                },
-                
-                // If set, KeyboardBehavior will prevent *scroller* from scrolling when moving focus
-                scroller: {
-                    get: function () {
-                        return this._scroller;
-                    },
-                    set: function (value) {
-                        this._scroller = value;
-                    }
-                },
-
-                _keyDownHandler: function _KeyboardBehavior_keyDownHandler(ev) {
-                    if (!ev.altKey) {
-                        if (_ElementUtilities._matchesSelector(ev.target, ".win-interactive, .win-interactive *")) {
-                            return;
-                        }
-                        var blockScrolling = false;
-
-                        var newIndex = this.currentIndex;
-                        var maxIndex = this._element.children.length - 1;
-
-                        var rtl = _Global.getComputedStyle(this._element).direction === "rtl";
-                        var leftStr = rtl ? Key.rightArrow : Key.leftArrow;
-                        var rightStr = rtl ? Key.leftArrow : Key.rightArrow;
-
-                        var targetIndex = this.getAdjacent && this.getAdjacent(newIndex, ev.keyCode);
-                        if (+targetIndex === targetIndex) {
-                            blockScrolling = true;
-                            newIndex = targetIndex;
-                        } else {
-                            var modFixedSize = newIndex % this.fixedSize;
-
-                            if (ev.keyCode === leftStr) {
-                                blockScrolling = true;
-                                if (this.fixedDirection === _KeyboardBehavior.FixedDirection.width) {
-                                    if (modFixedSize !== 0) {
-                                        newIndex--;
-                                    }
-                                } else {
-                                    if (newIndex >= this.fixedSize) {
-                                        newIndex -= this.fixedSize;
-                                    }
-                                }
-                            } else if (ev.keyCode === rightStr) {
-                                blockScrolling = true;
-                                if (this.fixedDirection === _KeyboardBehavior.FixedDirection.width) {
-                                    if (modFixedSize !== this.fixedSize - 1) {
-                                        newIndex++;
-                                    }
-                                } else {
-                                    if (newIndex + this.fixedSize - modFixedSize <= maxIndex) {
-                                        newIndex += this.fixedSize;
-                                    }
-                                }
-                            } else if (ev.keyCode === Key.upArrow) {
-                                blockScrolling = true;
-                                if (this.fixedDirection === _KeyboardBehavior.FixedDirection.height) {
-                                    if (modFixedSize !== 0) {
-                                        newIndex--;
-                                    }
-                                } else {
-                                    if (newIndex >= this.fixedSize) {
-                                        newIndex -= this.fixedSize;
-                                    }
-                                }
-                            } else if (ev.keyCode === Key.downArrow) {
-                                blockScrolling = true;
-                                if (this.fixedDirection === _KeyboardBehavior.FixedDirection.height) {
-                                    if (modFixedSize !== this.fixedSize - 1) {
-                                        newIndex++;
-                                    }
-                                } else {
-                                    if (newIndex + this.fixedSize - modFixedSize <= maxIndex) {
-                                        newIndex += this.fixedSize;
-                                    }
-                                }
-                            } else if (ev.keyCode === Key.home) {
-                                blockScrolling = true;
-                                newIndex = 0;
-                            } else if (ev.keyCode === Key.end) {
-                                blockScrolling = true;
-                                newIndex = this._element.children.length - 1;
-                            } else if (ev.keyCode === Key.pageUp) {
-                                blockScrolling = true;
-                            } else if (ev.keyCode === Key.pageDown) {
-                                blockScrolling = true;
-                            }
-                        }
-
-                        newIndex = Math.max(0, Math.min(this._element.children.length - 1, newIndex));
-
-                        if (newIndex !== this.currentIndex) {
-                            this._focus(newIndex, ev.keyCode);
-
-                            // Allow KeyboardBehavior to be nested
-                            if (ev.keyCode === leftStr || ev.keyCode === rightStr || ev.keyCode === Key.upArrow || ev.keyCode === Key.downArrow) {
-                                ev.stopPropagation();
-                            }
-                        }
-
-                        if (blockScrolling) {
-                            ev.preventDefault();
-                        }
-                    }
-                },
-
-                _focus: function _KeyboardBehavior_focus(index, keyCode) {
-                    index = (+index === index) ? index : this.currentIndex;
-
-                    var elementToFocus = this._element.children[index];
-                    if (elementToFocus) {
-                        if (elementToFocus.winControl && elementToFocus.winControl._getFocusInto) {
-                            elementToFocus = elementToFocus.winControl._getFocusInto(keyCode);
-                        }
-
-                        this.currentIndex = index;
-
-                        _ElementUtilities._setActive(elementToFocus, this.scroller);
-                    }
-                },
-
-                _MSPointerDownHandler: function _KeyboardBehavior_MSPointerDownHandler(ev) {
-                    var srcElement = ev.target;
-                    if (srcElement === this.element) {
-                        return;
-                    }
-
-                    while (srcElement.parentNode !== this.element) {
-                        srcElement = srcElement.parentNode;
-                    }
-
-                    var index = -1;
-                    while (srcElement) {
-                        index++;
-                        srcElement = srcElement.previousElementSibling;
-                    }
-
-                    this.currentIndex = index;
-                },
-
-                _beforeActivateHandler: function _KeyboardBehavior_beforeActivateHandler(ev) {
-                    var allowActivate = false;
-                    if (this._element.children.length) {
-                        var currentItem = this._element.children[this.currentIndex];
-                        if (currentItem === ev.target || currentItem.contains(ev.target)) {
-                            allowActivate = true;
-                        }
-                    }
-
-                    if (!allowActivate) {
-                        ev.stopPropagation();
-                        ev.preventDefault();
-                    }
-                }
-            }, {
-                FixedDirection: {
-                    height: "height",
-                    width: "width"
-                }
-            });
-
-            return _KeyboardBehavior;
-        })
-    });
-
-});
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-define('WinJS/Utilities/_SafeHtml',[
-    'exports',
-    '../Core/_Global',
-    '../Core/_Base',
-    '../Core/_ErrorFromName',
-    '../Core/_Resources'
-    ], function safeHTMLInit(exports, _Global, _Base, _ErrorFromName, _Resources) {
-    "use strict";
-
-
-    var setInnerHTML,
-        setInnerHTMLUnsafe,
-        setOuterHTML,
-        setOuterHTMLUnsafe,
-        insertAdjacentHTML,
-        insertAdjacentHTMLUnsafe;
-
-    var strings = {
-        get nonStaticHTML() { return _Resources._getWinJSString("base/nonStaticHTML").value; },
-    };
-
-    setInnerHTML = setInnerHTMLUnsafe = function (element, text) {
-        /// <signature helpKeyword="WinJS.Utilities.setInnerHTML">
-        /// <summary locid="WinJS.Utilities.setInnerHTML">
-        /// Sets the innerHTML property of the specified element to the specified text.
-        /// </summary>
-        /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.setInnerHTML_p:element">
-        /// The element on which the innerHTML property is to be set.
-        /// </param>
-        /// <param name="text" type="String" locid="WinJS.Utilities.setInnerHTML_p:text">
-        /// The value to be set to the innerHTML property.
-        /// </param>
-        /// </signature>
-        element.innerHTML = text;
-    };
-    setOuterHTML = setOuterHTMLUnsafe = function (element, text) {
-        /// <signature helpKeyword="WinJS.Utilities.setOuterHTML">
-        /// <summary locid="WinJS.Utilities.setOuterHTML">
-        /// Sets the outerHTML property of the specified element to the specified text.
-        /// </summary>
-        /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.setOuterHTML_p:element">
-        /// The element on which the outerHTML property is to be set.
-        /// </param>
-        /// <param name="text" type="String" locid="WinJS.Utilities.setOuterHTML_p:text">
-        /// The value to be set to the outerHTML property.
-        /// </param>
-        /// </signature>
-        element.outerHTML = text;
-    };
-    insertAdjacentHTML = insertAdjacentHTMLUnsafe = function (element, position, text) {
-        /// <signature helpKeyword="WinJS.Utilities.insertAdjacentHTML">
-        /// <summary locid="WinJS.Utilities.insertAdjacentHTML">
-        /// Calls insertAdjacentHTML on the specified element.
-        /// </summary>
-        /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.insertAdjacentHTML_p:element">
-        /// The element on which insertAdjacentHTML is to be called.
-        /// </param>
-        /// <param name="position" type="String" locid="WinJS.Utilities.insertAdjacentHTML_p:position">
-        /// The position relative to the element at which to insert the HTML.
-        /// </param>
-        /// <param name="text" type="String" locid="WinJS.Utilities.insertAdjacentHTML_p:text">
-        /// The value to be provided to insertAdjacentHTML.
-        /// </param>
-        /// </signature>
-        element.insertAdjacentHTML(position, text);
-    };
-
-    var msApp = _Global.MSApp;
-    if (msApp) {
-        setInnerHTMLUnsafe = function (element, text) {
-            /// <signature helpKeyword="WinJS.Utilities.setInnerHTMLUnsafe">
-            /// <summary locid="WinJS.Utilities.setInnerHTMLUnsafe">
-            /// Sets the innerHTML property of the specified element to the specified text.
-            /// </summary>
-            /// <param name='element' type='HTMLElement' locid="WinJS.Utilities.setInnerHTMLUnsafe_p:element">
-            /// The element on which the innerHTML property is to be set.
-            /// </param>
-            /// <param name='text' type="String" locid="WinJS.Utilities.setInnerHTMLUnsafe_p:text">
-            /// The value to be set to the innerHTML property.
-            /// </param>
-            /// </signature>
-            msApp.execUnsafeLocalFunction(function () {
-                element.innerHTML = text;
-            });
-        };
-        setOuterHTMLUnsafe = function (element, text) {
-            /// <signature helpKeyword="WinJS.Utilities.setOuterHTMLUnsafe">
-            /// <summary locid="WinJS.Utilities.setOuterHTMLUnsafe">
-            /// Sets the outerHTML property of the specified element to the specified text
-            /// in the context of msWWA.execUnsafeLocalFunction.
-            /// </summary>
-            /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.setOuterHTMLUnsafe_p:element">
-            /// The element on which the outerHTML property is to be set.
-            /// </param>
-            /// <param name="text" type="String" locid="WinJS.Utilities.setOuterHTMLUnsafe_p:text">
-            /// The value to be set to the outerHTML property.
-            /// </param>
-            /// </signature>
-            msApp.execUnsafeLocalFunction(function () {
-                element.outerHTML = text;
-            });
-        };
-        insertAdjacentHTMLUnsafe = function (element, position, text) {
-            /// <signature helpKeyword="WinJS.Utilities.insertAdjacentHTMLUnsafe">
-            /// <summary locid="WinJS.Utilities.insertAdjacentHTMLUnsafe">
-            /// Calls insertAdjacentHTML on the specified element in the context
-            /// of msWWA.execUnsafeLocalFunction.
-            /// </summary>
-            /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.insertAdjacentHTMLUnsafe_p:element">
-            /// The element on which insertAdjacentHTML is to be called.
-            /// </param>
-            /// <param name="position" type="String" locid="WinJS.Utilities.insertAdjacentHTMLUnsafe_p:position">
-            /// The position relative to the element at which to insert the HTML.
-            /// </param>
-            /// <param name="text" type="String" locid="WinJS.Utilities.insertAdjacentHTMLUnsafe_p:text">
-            /// Value to be provided to insertAdjacentHTML.
-            /// </param>
-            /// </signature>
-            msApp.execUnsafeLocalFunction(function () {
-                element.insertAdjacentHTML(position, text);
-            });
-        };
-    }
-    else if (_Global.msIsStaticHTML) {
-        var check = function (str) {
-            if (!_Global.msIsStaticHTML(str)) {
-                throw new _ErrorFromName("WinJS.Utitilies.NonStaticHTML", strings.nonStaticHTML);
-            }
-        };
-        // If we ever get isStaticHTML we can attempt to recreate the behavior we have in the local
-        // compartment, in the mean-time all we can do is sanitize the input.
-        //
-        setInnerHTML = function (element, text) {
-            /// <signature helpKeyword="WinJS.Utilities.setInnerHTML">
-            /// <summary locid="WinJS.Utilities.msIsStaticHTML.setInnerHTML">
-            /// Sets the innerHTML property of a element to the specified text
-            /// if it passes a msIsStaticHTML check.
-            /// </summary>
-            /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.msIsStaticHTML.setInnerHTML_p:element">
-            /// The element on which the innerHTML property is to be set.
-            /// </param>
-            /// <param name="text" type="String" locid="WinJS.Utilities.msIsStaticHTML.setInnerHTML_p:text">
-            /// The value to be set to the innerHTML property.
-            /// </param>
-            /// </signature>
-            check(text);
-            element.innerHTML = text;
-        };
-        setOuterHTML = function (element, text) {
-            /// <signature helpKeyword="WinJS.Utilities.setOuterHTML">
-            /// <summary locid="WinJS.Utilities.msIsStaticHTML.setOuterHTML">
-            /// Sets the outerHTML property of a element to the specified text
-            /// if it passes a msIsStaticHTML check.
-            /// </summary>
-            /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.msIsStaticHTML.setOuterHTML_p:element">
-            /// The element on which the outerHTML property is to be set.
-            /// </param>
-            /// <param name="text" type="String" locid="WinJS.Utilities.msIsStaticHTML.setOuterHTML_p:text">
-            /// The value to be set to the outerHTML property.
-            /// </param>
-            /// </signature>
-            check(text);
-            element.outerHTML = text;
-        };
-        insertAdjacentHTML = function (element, position, text) {
-            /// <signature helpKeyword="WinJS.Utilities.insertAdjacentHTML">
-            /// <summary locid="WinJS.Utilities.msIsStaticHTML.insertAdjacentHTML">
-            /// Calls insertAdjacentHTML on the element if it passes
-            /// a msIsStaticHTML check.
-            /// </summary>
-            /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.msIsStaticHTML.insertAdjacentHTML_p:element">
-            /// The element on which insertAdjacentHTML is to be called.
-            /// </param>
-            /// <param name="position" type="String" locid="WinJS.Utilities.msIsStaticHTML.insertAdjacentHTML_p:position">
-            /// The position relative to the element at which to insert the HTML.
-            /// </param>
-            /// <param name="text" type="String" locid="WinJS.Utilities.msIsStaticHTML.insertAdjacentHTML_p:text">
-            /// The value to be provided to insertAdjacentHTML.
-            /// </param>
-            /// </signature>
-            check(text);
-            element.insertAdjacentHTML(position, text);
-        };
-    }
-
-    _Base.Namespace._moduleDefine(exports, "WinJS.Utilities", {
-        setInnerHTML: setInnerHTML,
-        setInnerHTMLUnsafe: setInnerHTMLUnsafe,
-        setOuterHTML: setOuterHTML,
-        setOuterHTMLUnsafe: setOuterHTMLUnsafe,
-        insertAdjacentHTML: insertAdjacentHTML,
-        insertAdjacentHTMLUnsafe: insertAdjacentHTMLUnsafe
-    });
-
-});
-
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-define('WinJS/Utilities/_Select',[
-    'exports',
-    '../Core/_Base',
-    './_SafeHtml'
-    ], function selectInit(exports, _Base, _SafeHtml) {
-    "use strict";
-
-    _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
-        _Select: _Base.Namespace._lazy(function () {
-            var encodeHtmlRegEx = /[&<>'"]/g;
-            var encodeHtmlEscapeMap = {
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                "'": "&#39;",
-                '"': "&quot;"
-            };
-            var stringDirectionRegEx = /[\u200e\u200f]/g;
-            function encodeHtml(str) {
-                return str.replace(encodeHtmlRegEx, function (m) {
-                    return encodeHtmlEscapeMap[m] || "";
-                });
-            }
-            function stripDirectionMarker(str) {
-                return str.replace(stringDirectionRegEx, "");
-            }
-            function stockGetValue(index) {
-                /*jshint validthis: true */
-                return this[index];
-            }
-            function stockGetLength() {
-                /*jshint validthis: true */
-                return this.length;
-            }
-            function fixDataSource(dataSource) {
-                if (!dataSource.getValue) {
-                    dataSource.getValue = stockGetValue;
-                }
-
-                if (!dataSource.getLength) {
-                    dataSource.getLength = stockGetLength;
-                }
-                return dataSource;
-            }
-
-            return _Base.Class.define(function _Select_ctor(element, options) {
-                // This is an implementation detail of the TimePicker and DatePicker, designed
-                // to provide a primitive "data bound" select control. This is not designed to
-                // be used outside of the TimePicker and DatePicker controls.
-                //
-
-                this._dataSource = fixDataSource(options.dataSource);
-                this._index = options.index || 0;
-
-                this._domElement = element;
-                // Mark this as a tab stop
-                this._domElement.tabIndex = 0;
-
-                if (options.disabled) {
-                    this.setDisabled(options.disabled);
-                }
-
-                var that = this;
-                this._domElement.addEventListener("change", function () {
-                    //Should be set to _index to prevent events from firing twice
-                    that._index = that._domElement.selectedIndex;
-                }, false);
-
-                //update runtime accessibility value after initialization
-                this._createSelectElement();
-            }, {
-                _index: 0,
-                _dataSource: null,
-
-                dataSource: {
-                    get: function () { return this._dataSource; },
-                    set: function (value) {
-                        this._dataSource = fixDataSource(value);
-
-                        //Update layout as data source change
-                        if (this._domElement) {
-                            this._createSelectElement();
-                        }
-                    }
-                },
-
-                setDisabled: function (disabled) {
-                    if (disabled) {
-                        this._domElement.setAttribute("disabled", "disabled");
-                    }
-                    else {
-                        this._domElement.removeAttribute("disabled");
-                    }
-                },
-
-                _createSelectElement: function () {
-                    var dataSourceLength = this._dataSource.getLength();
-                    var text = "";
-                    for (var i = 0; i < dataSourceLength; i++) {
-                        var value = "" + this._dataSource.getValue(i);
-                        var escaped = encodeHtml(value);
-                        // WinRT localization often tags the strings with reading direction. We want this
-                        // for display text (escaped), but don't want this in the value space, as it
-                        // only present for display.
-                        //
-                        var stripped = stripDirectionMarker(escaped);
-                        text += "<option value='" + stripped + "'>" + escaped + "</option>";
-                    }
-                    _SafeHtml.setInnerHTMLUnsafe(this._domElement, text);
-                    this._domElement.selectedIndex = this._index;
-                },
-
-                index: {
-                    get: function () {
-                        return Math.max(0, Math.min(this._index, this._dataSource.getLength() - 1));
-                    },
-                    set: function (value) {
-                        if (this._index !== value) {
-                            this._index = value;
-
-                            var d = this._domElement;
-                            if (d && d.selectedIndex !== value) {
-                                d.selectedIndex = value;
-                            }
-                        }
-                    }
-                },
-
-                value: {
-                    get: function () {
-                        return this._dataSource.getValue(this.index);
-                    }
-                }
-            });
-        })
-    });
-});
-
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 define('WinJS/Utilities/_TabContainer',[
     'exports',
     '../Core/_Global',
@@ -4560,7 +4248,7 @@ define('WinJS/Utilities/_TabContainer',[
 
     // tabbableElementsNodeFilter works with the TreeWalker to create a view of the DOM tree that is built up of what we want the focusable tree to look like.
     // When it runs into a tab contained area, it rejects anything except the childFocus element so that any potentially tabbable things that the TabContainer
-    // doesn't want tabbed to get ignored. 
+    // doesn't want tabbed to get ignored.
     function tabbableElementsNodeFilter(node) {
         var nodeStyle = _Global.getComputedStyle(node);
         if (nodeStyle.display === "none" || nodeStyle.visibility === "hidden") {
@@ -4751,7 +4439,7 @@ define('WinJS/Utilities/_TabContainer',[
                             element.tabIndex = -1;
                         }
                         // If there's nothing else that can be tabbed to on the page, tab should wrap around back to the tab contained area.
-                        // We'll disable the sentinel node that's directly in the path of the tab order (catcherEnd for forward tabs, and 
+                        // We'll disable the sentinel node that's directly in the path of the tab order (catcherEnd for forward tabs, and
                         // catcherBegin for shift+tabs), but leave the other sentinel node untouched so tab can wrap around back into the region.
                         that._elementTabHelper[forwardTab ? "_catcherEnd" : "_catcherBegin"].tabIndex = -1;
 
@@ -4759,7 +4447,7 @@ define('WinJS/Utilities/_TabContainer',[
                             targetElement.removeEventListener("blur", restoreTabIndicesOnBlur, false);
                             for (var i = 0; i < len; i++) {
                                 if (originalTabIndices[i] !== -1) {
-                                    // When the original tabIndex was -1, don't try restoring to -1 again. A nested TabContainer might also be in the middle of handling this same code, 
+                                    // When the original tabIndex was -1, don't try restoring to -1 again. A nested TabContainer might also be in the middle of handling this same code,
                                     // and so would have set tabIndex = -1 on this element. The nested tab container will restore the element's tabIndex properly.
                                     allTabbableElements[i].tabIndex = originalTabIndices[i];
                                 }
@@ -4851,6 +4539,684 @@ define('WinJS/Utilities/_TabContainer',[
     });
 
 });
+// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+define('WinJS/Utilities/_KeyboardBehavior',[
+    'exports',
+    '../Core/_Global',
+    '../Core/_Base',
+    './_Control',
+    './_ElementUtilities',
+    './_TabContainer'
+    ], function KeyboardBehaviorInit(exports, _Global, _Base, _Control, _ElementUtilities, _TabContainer) {
+    "use strict";
+
+    // not supported in WebWorker
+    if (!_Global.document) {
+        return;
+    }
+
+    var _keyboardSeenLast = false;
+
+    _ElementUtilities._addEventListener(_Global, "pointerdown", function () {
+        if (_keyboardSeenLast) {
+            _keyboardSeenLast = false;
+        }
+    }, true);
+
+    _Global.addEventListener("keydown", function () {
+        if (!_keyboardSeenLast) {
+            _keyboardSeenLast = true;
+        }
+    }, true);
+
+    _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
+        _keyboardSeenLast : {
+            get: function _keyboardSeenLast_get() {
+                return _keyboardSeenLast;
+            },
+            set: function _keyboardSeenLast_set(value) {
+                _keyboardSeenLast = value;
+            }
+        },
+        _WinKeyboard: function (element) {
+            // Win Keyboard behavior is a solution that would be similar to -ms-keyboard-focus.
+            // It monitors the last input (keyboard/mouse) and adds/removes a win-keyboard class
+            // so that you can style .foo.win-keyboard:focus vs .foo:focus to add a keyboard rect
+            // on an item only when the last input method was keyboard.
+            // Reminder: Touch edgy does not count as an input method.
+            _ElementUtilities._addEventListener(element, "pointerdown", function (ev) {
+                // In case pointer down came on the active element.
+                _ElementUtilities.removeClass(ev.target, "win-keyboard");
+            }, true);
+            element.addEventListener("keydown", function (ev) {
+                _ElementUtilities.addClass(ev.target, "win-keyboard");
+            }, true);
+            _ElementUtilities._addEventListener(element, "focusin", function (ev) {
+                exports._keyboardSeenLast && _ElementUtilities.addClass(ev.target, "win-keyboard");
+            }, false);
+            _ElementUtilities._addEventListener(element, "focusout", function (ev) {
+                _ElementUtilities.removeClass(ev.target, "win-keyboard");
+            }, false);
+        },
+        _KeyboardBehavior: _Base.Namespace._lazy(function () {
+            var Key = _ElementUtilities.Key;
+
+            var _KeyboardBehavior = _Base.Class.define(function KeyboardBehavior_ctor(element, options) {
+                // KeyboardBehavior allows you to easily convert a bunch of tabable elements into a single tab stop with
+                // navigation replaced by keyboard arrow (Up/Down/Left/Right) + Home + End + Custom keys.
+                //
+                // Example use cases:
+                //
+                // 1 Dimensional list: FixedDirection = height and FixedSize = 1;
+                // [1] [ 2 ] [  3  ] [4] [  5  ]...
+                //
+                // 2 Dimensional list: FixedDirection = height and FixedSize = 2;
+                // [1] [3] [5] [7] ...
+                // [2] [4] [6] [8]
+                //
+                // 1 Dimensional list: FixedDirection = width and FixedSize = 1;
+                // [ 1 ]
+                // -   -
+                // |   |
+                // | 2 |
+                // |   |
+                // -   -
+                // [ 3 ]
+                // [ 4 ]
+                //  ...
+                //
+                // 2 Dimensional list: FixedDirection = width and FixedSize = 2;
+                // [1][2]
+                // [3][4]
+                // [5][6]
+                // ...
+                //
+                // Currently it is a "behavior" instead of a "control" so it can be attached to the same element as a
+                // winControl. The main scenario for this would be to attach it to the same element as a repeater.
+                //
+                // It also blocks "Portaling" where you go off the end of one column and wrap around to the other
+                // column. It also blocks "Carousel" where you go from the end of the list to the beginning.
+                //
+                // Keyboarding behavior supports nesting. It supports your tab stops having sub tab stops. If you want
+                // an interactive element within the tab stop you need to use the win-interactive classname or during the
+                // keydown event stop propogation so that the event is skipped.
+                //
+                // If you have custom keyboarding the getAdjacent API is provided. This can be used to enable keyboarding
+                // in multisize 2d lists or custom keyboard commands. PageDown and PageUp are the most common since this
+                // behavior does not detect scrollers.
+                //
+                // It also allows developers to show/hide keyboard focus rectangles themselves.
+                //
+                // It has an API called currentIndex so that Tab (or Shift+Tab) or a developer imitating Tab will result in
+                // the correct item having focus.
+                //
+                // It also allows an element to be represented as 2 arrow stops (commonly used for a split button) by calling
+                // the _getFocusInto API on the child element's winControl if it exists.
+
+                element = element || _Global.document.createElement("DIV");
+                options = options || {};
+
+                element._keyboardBehavior = this;
+                this._element = element;
+
+                this._fixedDirection = _KeyboardBehavior.FixedDirection.width;
+                this._fixedSize = 1;
+                this._currentIndex = 0;
+
+                _Control.setOptions(this, options);
+
+                // If there's a scroller, the TabContainer can't be inside of the scroller. Otherwise, tabbing into the
+                // TabContainer will cause the scroller to scroll.
+                this._tabContainer = new _TabContainer.TabContainer(this.scroller || this._element);
+                this._tabContainer.tabIndex = 0;
+                if (this._element.children.length > 0) {
+                    this._tabContainer.childFocus = this._getFocusInto(this._element.children[0]);
+                }
+
+                this._element.addEventListener('keydown', this._keyDownHandler.bind(this));
+                _ElementUtilities._addEventListener(this._element, 'pointerdown', this._MSPointerDownHandler.bind(this));
+            }, {
+                element: {
+                    get: function () {
+                        return this._element;
+                    }
+                },
+
+                fixedDirection: {
+                    get: function () {
+                        return this._fixedDirection;
+                    },
+                    set: function (value) {
+                        this._fixedDirection = value;
+                    }
+                },
+
+                fixedSize: {
+                    get: function () {
+                        return this._fixedSize;
+                    },
+                    set: function (value) {
+                        if (+value === value) {
+                            value = Math.max(1, value);
+                            this._fixedSize = value;
+                        }
+                    }
+                },
+
+                currentIndex: {
+                    get: function () {
+                        if (this._element.children.length > 0) {
+                            return this._currentIndex;
+                        }
+                        return -1;
+                    },
+                    set: function (value) {
+                        if (+value === value) {
+                            var length = this._element.children.length;
+                            value = Math.max(0, Math.min(length - 1, value));
+                            this._currentIndex = value;
+                            this._tabContainer.childFocus = this._getFocusInto(this._element.children[value]);
+                        }
+                    }
+                },
+
+                getAdjacent: {
+                    get: function () {
+                        return this._getAdjacent;
+                    },
+                    set: function (value) {
+                        this._getAdjacent = value;
+                    }
+                },
+
+                // If set, KeyboardBehavior will prevent *scroller* from scrolling when moving focus
+                scroller: {
+                    get: function () {
+                        return this._scroller;
+                    },
+                    set: function (value) {
+                        this._scroller = value;
+                    }
+                },
+
+                _keyDownHandler: function _KeyboardBehavior_keyDownHandler(ev) {
+                    if (!ev.altKey) {
+                        if (_ElementUtilities._matchesSelector(ev.target, ".win-interactive, .win-interactive *")) {
+                            return;
+                        }
+                        var blockScrolling = false;
+
+                        var newIndex = this.currentIndex;
+                        var maxIndex = this._element.children.length - 1;
+
+                        var rtl = _Global.getComputedStyle(this._element).direction === "rtl";
+                        var leftStr = rtl ? Key.rightArrow : Key.leftArrow;
+                        var rightStr = rtl ? Key.leftArrow : Key.rightArrow;
+
+                        var targetIndex = this.getAdjacent && this.getAdjacent(newIndex, ev.keyCode);
+                        if (+targetIndex === targetIndex) {
+                            blockScrolling = true;
+                            newIndex = targetIndex;
+                        } else {
+                            var modFixedSize = newIndex % this.fixedSize;
+
+                            if (ev.keyCode === leftStr) {
+                                blockScrolling = true;
+                                if (this.fixedDirection === _KeyboardBehavior.FixedDirection.width) {
+                                    if (modFixedSize !== 0) {
+                                        newIndex--;
+                                    }
+                                } else {
+                                    if (newIndex >= this.fixedSize) {
+                                        newIndex -= this.fixedSize;
+                                    }
+                                }
+                            } else if (ev.keyCode === rightStr) {
+                                blockScrolling = true;
+                                if (this.fixedDirection === _KeyboardBehavior.FixedDirection.width) {
+                                    if (modFixedSize !== this.fixedSize - 1) {
+                                        newIndex++;
+                                    }
+                                } else {
+                                    if (newIndex + this.fixedSize - modFixedSize <= maxIndex) {
+                                        newIndex += this.fixedSize;
+                                    }
+                                }
+                            } else if (ev.keyCode === Key.upArrow) {
+                                blockScrolling = true;
+                                if (this.fixedDirection === _KeyboardBehavior.FixedDirection.height) {
+                                    if (modFixedSize !== 0) {
+                                        newIndex--;
+                                    }
+                                } else {
+                                    if (newIndex >= this.fixedSize) {
+                                        newIndex -= this.fixedSize;
+                                    }
+                                }
+                            } else if (ev.keyCode === Key.downArrow) {
+                                blockScrolling = true;
+                                if (this.fixedDirection === _KeyboardBehavior.FixedDirection.height) {
+                                    if (modFixedSize !== this.fixedSize - 1) {
+                                        newIndex++;
+                                    }
+                                } else {
+                                    if (newIndex + this.fixedSize - modFixedSize <= maxIndex) {
+                                        newIndex += this.fixedSize;
+                                    }
+                                }
+                            } else if (ev.keyCode === Key.home) {
+                                blockScrolling = true;
+                                newIndex = 0;
+                            } else if (ev.keyCode === Key.end) {
+                                blockScrolling = true;
+                                newIndex = this._element.children.length - 1;
+                            } else if (ev.keyCode === Key.pageUp) {
+                                blockScrolling = true;
+                            } else if (ev.keyCode === Key.pageDown) {
+                                blockScrolling = true;
+                            }
+                        }
+
+                        newIndex = Math.max(0, Math.min(this._element.children.length - 1, newIndex));
+
+                        if (newIndex !== this.currentIndex) {
+                            this._focus(newIndex, ev.keyCode);
+
+                            // Allow KeyboardBehavior to be nested
+                            if (ev.keyCode === leftStr || ev.keyCode === rightStr || ev.keyCode === Key.upArrow || ev.keyCode === Key.downArrow) {
+                                ev.stopPropagation();
+                            }
+                        }
+
+                        if (blockScrolling) {
+                            ev.preventDefault();
+                        }
+                    }
+                },
+
+                _getFocusInto: function _KeyboardBehavior_getFocusInto(elementToFocus, keyCode) {
+                    return elementToFocus && elementToFocus.winControl && elementToFocus.winControl._getFocusInto ?
+                        elementToFocus.winControl._getFocusInto(keyCode) :
+                        elementToFocus;
+                },
+
+                _focus: function _KeyboardBehavior_focus(index, keyCode) {
+                    index = (+index === index) ? index : this.currentIndex;
+
+                    var elementToFocus = this._element.children[index];
+                    if (elementToFocus) {
+                        elementToFocus = this._getFocusInto(elementToFocus, keyCode);
+
+                        this.currentIndex = index;
+
+                        _ElementUtilities._setActive(elementToFocus, this.scroller);
+                    }
+                },
+
+                _MSPointerDownHandler: function _KeyboardBehavior_MSPointerDownHandler(ev) {
+                    var srcElement = ev.target;
+                    if (srcElement === this.element) {
+                        return;
+                    }
+
+                    while (srcElement.parentNode !== this.element) {
+                        srcElement = srcElement.parentNode;
+                    }
+
+                    var index = -1;
+                    while (srcElement) {
+                        index++;
+                        srcElement = srcElement.previousElementSibling;
+                    }
+
+                    this.currentIndex = index;
+                }
+            }, {
+                FixedDirection: {
+                    height: "height",
+                    width: "width"
+                }
+            });
+
+            return _KeyboardBehavior;
+        })
+    });
+
+});
+// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+define('WinJS/Utilities/_SafeHtml',[
+    'exports',
+    '../Core/_Global',
+    '../Core/_Base',
+    '../Core/_ErrorFromName',
+    '../Core/_Resources'
+    ], function safeHTMLInit(exports, _Global, _Base, _ErrorFromName, _Resources) {
+    "use strict";
+
+
+    var setInnerHTML,
+        setInnerHTMLUnsafe,
+        setOuterHTML,
+        setOuterHTMLUnsafe,
+        insertAdjacentHTML,
+        insertAdjacentHTMLUnsafe;
+
+    var strings = {
+        get nonStaticHTML() { return "Unable to add dynamic content. A script attempted to inject dynamic content, or elements previously modified dynamically, that might be unsafe. For example, using the innerHTML property or the document.write method to add a script element will generate this exception. If the content is safe and from a trusted source, use a method to explicitly manipulate elements and attributes, such as createElement, or use setInnerHTMLUnsafe (or other unsafe method)."; },
+    };
+
+    setInnerHTML = setInnerHTMLUnsafe = function (element, text) {
+        /// <signature helpKeyword="WinJS.Utilities.setInnerHTML">
+        /// <summary locid="WinJS.Utilities.setInnerHTML">
+        /// Sets the innerHTML property of the specified element to the specified text.
+        /// </summary>
+        /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.setInnerHTML_p:element">
+        /// The element on which the innerHTML property is to be set.
+        /// </param>
+        /// <param name="text" type="String" locid="WinJS.Utilities.setInnerHTML_p:text">
+        /// The value to be set to the innerHTML property.
+        /// </param>
+        /// </signature>
+        element.innerHTML = text;
+    };
+    setOuterHTML = setOuterHTMLUnsafe = function (element, text) {
+        /// <signature helpKeyword="WinJS.Utilities.setOuterHTML">
+        /// <summary locid="WinJS.Utilities.setOuterHTML">
+        /// Sets the outerHTML property of the specified element to the specified text.
+        /// </summary>
+        /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.setOuterHTML_p:element">
+        /// The element on which the outerHTML property is to be set.
+        /// </param>
+        /// <param name="text" type="String" locid="WinJS.Utilities.setOuterHTML_p:text">
+        /// The value to be set to the outerHTML property.
+        /// </param>
+        /// </signature>
+        element.outerHTML = text;
+    };
+    insertAdjacentHTML = insertAdjacentHTMLUnsafe = function (element, position, text) {
+        /// <signature helpKeyword="WinJS.Utilities.insertAdjacentHTML">
+        /// <summary locid="WinJS.Utilities.insertAdjacentHTML">
+        /// Calls insertAdjacentHTML on the specified element.
+        /// </summary>
+        /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.insertAdjacentHTML_p:element">
+        /// The element on which insertAdjacentHTML is to be called.
+        /// </param>
+        /// <param name="position" type="String" locid="WinJS.Utilities.insertAdjacentHTML_p:position">
+        /// The position relative to the element at which to insert the HTML.
+        /// </param>
+        /// <param name="text" type="String" locid="WinJS.Utilities.insertAdjacentHTML_p:text">
+        /// The value to be provided to insertAdjacentHTML.
+        /// </param>
+        /// </signature>
+        element.insertAdjacentHTML(position, text);
+    };
+
+    var msApp = _Global.MSApp;
+    if (msApp) {
+        setInnerHTMLUnsafe = function (element, text) {
+            /// <signature helpKeyword="WinJS.Utilities.setInnerHTMLUnsafe">
+            /// <summary locid="WinJS.Utilities.setInnerHTMLUnsafe">
+            /// Sets the innerHTML property of the specified element to the specified text.
+            /// </summary>
+            /// <param name='element' type='HTMLElement' locid="WinJS.Utilities.setInnerHTMLUnsafe_p:element">
+            /// The element on which the innerHTML property is to be set.
+            /// </param>
+            /// <param name='text' type="String" locid="WinJS.Utilities.setInnerHTMLUnsafe_p:text">
+            /// The value to be set to the innerHTML property.
+            /// </param>
+            /// </signature>
+            msApp.execUnsafeLocalFunction(function () {
+                element.innerHTML = text;
+            });
+        };
+        setOuterHTMLUnsafe = function (element, text) {
+            /// <signature helpKeyword="WinJS.Utilities.setOuterHTMLUnsafe">
+            /// <summary locid="WinJS.Utilities.setOuterHTMLUnsafe">
+            /// Sets the outerHTML property of the specified element to the specified text
+            /// in the context of msWWA.execUnsafeLocalFunction.
+            /// </summary>
+            /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.setOuterHTMLUnsafe_p:element">
+            /// The element on which the outerHTML property is to be set.
+            /// </param>
+            /// <param name="text" type="String" locid="WinJS.Utilities.setOuterHTMLUnsafe_p:text">
+            /// The value to be set to the outerHTML property.
+            /// </param>
+            /// </signature>
+            msApp.execUnsafeLocalFunction(function () {
+                element.outerHTML = text;
+            });
+        };
+        insertAdjacentHTMLUnsafe = function (element, position, text) {
+            /// <signature helpKeyword="WinJS.Utilities.insertAdjacentHTMLUnsafe">
+            /// <summary locid="WinJS.Utilities.insertAdjacentHTMLUnsafe">
+            /// Calls insertAdjacentHTML on the specified element in the context
+            /// of msWWA.execUnsafeLocalFunction.
+            /// </summary>
+            /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.insertAdjacentHTMLUnsafe_p:element">
+            /// The element on which insertAdjacentHTML is to be called.
+            /// </param>
+            /// <param name="position" type="String" locid="WinJS.Utilities.insertAdjacentHTMLUnsafe_p:position">
+            /// The position relative to the element at which to insert the HTML.
+            /// </param>
+            /// <param name="text" type="String" locid="WinJS.Utilities.insertAdjacentHTMLUnsafe_p:text">
+            /// Value to be provided to insertAdjacentHTML.
+            /// </param>
+            /// </signature>
+            msApp.execUnsafeLocalFunction(function () {
+                element.insertAdjacentHTML(position, text);
+            });
+        };
+    } else if (_Global.msIsStaticHTML) {
+        var check = function (str) {
+            if (!_Global.msIsStaticHTML(str)) {
+                throw new _ErrorFromName("WinJS.Utitilies.NonStaticHTML", strings.nonStaticHTML);
+            }
+        };
+        // If we ever get isStaticHTML we can attempt to recreate the behavior we have in the local
+        // compartment, in the mean-time all we can do is sanitize the input.
+        //
+        setInnerHTML = function (element, text) {
+            /// <signature helpKeyword="WinJS.Utilities.setInnerHTML">
+            /// <summary locid="WinJS.Utilities.msIsStaticHTML.setInnerHTML">
+            /// Sets the innerHTML property of a element to the specified text
+            /// if it passes a msIsStaticHTML check.
+            /// </summary>
+            /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.msIsStaticHTML.setInnerHTML_p:element">
+            /// The element on which the innerHTML property is to be set.
+            /// </param>
+            /// <param name="text" type="String" locid="WinJS.Utilities.msIsStaticHTML.setInnerHTML_p:text">
+            /// The value to be set to the innerHTML property.
+            /// </param>
+            /// </signature>
+            check(text);
+            element.innerHTML = text;
+        };
+        setOuterHTML = function (element, text) {
+            /// <signature helpKeyword="WinJS.Utilities.setOuterHTML">
+            /// <summary locid="WinJS.Utilities.msIsStaticHTML.setOuterHTML">
+            /// Sets the outerHTML property of a element to the specified text
+            /// if it passes a msIsStaticHTML check.
+            /// </summary>
+            /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.msIsStaticHTML.setOuterHTML_p:element">
+            /// The element on which the outerHTML property is to be set.
+            /// </param>
+            /// <param name="text" type="String" locid="WinJS.Utilities.msIsStaticHTML.setOuterHTML_p:text">
+            /// The value to be set to the outerHTML property.
+            /// </param>
+            /// </signature>
+            check(text);
+            element.outerHTML = text;
+        };
+        insertAdjacentHTML = function (element, position, text) {
+            /// <signature helpKeyword="WinJS.Utilities.insertAdjacentHTML">
+            /// <summary locid="WinJS.Utilities.msIsStaticHTML.insertAdjacentHTML">
+            /// Calls insertAdjacentHTML on the element if it passes
+            /// a msIsStaticHTML check.
+            /// </summary>
+            /// <param name="element" type="HTMLElement" locid="WinJS.Utilities.msIsStaticHTML.insertAdjacentHTML_p:element">
+            /// The element on which insertAdjacentHTML is to be called.
+            /// </param>
+            /// <param name="position" type="String" locid="WinJS.Utilities.msIsStaticHTML.insertAdjacentHTML_p:position">
+            /// The position relative to the element at which to insert the HTML.
+            /// </param>
+            /// <param name="text" type="String" locid="WinJS.Utilities.msIsStaticHTML.insertAdjacentHTML_p:text">
+            /// The value to be provided to insertAdjacentHTML.
+            /// </param>
+            /// </signature>
+            check(text);
+            element.insertAdjacentHTML(position, text);
+        };
+    }
+
+    _Base.Namespace._moduleDefine(exports, "WinJS.Utilities", {
+        setInnerHTML: setInnerHTML,
+        setInnerHTMLUnsafe: setInnerHTMLUnsafe,
+        setOuterHTML: setOuterHTML,
+        setOuterHTMLUnsafe: setOuterHTMLUnsafe,
+        insertAdjacentHTML: insertAdjacentHTML,
+        insertAdjacentHTMLUnsafe: insertAdjacentHTMLUnsafe
+    });
+
+});
+
+// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+define('WinJS/Utilities/_Select',[
+    'exports',
+    '../Core/_Base',
+    './_SafeHtml'
+    ], function selectInit(exports, _Base, _SafeHtml) {
+    "use strict";
+
+    _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
+        _Select: _Base.Namespace._lazy(function () {
+            var encodeHtmlRegEx = /[&<>'"]/g;
+            var encodeHtmlEscapeMap = {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                "'": "&#39;",
+                '"': "&quot;"
+            };
+            var stringDirectionRegEx = /[\u200e\u200f]/g;
+            function encodeHtml(str) {
+                return str.replace(encodeHtmlRegEx, function (m) {
+                    return encodeHtmlEscapeMap[m] || "";
+                });
+            }
+            function stripDirectionMarker(str) {
+                return str.replace(stringDirectionRegEx, "");
+            }
+            function stockGetValue(index) {
+                /*jshint validthis: true */
+                return this[index];
+            }
+            function stockGetLength() {
+                /*jshint validthis: true */
+                return this.length;
+            }
+            function fixDataSource(dataSource) {
+                if (!dataSource.getValue) {
+                    dataSource.getValue = stockGetValue;
+                }
+
+                if (!dataSource.getLength) {
+                    dataSource.getLength = stockGetLength;
+                }
+                return dataSource;
+            }
+
+            return _Base.Class.define(function _Select_ctor(element, options) {
+                // This is an implementation detail of the TimePicker and DatePicker, designed
+                // to provide a primitive "data bound" select control. This is not designed to
+                // be used outside of the TimePicker and DatePicker controls.
+                //
+
+                this._dataSource = fixDataSource(options.dataSource);
+                this._index = options.index || 0;
+
+                this._domElement = element;
+                // Mark this as a tab stop
+                this._domElement.tabIndex = 0;
+
+                if (options.disabled) {
+                    this.setDisabled(options.disabled);
+                }
+
+                var that = this;
+                this._domElement.addEventListener("change", function () {
+                    //Should be set to _index to prevent events from firing twice
+                    that._index = that._domElement.selectedIndex;
+                }, false);
+
+                //update runtime accessibility value after initialization
+                this._createSelectElement();
+            }, {
+                _index: 0,
+                _dataSource: null,
+
+                dataSource: {
+                    get: function () { return this._dataSource; },
+                    set: function (value) {
+                        this._dataSource = fixDataSource(value);
+
+                        //Update layout as data source change
+                        if (this._domElement) {
+                            this._createSelectElement();
+                        }
+                    }
+                },
+
+                setDisabled: function (disabled) {
+                    if (disabled) {
+                        this._domElement.setAttribute("disabled", "disabled");
+                    } else {
+                        this._domElement.removeAttribute("disabled");
+                    }
+                },
+
+                _createSelectElement: function () {
+                    var dataSourceLength = this._dataSource.getLength();
+                    var text = "";
+                    for (var i = 0; i < dataSourceLength; i++) {
+                        var value = "" + this._dataSource.getValue(i);
+                        var escaped = encodeHtml(value);
+                        // WinRT localization often tags the strings with reading direction. We want this
+                        // for display text (escaped), but don't want this in the value space, as it
+                        // only present for display.
+                        //
+                        var stripped = stripDirectionMarker(escaped);
+                        text += "<option value='" + stripped + "'>" + escaped + "</option>";
+                    }
+                    _SafeHtml.setInnerHTMLUnsafe(this._domElement, text);
+                    this._domElement.selectedIndex = this._index;
+                },
+
+                index: {
+                    get: function () {
+                        return Math.max(0, Math.min(this._index, this._dataSource.getLength() - 1));
+                    },
+                    set: function (value) {
+                        if (this._index !== value) {
+                            this._index = value;
+
+                            var d = this._domElement;
+                            if (d && d.selectedIndex !== value) {
+                                d.selectedIndex = value;
+                            }
+                        }
+                    }
+                },
+
+                value: {
+                    get: function () {
+                        return this._dataSource.getValue(this.index);
+                    }
+                }
+            });
+        })
+    });
+});
+
 // Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 define('WinJS/Utilities/_UI',[
     'exports',
@@ -5007,251 +5373,6 @@ define('WinJS/Utilities/_UI',[
 });
 
 // Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-define('WinJS/Utilities/_UIUtilities',[
-    'exports',
-    '../Core/_Global',
-    '../Core/_Base',
-    './_ElementUtilities'
-    ], function utilitiesInit(exports, _Global, _Base, _ElementUtilities) {
-    "use strict";
-
-    _Base.Namespace._moduleDefine(exports, "WinJS.Utilities", {
-
-        _deprecated: function (message) {
-            _Global.console && _Global.console.warn(message);
-        },
-
-        // Take a renderer which may be a function (signature: (data) => element) or a WinJS.Binding.Template
-        //  and return a function with a unified synchronous contract which is:
-        //
-        //  (data, container) => element
-        //      
-        // Where:
-        //
-        //  1) if you pass container the content will be rendered into the container and the
-        //     container will be returned. 
-        //
-        //  2) if you don't pass a container the content will be rendered and returned.
-        //
-        _syncRenderer: function (renderer, tagName) {
-            tagName = tagName || "div";
-            if (typeof renderer === "function") {
-                return function (data, container) {
-                    if (container) {
-                        container.appendChild(renderer(data));
-                        return container;
-                    } else {
-                        return renderer(data);
-                    }
-                };
-            }
-
-            var template;
-            if (typeof renderer.render === "function") {
-                template = renderer;
-            } else if (renderer.winControl && typeof renderer.winControl.render === "function") {
-                template = renderer.winControl;
-            }
-
-            return function (data, container) {
-                var host = container || _Global.document.createElement(tagName);
-                template.render(data, host);
-                if (container) {
-                    return container;
-                } else {
-                    // The expectation is that the creation of the DOM elements happens synchronously
-                    //  and as such we steal the first child and make it the root element.
-                    //
-                    var element = host.firstElementChild;
-
-                    // Because we have changed the "root" we may need to move the dispose method
-                    //  created by the template to the child and do a little switcheroo on dispose.
-                    //
-                    if (element && host.dispose) {
-                        var prev = element.dispose;
-                        element.dispose = function () {
-                            element.dispose = prev;
-                            host.appendChild(element);
-                            host.dispose();
-                        };
-                    }
-                    return element;
-                }
-            };
-        },
-
-
-        _getLowestTabIndexInList: function Utilities_getLowestTabIndexInList(elements) {
-            // Returns the lowest positive tabIndex in a list of elements.
-            // Returns 0 if there are no positive tabIndices.
-            var lowestTabIndex = 0;
-            var elmTabIndex;
-            for (var i = 0; i < elements.length; i++) {
-                elmTabIndex = parseInt(elements[i].getAttribute("tabIndex"), 10);
-                if ((0 < elmTabIndex)
-                 && ((elmTabIndex < lowestTabIndex) || !lowestTabIndex)) {
-                    lowestTabIndex = elmTabIndex;
-                }
-            }
-
-            return lowestTabIndex;
-        },
-
-        _getHighestTabIndexInList: function Utilities_getHighestTabIndexInList(elements) {
-            // Returns 0 if any element is explicitly set to 0. (0 is the highest tabIndex)
-            // Returns the highest tabIndex in the list of elements.
-            // Returns 0 if there are no positive tabIndices.
-            var highestTabIndex = 0;
-            var elmTabIndex;
-            for (var i = 0; i < elements.length; i++) {
-                elmTabIndex = parseInt(elements[i].getAttribute("tabIndex"), 10);
-                if (elmTabIndex === 0) {
-                    return elmTabIndex;
-                } else if (highestTabIndex < elmTabIndex) {
-                    highestTabIndex = elmTabIndex;
-                }
-            }
-
-            return highestTabIndex;
-        },
-
-        _trySetActive: function Utilities_trySetActive(elem, scroller) {
-            return this._tryFocus(elem, true, scroller);
-        },
-
-        _tryFocus: function Utilities_tryFocus(elem, useSetActive, scroller) {
-            var previousActiveElement = _Global.document.activeElement;
-
-            if (elem === previousActiveElement) {
-                return true;
-            }
-
-            var simpleLogicForValidTabStop = (_ElementUtilities.getTabIndex(elem) >= 0);
-            if (!simpleLogicForValidTabStop) {
-                return false;
-            }
-
-            if (useSetActive) {
-                _ElementUtilities._setActive(elem, scroller);
-            } else {
-                elem.focus();
-            }
-
-            if (previousActiveElement !== _Global.document.activeElement) {
-                return true;
-            }
-            return false;
-        },
-
-        _setActiveFirstFocusableElement: function Utilities_setActiveFirstFocusableElement(rootEl, scroller) {
-            return this._focusFirstFocusableElement(rootEl, true, scroller);
-        },
-
-        _focusFirstFocusableElement: function Utilities_focusFirstFocusableElement(rootEl, useSetActive, scroller) {
-            var _elms = rootEl.getElementsByTagName("*");
-
-            // Get the tabIndex set to the firstDiv (which is the lowest)
-            var _lowestTabIndex = this._getLowestTabIndexInList(_elms);
-            var _nextLowestTabIndex = 0;
-
-            // If there are positive tabIndices, set focus to the element with the lowest tabIndex.
-            // Keep trying with the next lowest tabIndex until all tabIndices have been exhausted.
-            // Otherwise set focus to the first focusable element in DOM order.
-            var i;
-            while (_lowestTabIndex) {
-                for (i = 0; i < _elms.length; i++) {
-                    if (_elms[i].tabIndex === _lowestTabIndex) {
-                        if (this._tryFocus(_elms[i], useSetActive, scroller)) {
-                            return true;
-                        }
-                    } else if ((_lowestTabIndex < _elms[i].tabIndex)
-                            && ((_elms[i].tabIndex < _nextLowestTabIndex) || (_nextLowestTabIndex === 0))) {
-                        // Here if _lowestTabIndex < _elms[i].tabIndex < _nextLowestTabIndex
-                        _nextLowestTabIndex = _elms[i].tabIndex;
-                    }
-                }
-
-                // We weren't able to set focus to anything at that tabIndex
-                // If we found a higher valid tabIndex, try that now
-                _lowestTabIndex = _nextLowestTabIndex;
-                _nextLowestTabIndex = 0;
-            }
-
-            // Wasn't able to set focus to anything with a positive tabIndex, try everything now.
-            // This is where things with tabIndex of 0 will be tried.
-            for (i = 0; i < _elms.length; i++) {
-                if (this._tryFocus(_elms[i], useSetActive, scroller)) {
-                    return true;
-                }
-            }
-
-            return false;
-        },
-
-        _setActiveLastFocusableElement: function Utilities_setActiveLastFocusableElement(rootEl, scroller) {
-            return this._focusLastFocusableElement(rootEl, true, scroller);
-        },
-
-        _focusLastFocusableElement: function Utilities_focusLastFocusableElement(rootEl, useSetActive, scroller) {
-            var _elms = rootEl.getElementsByTagName("*");
-            // Get the tabIndex set to the finalDiv (which is the highest)
-            var _highestTabIndex = this._getHighestTabIndexInList(_elms);
-            var _nextHighestTabIndex = 0;
-
-            // Try all tabIndex 0 first. After this conditional the _highestTabIndex
-            // should be equal to the highest positive tabIndex.
-            var i;
-            if (_highestTabIndex === 0) {
-                for (i = _elms.length - 1; i >= 0; i--) {
-                    if (_elms[i].tabIndex === _highestTabIndex) {
-                        if (this._tryFocus(_elms[i], useSetActive, scroller)) {
-                            return true;
-                        }
-                    } else if (_nextHighestTabIndex < _elms[i].tabIndex) {
-                        _nextHighestTabIndex = _elms[i].tabIndex;
-                    }
-                }
-
-                _highestTabIndex = _nextHighestTabIndex;
-                _nextHighestTabIndex = 0;
-            }
-
-            // If there are positive tabIndices, set focus to the element with the highest tabIndex.
-            // Keep trying with the next highest tabIndex until all tabIndices have been exhausted.
-            // Otherwise set focus to the last focusable element in DOM order.
-            while (_highestTabIndex) {
-                for (i = _elms.length - 1; i >= 0; i--) {
-                    if (_elms[i].tabIndex === _highestTabIndex) {
-                        if (this._tryFocus(_elms[i], useSetActive, scroller)) {
-                            return true;
-                        }
-                    } else if ((_nextHighestTabIndex < _elms[i].tabIndex) && (_elms[i].tabIndex < _highestTabIndex)) {
-                        // Here if _nextHighestTabIndex < _elms[i].tabIndex < _highestTabIndex
-                        _nextHighestTabIndex = _elms[i].tabIndex;
-                    }
-                }
-
-                // We weren't able to set focus to anything at that tabIndex
-                // If we found a lower valid tabIndex, try that now
-                _highestTabIndex = _nextHighestTabIndex;
-                _nextHighestTabIndex = 0;
-            }
-
-            // Wasn't able to set focus to anything with a tabIndex, try everything now
-            for (i = _elms.length - 2; i > 0; i--) {
-                if (this._tryFocus(_elms[i], useSetActive, scroller)) {
-                    return true;
-                }
-            }
-
-            return false;
-        },
-
-    });
-
-});
-
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 define('WinJS/Utilities/_Xhr',[
     '../Core/_Global',
     '../Core/_Base',
@@ -5353,6 +5474,7 @@ define('WinJS/Utilities',[
     './Utilities/_Dispose',
     './Utilities/_ElementListUtilities',
     './Utilities/_ElementUtilities',
+    './Utilities/_Hoverable',
     './Utilities/_ItemsManager',
     './Utilities/_KeyboardBehavior',
     './Utilities/_ParallelWorkQueue',
@@ -5360,9 +5482,8 @@ define('WinJS/Utilities',[
     './Utilities/_Select',
     './Utilities/_TabContainer',
     './Utilities/_UI',
-    './Utilities/_UIUtilities',
     './Utilities/_VersionManager',
-    './Utilities/_Xhr' ], function() {
+    './Utilities/_Xhr' ], function () {
 
     //wrapper module
 });

@@ -13,8 +13,8 @@ define('WinJS/Controls/Repeater',[
     '../Utilities/_Control',
     '../Utilities/_Dispose',
     '../Utilities/_ElementUtilities',
-    '../Utilities/_UIUtilities'
-    ], function repeaterInit(exports, _Global, _Base, _ErrorFromName, _Events, _Resources, _WriteProfilerMark, BindingList, BindingTemplate, Promise, _Control, _Dispose, _ElementUtilities, _UIUtilities) {
+    '../Utilities/_Hoverable',
+    ], function repeaterInit(exports, _Global, _Base, _ErrorFromName, _Events, _Resources, _WriteProfilerMark, BindingList, BindingTemplate, Promise, _Control, _Dispose, _ElementUtilities, _Hoverable) {
     "use strict";
 
     _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
@@ -27,9 +27,9 @@ define('WinJS/Controls/Repeater',[
         /// <icon src="ui_winjs.ui.repeater.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.Repeater"></div>]]></htmlSnippet>
         /// <part name="repeater" class="win-repeater" locid="WinJS.UI.Repeater_part:repeater">The Repeater control itself</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         Repeater: _Base.Namespace._lazy(function () {
 
             // Constants
@@ -56,9 +56,9 @@ define('WinJS/Controls/Repeater',[
 
             // Statics
             var strings = {
-                get duplicateConstruction() { return _Resources._getWinJSString("ui/duplicateConstruction").value; },
-                get asynchronousRender() { return _Resources._getWinJSString("ui/asynchronousRender").value; },
-                get repeaterReentrancy() { return _Resources._getWinJSString("ui/repeaterReentrancy").value; },
+                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
+                get asynchronousRender() { return "Top level items must render synchronously"; },
+                get repeaterReentrancy() { return "Cannot modify Repeater data until Repeater has commited previous modification."; },
             };
 
             var Repeater = _Base.Class.define(function Repeater_ctor(element, options) {
@@ -70,9 +70,9 @@ define('WinJS/Controls/Repeater',[
                 /// The DOM element that will host the new control. The Repeater will create an element if this value is null.
                 /// </param>
                 /// <param name="options" type="Object" isOptional="true" locid="WinJS.UI.Repeater.constructor_p:options">
-                /// An object that contains one or more property/value pairs to apply to the 
-                /// new Repeater. Each property of the options object corresponds to one of the 
-                /// object's properties or events. Event names must begin with "on". 
+                /// An object that contains one or more property/value pairs to apply to the
+                /// new Repeater. Each property of the options object corresponds to one of the
+                /// object's properties or events. Event names must begin with "on".
                 /// </param>
                 /// <returns type="WinJS.UI.Repeater" locid="WinJS.UI.Repeater.constructor_returnValue">
                 /// The new Repeater control.
@@ -158,7 +158,7 @@ define('WinJS/Controls/Repeater',[
                     set: function (template) {
                         this._writeProfilerMark("template.set,StartTM");
                         this._template = (template || stringifyItem);
-                        this._render = _UIUtilities._syncRenderer(this._template, this.element.tagName);
+                        this._render = _ElementUtilities._syncRenderer(this._template, this.element.tagName);
                         if (!this._initializing) {
                             this._reloadRepeater(true);
                             this.dispatchEvent(ITEMSLOADED, {});
@@ -214,37 +214,37 @@ define('WinJS/Controls/Repeater',[
                 onitemsloaded: createEvent(ITEMSLOADED),
 
                 /// <field type="Function" locid="WinJS.UI.Repeater.onitemchanging" helpKeyword="WinJS.UI.Repeater.onitemchanging">
-                /// Raised after an item in the Repeater control's data source changes but before the corresponding DOM element has been updated. 
+                /// Raised after an item in the Repeater control's data source changes but before the corresponding DOM element has been updated.
                 /// </field>
                 onitemchanging: createEvent(ITEMCHANGING),
 
                 /// <field type="Function" locid="WinJS.UI.Repeater.onitemchanged" helpKeyword="WinJS.UI.Repeater.onitemchanged">
-                /// Raised after an item in the Repeater control's data source changes and after the corresponding DOM element has been updated. 
+                /// Raised after an item in the Repeater control's data source changes and after the corresponding DOM element has been updated.
                 /// </field>
                 onitemchanged: createEvent(ITEMCHANGED),
 
                 /// <field type="Function" locid="WinJS.UI.Repeater.oniteminserting" helpKeyword="WinJS.UI.Repeater.oniteminserting">
-                /// Raised after an item has been added to the Repeater control's data source but before the corresponding DOM element has been added. 
+                /// Raised after an item has been added to the Repeater control's data source but before the corresponding DOM element has been added.
                 /// </field>
                 oniteminserting: createEvent(ITEMINSERTING),
 
                 /// <field type="Function" locid="WinJS.UI.Repeater.oniteminserted" helpKeyword="WinJS.UI.Repeater.oniteminserted">
-                /// Raised after an item has been added to the Repeater control's data source and after the corresponding DOM element has been added. 
+                /// Raised after an item has been added to the Repeater control's data source and after the corresponding DOM element has been added.
                 /// </field>
                 oniteminserted: createEvent(ITEMINSERTED),
 
                 /// <field type="Function" locid="WinJS.UI.Repeater.onitemmoving" helpKeyword="WinJS.UI.Repeater.onitemmoving">
-                /// Raised after an item has been moved from one index to another in the Repeater control's data source but before the corresponding DOM element has been moved. 
+                /// Raised after an item has been moved from one index to another in the Repeater control's data source but before the corresponding DOM element has been moved.
                 /// </field>
                 onitemmoving: createEvent(ITEMMOVING),
 
                 /// <field type="Function" locid="WinJS.UI.Repeater.onitemmoved" helpKeyword="WinJS.UI.Repeater.onitemmoved">
-                /// Raised after an item has been moved from one index to another in the Repeater control's data source and after the corresponding DOM element has been moved. 
+                /// Raised after an item has been moved from one index to another in the Repeater control's data source and after the corresponding DOM element has been moved.
                 /// </field>
                 onitemmoved: createEvent(ITEMMOVED),
 
                 /// <field type="Function" locid="WinJS.UI.Repeater.onitemremoving" helpKeyword="WinJS.UI.Repeater.onitemremoving">
-                /// Raised after an item has been removed from the Repeater control's data source but before the corresponding DOM element has been removed. 
+                /// Raised after an item has been removed from the Repeater control's data source but before the corresponding DOM element has been removed.
                 /// </field>
                 onitemremoving: createEvent(ITEMREMOVING),
 
@@ -413,7 +413,7 @@ define('WinJS/Controls/Repeater',[
                 },
 
                 _dataItemMovedHandler: function Repeater_dataItemMovedHandler(eventInfo) {
-                    // Handles the 'itemmoved' event fired by WinJS.Binding.List 
+                    // Handles the 'itemmoved' event fired by WinJS.Binding.List
 
                     this._beginModification();
 
@@ -473,7 +473,7 @@ define('WinJS/Controls/Repeater',[
                 },
 
                 _dataReloadHandler: function Repeater_dataReloadHandler() {
-                    // Handles the 'reload' event fired by WinJS.Binding.List whenever it performs operations such as reverse() or sort() 
+                    // Handles the 'reload' event fired by WinJS.Binding.List whenever it performs operations such as reverse() or sort()
 
                     this._beginModification();
                     var animationPromise;
@@ -513,11 +513,3 @@ define('WinJS/Controls/Repeater',[
 
 });
 
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

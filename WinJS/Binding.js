@@ -14,8 +14,8 @@ define('WinJS/Binding/_BindingParser',[
 
 
     var strings = {
-        get invalidBinding() { return _Resources._getWinJSString("base/invalidBinding").value; },
-        get bindingInitializerNotFound() { return _Resources._getWinJSString("base/bindingInitializerNotFound").value; },
+        get invalidBinding() { return "Invalid binding:'{0}'. Expected to be '<destProp>:<sourceProp>;'. {1}"; },
+        get bindingInitializerNotFound() { return "Initializer not found:'{0}'"; },
     };
 
 /*
@@ -58,10 +58,10 @@ define('WinJS/Binding/_BindingParser',[
 
 */
     var imports = _Base.Namespace.defineWithParent(null, null, {
-        lexer: _Base.Namespace._lazy(function() {
+        lexer: _Base.Namespace._lazy(function () {
             return _OptionsLexer._optionsLexer;
         }),
-        tokenType: _Base.Namespace._lazy(function() {
+        tokenType: _Base.Namespace._lazy(function () {
             return _OptionsLexer._optionsLexer.tokenType;
         }),
     });
@@ -232,7 +232,7 @@ define('WinJS/Binding/_DomWeakRefTable',[
 
     }
 
-    // Defaults 
+    // Defaults
     var SWEEP_PERIOD = 500;
     var TIMEOUT = 1000;
     var table = {};
@@ -302,12 +302,10 @@ define('WinJS/Binding/_DomWeakRefTable',[
             var entry = table[id];
             if (entry) {
                 return entry.element;
-            }
-            else {
+            } else {
                 return _Global.document.getElementById(id);
             }
-        }
-        else {
+        } else {
             var element = _Global.document.getElementById(id);
             if (element) {
                 delete table[id];
@@ -325,35 +323,35 @@ define('WinJS/Binding/_DomWeakRefTable',[
 
     _Base.Namespace._moduleDefine(exports, "WinJS.Utilities",  {
         _DOMWeakRefTable_noTimeoutUnderDebugger: {
-            get: function() {
+            get: function () {
                 return noTimeoutUnderDebugger;
             },
-            set: function(value) {
+            set: function (value) {
                 noTimeoutUnderDebugger = value;
             }
         },
         _DOMWeakRefTable_sweepPeriod: {
-            get: function() {
+            get: function () {
                 return SWEEP_PERIOD;
             },
-            set: function(value) {
+            set: function (value) {
                 SWEEP_PERIOD = value;
             }
         },
         _DOMWeakRefTable_timeout: {
-            get: function() {
+            get: function () {
                 return TIMEOUT;
             },
-            set: function(value) {
+            set: function (value) {
                 TIMEOUT = value;
             }
         },
         _DOMWeakRefTable_tableSize: { get: function () { return Object.keys(table).length; } },
         _DOMWeakRefTable_fastLoadPath: {
-            get: function() {
+            get: function () {
                 return fastLoadPath;
             },
-            set: function(value) {
+            set: function (value) {
                 fastLoadPath = value;
             }
         },
@@ -380,9 +378,9 @@ define('WinJS/Binding/_Data',[
 
 
     var strings = {
-        get exceptionFromBindingInitializer() { return _Resources._getWinJSString("base/exceptionFromBindingInitializer").value; },
-        get propertyIsUndefined() { return _Resources._getWinJSString("base/propertyIsUndefined").value; },
-        get unsupportedDataTypeForBinding() { return _Resources._getWinJSString("base/unsupportedDataTypeForBinding").value; },
+        get exceptionFromBindingInitializer() { return "Exception thrown from binding initializer: {0}"; },
+        get propertyIsUndefined() { return "{0} is undefined"; },
+        get unsupportedDataTypeForBinding() { return "Unsupported data type"; },
     };
 
     var observableMixin = {
@@ -553,12 +551,10 @@ define('WinJS/Binding/_Data',[
                 // which means that "unbind" inside of a notification
                 // will not prevent that notification from occuring.
                 //
-            }
-            else if (name) {
+            } else if (name) {
                 this._cancel(name);
                 delete this._listeners[name];
-            }
-            else {
+            } else {
                 var that = this;
                 if (that._pendingNotifications) {
                     var v = that._pendingNotifications;
@@ -687,7 +683,7 @@ define('WinJS/Binding/_Data',[
                 // even in strict mode, when set using a string accessor.
                 // To be consistent across browsers, only notify if the
                 // set succeeded.
-                if(this._backingData[name] === newValue) {
+                if (this._backingData[name] === newValue) {
                     return this.notify(name, newValue, oldValue);
                 }
             }
@@ -813,8 +809,7 @@ define('WinJS/Binding/_Data',[
                 simpleLast = simpleLast || [];
                 simpleLast.push({ source: observable, prop: k, listener: listener });
                 observable.bind(k, listener);
-            }
-            else {
+            } else {
                 var propChanged = function (v) {
                     cancelComplex(k);
                     var complexBind = bindImpl(as(v), listener, bindStateRef);
@@ -829,8 +824,7 @@ define('WinJS/Binding/_Data',[
                                 var item = root[key];
                                 if (item instanceof Function) {
                                     item(undefined, undefined);
-                                }
-                                else {
+                                } else {
                                     recursiveNotify(item);
                                 }
                             });
@@ -859,7 +853,7 @@ define('WinJS/Binding/_Data',[
         };
     };
 
-    
+
     var ObservableProxy = _Base.Class.mix(function (data) {
         this._initObservable(data);
         Object.defineProperties(this, expandProperties(data));
@@ -916,8 +910,7 @@ define('WinJS/Binding/_Data',[
         if (!data || typeof (data) !== "object" || (data instanceof Date) || Array.isArray(data)) {
             if (_BaseUtils.validation) {
                 throw new _ErrorFromName("WinJS.Binding.UnsupportedDataType", _Resources._formatString(strings.unsupportedDataTypeForBinding));
-            }
-            else {
+            } else {
                 return;
             }
         }
@@ -978,8 +971,7 @@ define('WinJS/Binding/_Data',[
                 }
             );
                 return observable;
-            }
-        else {
+            } else {
             return data;
         }
     };
@@ -998,8 +990,7 @@ define('WinJS/Binding/_Data',[
         /// </signature>
         if (data && data.backingData) {
             return data.backingData;
-        }
-        else {
+        } else {
             return data;
         }
     };
@@ -1044,15 +1035,15 @@ define('WinJS/Binding/_Declarative',[
     var optimizeBindingReferences = _WinRT.msSetWeakWinRTProperty && _WinRT.msGetWeakWinRTProperty;
 
     var strings = {
-        get attributeBindingSingleProperty() { return _Resources._getWinJSString("base/attributeBindingSingleProperty").value; },
-        get cannotBindToThis() { return _Resources._getWinJSString("base/cannotBindToThis").value; },
-        get creatingNewProperty() { return _Resources._getWinJSString("base/creatingNewProperty").value; },
-        get duplicateBindingDetected() { return _Resources._getWinJSString("base/duplicateBindingDetected").value; },
-        get elementNotFound() { return _Resources._getWinJSString("base/elementNotFound").value; },
-        get errorInitializingBindings() { return _Resources._getWinJSString("base/errorInitializingBindings").value; },
-        get propertyDoesNotExist() { return _Resources._getWinJSString("base/propertyDoesNotExist").value; },
-        get idBindingNotSupported() { return _Resources._getWinJSString("base/idBindingNotSupported").value; },
-        get nestedDOMElementBindingNotSupported() { return _Resources._getWinJSString("base/nestedDOMElementBindingNotSupported").value; }
+        get attributeBindingSingleProperty() { return "Attribute binding requires a single destination attribute name, often in the form \"this['aria-label']\" or \"width\"."; },
+        get cannotBindToThis() { return "Can't bind to 'this'."; },
+        get creatingNewProperty() { return "Creating new property {0}. Full path:{1}"; },
+        get duplicateBindingDetected() { return "Binding against element with id {0} failed because a duplicate id was detected."; },
+        get elementNotFound() { return "Element not found:{0}"; },
+        get errorInitializingBindings() { return "Error initializing bindings: {0}"; },
+        get propertyDoesNotExist() { return "{0} doesn't exist. Full path:{1}"; },
+        get idBindingNotSupported() { return "Declarative binding to ID field is not supported. Initializer: {0}"; },
+        get nestedDOMElementBindingNotSupported() { return "Binding through a property {0} of type HTMLElement is not supported, Full path:{1}."; }
     };
 
     var markSupportedForProcessing = _BaseUtils.markSupportedForProcessing;
@@ -1070,12 +1061,10 @@ define('WinJS/Binding/_Declarative',[
         if (element) {
             if (element.winBindingToken === bindingId) {
                 return element;
-            }
-            else {
+            } else {
                 _Log.log && _Log.log(_Resources._formatString(strings.duplicateBindingDetected, element.id), "winjs binding", "error");
             }
-        }
-        else {
+        } else {
             return element;
         }
     }
@@ -1101,16 +1090,14 @@ define('WinJS/Binding/_Declarative',[
             if (cacheEntry) {
                 if (result && result.cancel) {
                     cacheEntry.bindings.push(function () { result.cancel(); });
-                }
-                else {
+                } else {
                     // notify the cache that we encountered an uncancellable thing
                     //
                     cacheEntry.nocache = true;
                 }
             }
             return result;
-        }
-        else if (initializer && initializer.render) {
+        } else if (initializer && initializer.render) {
             pend.count++;
 
             // notify the cache that we encountered an uncancellable thing
@@ -1185,8 +1172,7 @@ define('WinJS/Binding/_Declarative',[
             // declarative binding must use a weak ref to the target element
             //
             return makeBinding(ref, bindingId, pend, bindable, bind, cacheEntry);
-        }
-        else {
+        } else {
             nestedSet(e, bind.destination, getValue(source, bind.source));
         }
     }
@@ -1218,8 +1204,7 @@ define('WinJS/Binding/_Declarative',[
                 declBind = declBindCache;
             }
             return declBind;
-        }
-        else {
+        } else {
             return filterIdBinding(_BindingParser._bindingParser(bindingStr, _Global), bindingStr);
         }
     }
@@ -1286,8 +1271,7 @@ define('WinJS/Binding/_Declarative',[
                         bind.initializer = bind.initializer || defaultInitializer;
                         if (bind.initializer) {
                             bind.implementation = initializerOneBinding;
-                        }
-                        else {
+                        } else {
                             bind.implementation = sourceOneBinding;
                         }
                     }
@@ -1419,8 +1403,7 @@ define('WinJS/Binding/_Declarative',[
                     var found = checkBindingToken(_DomWeakRefTable._getWeakRefElement(ref), bindingId);
                     if (found) {
                         nestedSet(found, destProperties, convert(requireSupportedForProcessing(v)));
-                    }
-                    else if (workerResult) {
+                    } else if (workerResult) {
                         _Log.log && _Log.log(_Resources._formatString(strings.elementNotFound, ref), "winjs binding", "info");
                         workerResult.cancel();
                     }
@@ -1456,8 +1439,7 @@ define('WinJS/Binding/_Declarative',[
             if (!dest) {
                 _Log.log && _Log.log(_Resources._formatString(strings.propertyDoesNotExist, destProperties[i], destProperties.join(".")), "winjs binding", "error");
                 return;
-            }
-            else if (dest instanceof _Global.Node) {
+            } else if (dest instanceof _Global.Node) {
                 _Log.log && _Log.log(_Resources._formatString(strings.nestedDOMElementBindingNotSupported, destProperties[i], destProperties.join(".")), "winjs binding", "error");
                 return;
             }
@@ -1538,8 +1520,7 @@ define('WinJS/Binding/_Declarative',[
                 var found = checkBindingToken(_DomWeakRefTable._getWeakRefElement(ref), bindingId);
                 if (found) {
                     attributeSet(found, destProperties, requireSupportedForProcessing(v));
-                }
-                else if (workerResult) {
+                } else if (workerResult) {
                     _Log.log && _Log.log(_Resources._formatString(strings.elementNotFound, ref), "winjs binding", "info");
                     workerResult.cancel();
                 }
@@ -1591,7 +1572,7 @@ define('WinJS/Binding/_Declarative',[
         dest = requireSupportedForProcessing(dest);
         var value = getValue(source, sourceProperties);
         if (Array.isArray(value)) {
-            value.forEach(function(className) {
+            value.forEach(function (className) {
                 _ElementUtilities.addClass(dest, className);
             });
         } else if (value) {
@@ -1640,8 +1621,7 @@ define('WinJS/Binding/_Declarative',[
             current[sourceProperties[sourceProperties.length - 1]] = func;
 
             return _Data.bind(bindable, root, true);
-        }
-        else if (sourceProperties.length === 1) {
+        } else if (sourceProperties.length === 1) {
             bindable.bind(sourceProperties[0], func, true);
             return {
                 cancel: function () {
@@ -1649,8 +1629,7 @@ define('WinJS/Binding/_Declarative',[
                     this.cancel = noop;
                 }
             };
-        }
-        else {
+        } else {
             // can't bind to object, so we just push it through
             //
             func(bindable);
@@ -1715,6 +1694,6 @@ define('WinJS/Binding',[
     './Binding/_BindingParser',
     './Binding/_Data',
     './Binding/_Declarative',
-    './Binding/_DomWeakRefTable'], function() {
+    './Binding/_DomWeakRefTable'], function () {
     //Wrapper module
 });

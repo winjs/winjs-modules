@@ -46,7 +46,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                 itemSelectedEventDelay = 250;
 
             var strings = {
-                get badCurrentPage() { return _Resources._getWinJSString("ui/badCurrentPage").value; }
+                get badCurrentPage() { return "Invalid argument: currentPage must be a number greater than or equal to zero and be within the bounds of the datasource"; }
             };
 
             function isFlipper(element) {
@@ -97,6 +97,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                 if (this._tabIndex < 0) {
                     this._tabIndex = 0;
                 }
+                panningDiv.tabIndex = -1;
                 flipperDiv.tabIndex = -1;
                 this._tabManager = new _TabContainer.TabContainer(this._panningDivContainer);
                 this._tabManager.tabIndex = this._tabIndex;
@@ -122,31 +123,22 @@ define('WinJS/Controls/FlipView/_PageManager',[
                 }, false);
                 new _ElementUtilities._MutationObserver(flipperPropertyChanged).observe(this._flipperDiv, { attributes: true, attributeFilter: ["dir", "style", "tabindex"] });
                 this._cachedStyleDir = this._flipperDiv.style.direction;
-                this._panningDiv.addEventListener("activate", function () {
-                    that._hasFocus = true;
-                }, true);
-                this._panningDiv.addEventListener("deactivate", function () {
-                    that._hasFocus = false;
-                }, true);
+
+                this._handleManipulationStateChangedBound = this._handleManipulationStateChanged.bind(this);
+
                 if (this._environmentSupportsTouch) {
-                    this._panningDivContainer.addEventListener(_BaseUtils._browserEventEquivalents["manipulationStateChanged"], function (event) {
-                        that._manipulationState = event.currentState;
-                        if (event.currentState === 0 && event.target === that._panningDivContainer) {
-                            that._itemSettledOn();
-                            that._ensureCentered();
-                        }
-                    }, true);
+                    this._panningDivContainer.addEventListener(_BaseUtils._browserEventEquivalents["manipulationStateChanged"], this._handleManipulationStateChangedBound, true);
                 }
             }, {
                 // Public Methods
 
-                initialize: function (initialIndex, horizontal) {
+                initialize: function (initialIndex, isHorizontal) {
                     var currPage = null;
                     // Every call to offsetWidth/offsetHeight causes an switch from Script to Layout which affects
                     // the performance of the control. The values will be cached and will be updated when a resize occurs.
                     this._panningDivContainerOffsetWidth = this._panningDivContainer.offsetWidth;
                     this._panningDivContainerOffsetHeight = this._panningDivContainer.offsetHeight;
-                    this._horizontal = horizontal;
+                    this._isHorizontal = isHorizontal;
                     if (!this._currentPage) {
                         this._bufferAriaStartMarker = _Global.document.createElement("div");
                         this._bufferAriaStartMarker.id = uniqueID(this._bufferAriaStartMarker);
@@ -156,7 +148,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                         currPage = this._currentPage;
                         this._panningDiv.appendChild(currPage.pageRoot);
 
-                        // flipPageBufferCount is added here twice. 
+                        // flipPageBufferCount is added here twice.
                         // Once for the buffer prior to the current item, and once for the buffer ahead of the current item.
                         var pagesToInit = 2 * this._bufferSize;
                         for (var i = 0; i < pagesToInit; i++) {
@@ -186,37 +178,45 @@ define('WinJS/Controls/FlipView/_PageManager',[
                     } while (tmpPage !== curPage);
                 },
 
-                setOrientation: function (horizontal) {
+                setOrientation: function (isHorizontal) {
                     if (this._notificationsEndedSignal) {
                         var that = this;
                         this._notificationsEndedSignal.promise.done(function () {
                             that._notificationsEndedSignal = null;
-                            that.setOrientation(horizontal);
+                            that.setOrientation(isHorizontal);
                         });
                         return;
                     }
 
-                    if (horizontal !== this._horizontal) {
-                        this._isOrientationChanging = true;
-                        this._horizontal = horizontal;
-                        this._forEachPage(function (curr) {
+                    if (isHorizontal === this._isHorizontal) {
+                        return;
+                    }
+
+                    this._isOrientationChanging = true;
+
+                    if (this._isHorizontal) {
+                        _ElementUtilities.setScrollPosition(this._panningDivContainer, { scrollLeft: this._getItemStart(this._currentPage), scrollTop: 0 });
+                    } else {
+                        _ElementUtilities.setScrollPosition(this._panningDivContainer, { scrollLeft: 0, scrollTop: this._getItemStart(this._currentPage) });
+                    }
+                    this._isHorizontal = isHorizontal;
+
+                    var containerStyle = this._panningDivContainer.style;
+                    containerStyle.overflowX = "hidden";
+                    containerStyle.overflowY = "hidden";
+
+                    var that = this;
+                    _Global.requestAnimationFrame(function () {
+                        that._isOrientationChanging = false;
+                        that._forEachPage(function (curr) {
                             var currStyle = curr.pageRoot.style;
                             currStyle.left = "0px";
                             currStyle.top = "0px";
                         });
-                        _ElementUtilities.setScrollPosition(this._panningDivContainer, { scrollLeft: 0, scrollTop: 0 });
-                        var containerStyle = this._panningDivContainer.style;
-                        containerStyle.overflowX = "hidden";
-                        containerStyle.overflowY = "hidden";
-
-                        var that = this;
-                        _Global.requestAnimationFrame(function () {
-                            that._isOrientationChanging = false;
-                            containerStyle.overflowX = ((that._horizontal && that._environmentSupportsTouch) ? "scroll" : "hidden");
-                            containerStyle.overflowY = ((that._horizontal || !that._environmentSupportsTouch) ? "hidden" : "scroll");
-                            that._ensureCentered();
-                        });
-                    }
+                        containerStyle.overflowX = ((that._isHorizontal && that._environmentSupportsTouch) ? "scroll" : "hidden");
+                        containerStyle.overflowY = ((that._isHorizontal || !that._environmentSupportsTouch) ? "hidden" : "scroll");
+                        that._ensureCentered();
+                    });
                 },
 
                 resetState: function (initialIndex) {
@@ -281,18 +281,23 @@ define('WinJS/Controls/FlipView/_PageManager',[
                 },
 
                 scrollPosChanged: function () {
+
+                    if (this._hasFocus) {
+                        this._hadFocus = true;
+                    }
+
                     if (!this._itemsManager || !this._currentPage.element || this._isOrientationChanging) {
                         return;
                     }
 
-                    var newPos = this._viewportStart(),
+                    var newPos = this._getViewportStart(),
                         bufferEnd = (this._lastScrollPos > newPos ? this._getTailOfBuffer() : this._getHeadOfBuffer());
 
                     if (newPos === this._lastScrollPos) {
                         return;
                     }
 
-                    while (this._currentPage.element && this._itemStart(this._currentPage) > newPos && this._currentPage.prev.element) {
+                    while (this._currentPage.element && this._getItemStart(this._currentPage) > newPos && this._currentPage.prev.element) {
                         this._currentPage = this._currentPage.prev;
                         this._fetchOnePrevious(bufferEnd.prev);
                         bufferEnd = bufferEnd.prev;
@@ -313,7 +318,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                     this._setListEnds();
 
                     if (!this._manipulationState && this._viewportOnItemStart()) {
-                        // Setup a timeout to invoke _itemSettledOn in cases where the scroll position is changed, and the control 
+                        // Setup a timeout to invoke _itemSettledOn in cases where the scroll position is changed, and the control
                         // does not know when it has settled on an item (e.g. 1-finger swipe with narrator touch).
                         this._currentPage.element.setAttribute("aria-setsize", this._cachedSize);
                         this._currentPage.element.setAttribute("aria-posinset", this.currentIndex() + 1);
@@ -453,8 +458,8 @@ define('WinJS/Controls/FlipView/_PageManager',[
                             incomingFlipPage.pageRoot.style.position = "absolute";
                             outgoingFlipPage.pageRoot.style.zIndex = 1;
                             incomingFlipPage.pageRoot.style.zIndex = 2;
-                            this._itemStart(outgoingFlipPage, 0, 0);
-                            this._itemStart(incomingFlipPage, 0, 0);
+                            this._setItemStart(outgoingFlipPage, 0);
+                            this._setItemStart(incomingFlipPage, 0);
                             this._blockTabs = true;
                             this._visibleElements.push(incomingElement);
                             this._announceElementVisible(incomingElement);
@@ -478,7 +483,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                         if (!outgoingRemoved) {
                             // Advance only when the element in the current page was not removed because if it did, all the pages
                             // were shifted.
-                            this._viewportStart(this._itemStart(goForward ? this._currentPage.next : this._currentPage.prev));
+                            this._setViewportStart(this._getItemStart(goForward ? this._currentPage.next : this._currentPage.prev));
                         }
                         this._navigationAnimationRecord = null;
                         this._itemSettledOn();
@@ -487,6 +492,10 @@ define('WinJS/Controls/FlipView/_PageManager',[
 
                 startAnimatedJump: function (index, cancelAnimationCallback, completionCallback) {
                     this._writeProfilerMark("WinJS.UI.FlipView:startAnimatedJump,info");
+
+                    if (this._hasFocus) {
+                        this._hadFocus = true;
+                    }
                     if (this._currentPage.element) {
                         var oldElement = this._currentPage.element;
                         var oldIndex = this._getElementIndex(oldElement);
@@ -533,8 +542,8 @@ define('WinJS/Controls/FlipView/_PageManager',[
                             newFlipPage.pageRoot.style.position = "absolute";
                             oldFlipPage.pageRoot.style.zIndex = 1;
                             newFlipPage.pageRoot.style.zIndex = 2;
-                            that._itemStart(oldFlipPage, 0, 0);
-                            that._itemStart(newFlipPage, that._itemSize(that._currentPage), 0);
+                            that._setItemStart(oldFlipPage, 0);
+                            that._setItemStart(newFlipPage, that._itemSize(that._currentPage));
                             that._visibleElements.push(newElement);
                             that._announceElementVisible(newElement);
                             that._navigationAnimationRecord.elementContainers = [oldFlipPage, newFlipPage];
@@ -547,6 +556,38 @@ define('WinJS/Controls/FlipView/_PageManager',[
                     }
 
                     return Promise.wrap(null);
+                },
+
+                simulateMouseWheelScroll: function (ev) {
+
+                    if (this._environmentSupportsTouch || this._waitingForMouseScroll) {
+                        return;
+                    }
+
+                    var wheelingForward;
+
+                    if (typeof ev.deltaY === 'number') {
+                        wheelingForward = (ev.deltaX || ev.deltaY) > 0;
+                    } else {
+                        wheelingForward = ev.wheelDelta < 0;
+                    }
+
+                    var targetPage = wheelingForward ? this._currentPage.next : this._currentPage.prev;
+
+                    if (!targetPage.element) {
+                        return;
+                    }
+
+                    var zoomToContent = { contentX: 0, contentY: 0, viewportX: 0, viewportY: 0 };
+                    zoomToContent[this._isHorizontal ? "contentX" : "contentY"] = this._getItemStart(targetPage);
+                    _ElementUtilities._zoomTo(this._panningDivContainer, zoomToContent);
+                    this._waitingForMouseScroll = true;
+
+                    // The 100ms is added to the zoom duration to give the snap feeling where the page sticks
+                    // while scrolling
+                    _Global.setTimeout(function () {
+                        this._waitingForMouseScroll = false;
+                    }.bind(this), _ElementUtilities._zoomToDuration + 100);
                 },
 
                 endAnimatedJump: function (oldCurr, newCurr) {
@@ -743,8 +784,8 @@ define('WinJS/Controls/FlipView/_PageManager',[
                             work = this._itemsManager._previousItem(prevMarker.next.element).
                                 then(function (e) {
                                     if (e === element) {
-                                        // Because the VDS and Binding.List can send notifications in 
-                                        // different states we accomodate this here by fixing the case 
+                                        // Because the VDS and Binding.List can send notifications in
+                                        // different states we accomodate this here by fixing the case
                                         // where VDS hasn't yet removed an item when it sends a removed
                                         // or moved notification.
                                         //
@@ -763,8 +804,8 @@ define('WinJS/Controls/FlipView/_PageManager',[
                             work = this._itemsManager._nextItem(prevMarker.prev.prev.element).
                                 then(function (e) {
                                     if (e === element) {
-                                        // Because the VDS and Binding.List can send notifications in 
-                                        // different states we accomodate this here by fixing the case 
+                                        // Because the VDS and Binding.List can send notifications in
+                                        // different states we accomodate this here by fixing the case
                                         // where VDS hasn't yet removed an item when it sends a removed
                                         // or moved notification.
                                         //
@@ -849,7 +890,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                     // The moved animation of the last part is joined with the moved animation of the previous part, so in the end it is:
                     // removed -> moved items in view + moved items not in view -> inserted.
                     var that = this;
-                    this._endNotificationsWork  && this._endNotificationsWork.cancel();
+                    this._endNotificationsWork && this._endNotificationsWork.cancel();
                     this._endNotificationsWork = this._ensureBufferConsistency().then(function () {
                         var animationPromises = [];
                         that._forEachPage(function (curr) {
@@ -860,7 +901,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                                     animationPromises.push(that._changeFlipPage(curr, record.oldElement, record.newElement));
                                 }
                                 record.newLocation = curr.location;
-                                that._itemStart(curr, record.originalLocation);
+                                that._setItemStart(curr, record.originalLocation);
                                 if (record.inserted) {
                                     curr.elementRoot.style.opacity = 0.0;
                                 }
@@ -881,7 +922,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                         function animateOldViewportItemRemoved(record, item) {
                             that._writeProfilerMark("WinJS.UI.FlipView:_animateOldViewportItemRemoved,info");
                             var removedPage = that._createDiscardablePage(item);
-                            that._itemStart(removedPage, record.originalLocation);
+                            that._setItemStart(removedPage, record.originalLocation);
                             animationPromises.push(that._deleteFlipPage(removedPage));
                         }
 
@@ -903,9 +944,9 @@ define('WinJS/Controls/FlipView/_PageManager',[
                                 newLocation = record.newLocation;
                             }
                             if (movedPage) {
-                                that._itemStart(movedPage, record.originalLocation);
+                                that._setItemStart(movedPage, record.originalLocation);
                                 animationPromises.push(that._moveFlipPage(movedPage, function () {
-                                    that._itemStart(movedPage, newLocation);
+                                    that._setItemStart(movedPage, newLocation);
                                 }));
                             }
                         }
@@ -957,7 +998,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                                                 (record === oldCurrentRecord && !oldCurrentRecord.moved) ||
                                                 (record === oldNextRecord && !oldNextRecord.moved)) {
                                                 animationPromises.push(that._moveFlipPage(curr, function () {
-                                                    that._itemStart(curr, record.newLocation);
+                                                    that._setItemStart(curr, record.newLocation);
                                                 }));
                                             }
                                         }
@@ -991,7 +1032,36 @@ define('WinJS/Controls/FlipView/_PageManager',[
                     });
                 },
 
+                disableTouchFeatures: function () {
+                    this._environmentSupportsTouch = false;
+                    var panningContainerStyle = this._panningDivContainer.style;
+                    this._panningDivContainer.removeEventListener(_BaseUtils._browserEventEquivalents["manipulationStateChanged"], this._handleManipulationStateChangedBound, true);
+                    panningContainerStyle.overflowX = "hidden";
+                    panningContainerStyle.overflowY = "hidden";
+                    var panningContainerPropertiesToClear = [
+                        "scroll-snap-type",
+                        "scroll-snap-points-x",
+                        "scroll-snap-points-y",
+                        "scroll-limit-x-min",
+                        "scroll-limit-x-max",
+                        "scroll-limit-y-min",
+                        "scroll-limit-y-max"
+                    ];
+                    panningContainerPropertiesToClear.forEach(function (propertyName) {
+                        var platformPropertyName = styleEquivalents[propertyName];
+                        if (platformPropertyName) {
+                            panningContainerStyle[platformPropertyName.scriptName] = "";
+                        }
+                    });
+                },
+
                 // Private methods
+
+                _hasFocus: {
+                    get: function () {
+                        return this._flipperDiv.contains(_Global.document.activeElement);
+                    }
+                },
 
                 _timeoutPageSelection: function () {
                     var that = this;
@@ -1040,14 +1110,14 @@ define('WinJS/Controls/FlipView/_PageManager',[
                     }
                 },
 
-                _writeProfilerMark: function(message) {
+                _writeProfilerMark: function (message) {
                     _WriteProfilerMark(message);
                     if (this._flipperDiv.winControl.constructor._enabledDebug) {
                         _Log.log && _Log.log(message, null, "flipviewdebug");
                     }
                 },
 
-                _getElementIndex: function(element) {
+                _getElementIndex: function (element) {
                     var index = 0;
                     try {
                         index = this._itemsManager.itemObject(element).index;
@@ -1199,7 +1269,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
 
                 _ensureCentered: function (delayBoundariesSet) {
                     this._writeProfilerMark("WinJS.UI.FlipView:_ensureCentered,info");
-                    this._itemStart(this._currentPage, leftBufferAmount * this._viewportSize());
+                    this._setItemStart(this._currentPage, leftBufferAmount * this._viewportSize());
                     var curr = this._currentPage;
                     while (curr !== this._prevMarker) {
                         this._movePageBehind(curr, curr.prev);
@@ -1216,8 +1286,8 @@ define('WinJS/Controls/FlipView/_PageManager',[
                         this._setListEnds();
                         boundariesSet = true;
                     }
-                    this._lastScrollPos = this._itemStart(this._currentPage);
-                    this._viewportStart(this._lastScrollPos);
+                    this._lastScrollPos = this._getItemStart(this._currentPage);
+                    this._setViewportStart(this._lastScrollPos);
                     this._checkElementVisibility(true);
                     this._setupSnapPoints();
                     if (!boundariesSet) {
@@ -1470,7 +1540,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                     page.element = null;
                     page.elementUniqueID = null;
 
-                    // The flip pages are managed as a circular doubly-linked list. this.currentItem should always refer to the current item in view, and this._prevMarker marks the point 
+                    // The flip pages are managed as a circular doubly-linked list. this.currentItem should always refer to the current item in view, and this._prevMarker marks the point
                     // in the list where the last previous item is stored. Why a circular linked list?
                     // The virtualized flipper reuses its flip pages. When a new item is requested, the flipper needs to reuse an old item from the buffer. In the case of previous items,
                     // the flipper has to go all the way back to the farthest next item in the buffer and recycle it (which is why having a .prev pointer on the farthest previous item is really useful),
@@ -1500,7 +1570,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                             if (!element) {
                                 // If there are data source updates during the animation (e.g. item removed), a page element can be set to null when the shiftLeft/Right functions
                                 // call this function with a null element. However, since the element in the page is in the middle of an animation its page.elementUniqueID
-                                // is still set, so we need to explicitly clear its value so that when the animation completes, the animated element is not 
+                                // is still set, so we need to explicitly clear its value so that when the animation completes, the animated element is not
                                 // restored back into the internal buffer.
                                 page.elementUniqueID = null;
                             }
@@ -1560,33 +1630,36 @@ define('WinJS/Controls/FlipView/_PageManager',[
                 },
 
                 _itemInView: function (flipPage) {
-                    return this._itemEnd(flipPage) > this._viewportStart() && this._itemStart(flipPage) < this._viewportEnd();
+                    return this._itemEnd(flipPage) > this._getViewportStart() && this._getItemStart(flipPage) < this._viewportEnd();
                 },
 
-                _viewportStart: function (newValue) {
+                _getViewportStart: function () {
                     if (!this._panningDivContainer.parentNode) {
                         return;
                     }
+                    if (this._isHorizontal) {
+                        return _ElementUtilities.getScrollPosition(this._panningDivContainer).scrollLeft;
+                    } else {
+                        return _ElementUtilities.getScrollPosition(this._panningDivContainer).scrollTop;
+                    }
+                },
 
-                    if (this._horizontal) {
-                        if (newValue === undefined) {
-                            return _ElementUtilities.getScrollPosition(this._panningDivContainer).scrollLeft;
-                        }
+                _setViewportStart: function (newValue) {
+                    if (!this._panningDivContainer.parentNode) {
+                        return;
+                    }
+                    if (this._isHorizontal) {
                         _ElementUtilities.setScrollPosition(this._panningDivContainer, { scrollLeft: newValue });
                     } else {
-                        if (newValue === undefined) {
-                            return this._panningDivContainer.scrollTop;
-                        }
-
-                        this._panningDivContainer.scrollTop = newValue;
+                        _ElementUtilities.setScrollPosition(this._panningDivContainer, { scrollTop: newValue });
                     }
                 },
 
                 _viewportEnd: function () {
                     var element = this._panningDivContainer;
-                    if (this._horizontal) {
+                    if (this._isHorizontal) {
                         if (this._rtl) {
-                            return this._viewportStart() + this._panningDivContainerOffsetWidth;
+                            return this._getViewportStart() + this._panningDivContainerOffsetWidth;
                         } else {
                             return _ElementUtilities.getScrollPosition(element).scrollLeft + this._panningDivContainerOffsetWidth;
                         }
@@ -1596,39 +1669,39 @@ define('WinJS/Controls/FlipView/_PageManager',[
                 },
 
                 _viewportSize: function () {
-                    return this._horizontal ? this._panningDivContainerOffsetWidth : this._panningDivContainerOffsetHeight;
+                    return this._isHorizontal ? this._panningDivContainerOffsetWidth : this._panningDivContainerOffsetHeight;
                 },
 
-                _itemStart: function (flipPage, newValue) {
-                    if (newValue === undefined) {
-                        return flipPage.location;
-                    }
+                _getItemStart: function (flipPage) {
+                    return flipPage.location;
+                },
 
-                    if (this._horizontal) {
+                _setItemStart: function (flipPage, newValue) {
+
+                    if (this._isHorizontal) {
                         flipPage.pageRoot.style.left = (this._rtl ? -newValue : newValue) + "px";
                     } else {
                         flipPage.pageRoot.style.top = newValue + "px";
                     }
-
                     flipPage.location = newValue;
                 },
 
                 _itemEnd: function (flipPage) {
-                    return (this._horizontal ? flipPage.location + this._panningDivContainerOffsetWidth : flipPage.location + this._panningDivContainerOffsetHeight) + this._itemSpacing;
+                    return (this._isHorizontal ? flipPage.location + this._panningDivContainerOffsetWidth : flipPage.location + this._panningDivContainerOffsetHeight) + this._itemSpacing;
                 },
 
                 _itemSize: function () {
-                    return this._horizontal ? this._panningDivContainerOffsetWidth : this._panningDivContainerOffsetHeight;
+                    return this._isHorizontal ? this._panningDivContainerOffsetWidth : this._panningDivContainerOffsetHeight;
                 },
 
                 _movePageAhead: function (referencePage, pageToPlace) {
                     var delta = this._itemSize(referencePage) + this._itemSpacing;
-                    this._itemStart(pageToPlace, this._itemStart(referencePage) + delta);
+                    this._setItemStart(pageToPlace, this._getItemStart(referencePage) + delta);
                 },
 
                 _movePageBehind: function (referencePage, pageToPlace) {
                     var delta = this._itemSize(referencePage) + this._itemSpacing;
-                    this._itemStart(pageToPlace, this._itemStart(referencePage) - delta);
+                    this._setItemStart(pageToPlace, this._getItemStart(referencePage) - delta);
                 },
 
                 _setupSnapPoints: function () {
@@ -1641,9 +1714,9 @@ define('WinJS/Controls/FlipView/_PageManager',[
                     var snapInterval = viewportSize + this._itemSpacing;
                     var propertyName = "scroll-snap-points";
                     var startSnap = 0;
-                    var currPos = this._itemStart(this._currentPage);
+                    var currPos = this._getItemStart(this._currentPage);
                     startSnap = currPos % (viewportSize + this._itemSpacing);
-                    containerStyle[styleEquivalents[(this._horizontal ? propertyName + "-x" : propertyName + "-y")].scriptName] = "snapInterval(" + startSnap + "px, " + snapInterval + "px)";
+                    containerStyle[styleEquivalents[(this._isHorizontal ? propertyName + "-x" : propertyName + "-y")].scriptName] = "snapInterval(" + startSnap + "px, " + snapInterval + "px)";
                 },
 
                 _setListEnds: function () {
@@ -1657,8 +1730,8 @@ define('WinJS/Controls/FlipView/_PageManager',[
                             endScroll = 0,
                             startNonEmptyPage = this._getTailOfBuffer(),
                             endNonEmptyPage = this._getHeadOfBuffer(),
-                            startBoundaryStyle = styleEquivalents["scroll-limit-" + (this._horizontal ? "x-min" : "y-min")].scriptName,
-                            endBoundaryStyle = styleEquivalents["scroll-limit-" + (this._horizontal ? "x-max" : "y-max")].scriptName;
+                            startBoundaryStyle = styleEquivalents["scroll-limit-" + (this._isHorizontal ? "x-min" : "y-min")].scriptName,
+                            endBoundaryStyle = styleEquivalents["scroll-limit-" + (this._isHorizontal ? "x-max" : "y-max")].scriptName;
 
                         while (!endNonEmptyPage.element) {
                             endNonEmptyPage = endNonEmptyPage.prev;
@@ -1680,15 +1753,15 @@ define('WinJS/Controls/FlipView/_PageManager',[
                             }
                         }
 
-                        endScroll = this._itemStart(endNonEmptyPage);
-                        startScroll = this._itemStart(startNonEmptyPage);
+                        endScroll = this._getItemStart(endNonEmptyPage);
+                        startScroll = this._getItemStart(startNonEmptyPage);
                         containerStyle[startBoundaryStyle] = startScroll + "px";
                         containerStyle[endBoundaryStyle] = endScroll + "px";
                     }
                 },
 
                 _viewportOnItemStart: function () {
-                    return this._itemStart(this._currentPage) === this._viewportStart();
+                    return this._getItemStart(this._currentPage) === this._getViewportStart();
                 },
 
                 _restoreAnimatedElement: function (oldPage, discardablePage) {
@@ -1723,10 +1796,6 @@ define('WinJS/Controls/FlipView/_PageManager',[
                         if (that._viewportOnItemStart()) {
                             that._blockTabs = false;
                             if (that._currentPage.element) {
-                                if (that._hasFocus) {
-                                    _ElementUtilities._setActive(that._currentPage.element);
-                                    that._tabManager.childFocus = that._currentPage.element;
-                                }
                                 if (that._lastSelectedElement !== that._currentPage.element) {
                                     if (that._lastSelectedPage && that._lastSelectedPage.element && !isFlipper(that._lastSelectedPage.element)) {
                                         that._lastSelectedPage.element.setAttribute("aria-selected", false);
@@ -1742,13 +1811,18 @@ define('WinJS/Controls/FlipView/_PageManager',[
                                     // - in case a FlipView navigation is triggered inside the pageselected listener (avoid reentering _itemSettledOn)
                                     Scheduler.schedule(function FlipView_dispatchPageSelectedEvent() {
                                         if (that._currentPage.element) {
+                                            if (that._hasFocus || that._hadFocus) {
+                                                that._hadFocus = false;
+                                                _ElementUtilities._setActive(that._currentPage.element);
+                                                that._tabManager.childFocus = that._currentPage.element;
+                                            }
                                             var event = _Global.document.createEvent("CustomEvent");
                                             event.initCustomEvent(_Constants.pageSelectedEvent, true, false, { source: that._flipperDiv });
                                             that._writeProfilerMark("WinJS.UI.FlipView:pageSelectedEvent,info");
                                             that._currentPage.element.dispatchEvent(event);
 
                                             // Fire the pagecompleted event when the render completes if we are still looking  at the same element.
-                                            // Check that the current element is not null, since the app could've triggered a navigation inside the 
+                                            // Check that the current element is not null, since the app could've triggered a navigation inside the
                                             // pageselected event handler.
                                             var originalElement = that._currentPage.element;
                                             if (originalElement) {
@@ -1782,7 +1856,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                             break;
                         }
                         curr = curr.next;
-                    } while(curr !== this._prevMarker);
+                    } while (curr !== this._prevMarker);
                 },
 
                 _changeFlipPage: function (page, oldElement, newElement) {
@@ -1857,6 +1931,14 @@ define('WinJS/Controls/FlipView/_PageManager',[
                             }
                         }
                     });
+                },
+
+                _handleManipulationStateChanged: function (event) {
+                    this._manipulationState = event.currentState;
+                    if (event.currentState === 0 && event.target === this._panningDivContainer) {
+                        this._itemSettledOn();
+                        this._ensureCentered();
+                    }
                 }
             }, {
                 supportedForProcessing: false,
@@ -1889,13 +1971,14 @@ define('WinJS/Controls/FlipView',[
     '../Utilities/_Control',
     '../Utilities/_Dispose',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_Hoverable',
     '../Utilities/_ItemsManager',
     '../Utilities/_UI',
     './FlipView/_Constants',
     './FlipView/_PageManager',
     'require-style!less/desktop/controls',
     'require-style!less/phone/controls'
-    ], function flipperInit(_Global,_Base, _BaseUtils, _ErrorFromName, _Events, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, Promise, Scheduler, _Control, _Dispose, _ElementUtilities, _ItemsManager, _UI, _Constants, _PageManager) {
+    ], function flipperInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, Promise, Scheduler, _Control, _Dispose, _ElementUtilities, _Hoverable, _ItemsManager, _UI, _Constants, _PageManager) {
     "use strict";
 
     _Base.Namespace.define("WinJS.UI", {
@@ -1917,9 +2000,9 @@ define('WinJS/Controls/FlipView',[
         /// <part name="rightNavigationButton" class="win-navright" locid="WinJS.UI.FlipView_part:rightNavigationButton">The right navigation button.</part>
         /// <part name="topNavigationButton" class="win-navtop" locid="WinJS.UI.FlipView_part:topNavigationButton">The top navigation button.</part>
         /// <part name="bottomNavigationButton" class="win-navbottom" locid="WinJS.UI.FlipView_part:bottomNavigationButton">The bottom navigation button.</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         FlipView: _Base.Namespace._lazy(function () {
 
             // Class names
@@ -1970,11 +2053,11 @@ define('WinJS/Controls/FlipView',[
             }
 
             var strings = {
-                get badAxis() { return _Resources._getWinJSString("ui/badAxis").value; },
-                get badCurrentPage() { return _Resources._getWinJSString("ui/badCurrentPage").value; },
-                get noitemsManagerForCount() { return _Resources._getWinJSString("ui/noitemsManagerForCount").value; },
-                get badItemSpacingAmount() { return _Resources._getWinJSString("ui/badItemSpacingAmount").value; },
-                get navigationDuringStateChange() { return _Resources._getWinJSString("ui/flipViewNavigationDuringStateChange").value; },
+                get badAxis() { return "Invalid argument: orientation must be a string, either 'horizontal' or 'vertical'"; },
+                get badCurrentPage() { return "Invalid argument: currentPage must be a number greater than or equal to zero and be within the bounds of the datasource"; },
+                get noitemsManagerForCount() { return "Invalid operation: can't get count if no dataSource has been set"; },
+                get badItemSpacingAmount() { return "Invalid argument: itemSpacing must be a number greater than or equal to zero"; },
+                get navigationDuringStateChange() { return "Error: After changing itemDataSource or itemTemplate, any navigation in the FlipView control should be delayed until the pageselected event is fired."; },
                 get panningContainerAriaLabel() { return _Resources._getWinJSString("ui/flipViewPanningContainerAriaLabel").value; }
             };
 
@@ -2003,7 +2086,7 @@ define('WinJS/Controls/FlipView',[
 
                 element = element || _Global.document.createElement("div");
 
-                var horizontal = true,
+                var isHorizontal = true,
                     dataSource = null,
                     itemRenderer = _ItemsManager._trivialHtmlRenderer,
                     initialIndex = 0,
@@ -2015,11 +2098,11 @@ define('WinJS/Controls/FlipView',[
                         if (typeof options.orientation === "string") {
                             switch (options.orientation.toLowerCase()) {
                                 case "horizontal":
-                                    horizontal = true;
+                                    isHorizontal = true;
                                     break;
 
                                 case "vertical":
-                                    horizontal = false;
+                                    isHorizontal = false;
                                     break;
                             }
                         }
@@ -2055,11 +2138,12 @@ define('WinJS/Controls/FlipView',[
                 this._flipviewDiv = element;
                 element.winControl = this;
                 _Control._setOptions(this, options, true);
-                this._initializeFlipView(element, horizontal, dataSource, itemRenderer, initialIndex, itemSpacing);
+                this._initializeFlipView(element, isHorizontal, dataSource, itemRenderer, initialIndex, itemSpacing);
                 _ElementUtilities.addClass(element, "win-disposable");
                 this._avoidTrappingTime = 0;
                 this._windowWheelHandlerBound = this._windowWheelHandler.bind(this);
-                _Global.addEventListener('wheel', this._windowWheelHandlerBound);
+                _ElementUtilities._globalListener.addEventListener(element, 'wheel', this._windowWheelHandlerBound);
+                _ElementUtilities._globalListener.addEventListener(element, 'mousewheel', this._windowWheelHandlerBound);
 
                 _WriteProfilerMark("WinJS.UI.FlipView:constructor,StopTM");
             }, {
@@ -2077,7 +2161,8 @@ define('WinJS/Controls/FlipView',[
                         return;
                     }
 
-                    _Global.removeEventListener('wheel', this._windowWheelHandlerBound);
+                    _ElementUtilities._globalListener.removeEventListener(this._flipviewDiv, 'wheel', this._windowWheelHandlerBound);
+                    _ElementUtilities._globalListener.removeEventListener(this._flipviewDiv, 'mousewheel', this._windowWheelHandlerBound);
                     _ElementUtilities._resizeNotifier.unsubscribe(this._flipviewDiv, flipviewResized);
 
 
@@ -2206,11 +2291,11 @@ define('WinJS/Controls/FlipView',[
                     },
                     set: function (orientation) {
                         _WriteProfilerMark("WinJS.UI.FlipView:set_orientation,info");
-                        var horizontal = orientation === "horizontal";
-                        if (horizontal !== this._horizontal) {
-                            this._horizontal = horizontal;
+                        var isHorizontal = orientation === "horizontal";
+                        if (isHorizontal !== this._isHorizontal) {
+                            this._isHorizontal = isHorizontal;
                             this._setupOrientation();
-                            this._pageManager.setOrientation(this._horizontal);
+                            this._pageManager.setOrientation(this._isHorizontal);
                         }
                     }
                 },
@@ -2330,7 +2415,9 @@ define('WinJS/Controls/FlipView',[
 
                 // Private members
 
-                _initializeFlipView: function FlipView_initializeFlipView(element, horizontal, dataSource, itemRenderer, initialIndex, itemSpacing) {
+                _initializeFlipView: function FlipView_initializeFlipView(element, isHorizontal, dataSource, itemRenderer, initialIndex, itemSpacing) {
+                    var that = this;
+                    var flipViewInitialized = false;
                     this._flipviewDiv = element;
                     _ElementUtilities.addClass(this._flipviewDiv, flipViewClass);
                     this._contentDiv = _Global.document.createElement("div");
@@ -2339,7 +2426,7 @@ define('WinJS/Controls/FlipView',[
                     this._panningDiv = _Global.document.createElement("div");
                     this._prevButton = _Global.document.createElement("button");
                     this._nextButton = _Global.document.createElement("button");
-                    this._horizontal = horizontal;
+                    this._isHorizontal = isHorizontal;
                     this._dataSource = dataSource;
                     this._itemRenderer = itemRenderer;
                     this._itemsManager = null;
@@ -2355,6 +2442,7 @@ define('WinJS/Controls/FlipView',[
                         "scroll-snap-y",
                         "overflow-style",
                     ];
+
                     var allFeaturesSupported = true,
                         styleEquivalents = _BaseUtils._browserStyleEquivalents;
                     for (var i = 0, len = stylesRequiredForFullFeatureMode.length; i < len; i++) {
@@ -2362,6 +2450,27 @@ define('WinJS/Controls/FlipView',[
                     }
                     allFeaturesSupported = allFeaturesSupported && !!_BaseUtils._browserEventEquivalents["manipulationStateChanged"];
                     this._environmentSupportsTouch = allFeaturesSupported;
+                    if (allFeaturesSupported) {
+                        // All of our synchronous checks indicate that touch is supported. Because the last check can be
+                        // asynchronous, we'll assume that touch is supported for now and if we later find out it isn't,
+                        // we'll tear down the touch features.
+                        _ElementUtilities._detectSnapPointsSupport().then(function (snapPointsSupported) {
+                            if (!snapPointsSupported) {
+                                that._environmentSupportsTouch = false;
+
+                                // Tear down the touch features
+                                if (flipViewInitialized) {
+                                    that._fadeInButton("prev");
+                                    that._fadeInButton("next");
+                                    _ElementUtilities._removeEventListener(that._contentDiv, "pointerdown", handlePointerDown, false);
+                                    _ElementUtilities._removeEventListener(that._contentDiv, "pointermove", handleShowButtons, false);
+                                    _ElementUtilities._removeEventListener(that._contentDiv, "pointerup", handlePointerUp, false);
+                                    that._panningDivContainer.style[that._isHorizontal ? "overflowX" : "overflowY"] = "hidden";
+                                    that._pageManager.disableTouchFeatures();
+                                }
+                            }
+                        });
+                    }
 
                     var accName = this._flipviewDiv.getAttribute("aria-label");
                     if (!accName) {
@@ -2406,8 +2515,6 @@ define('WinJS/Controls/FlipView',[
                     this._contentDiv.appendChild(this._prevButton);
                     this._contentDiv.appendChild(this._nextButton);
 
-                    var that = this;
-
                     this._itemsManagerCallback = {
                         // Callbacks for itemsManager
                         inserted: function FlipView_inserted(itemPromise, previousHandle, nextHandle) {
@@ -2439,8 +2546,7 @@ define('WinJS/Controls/FlipView',[
                             // If we haven't instantiated this item yet, do so now
                             if (!element) {
                                 that._itemsManager._itemFromPromise(itemPromise).then(elementReady);
-                            }
-                            else {
+                            } else {
                                 elementReady(element);
                             }
 
@@ -2479,7 +2585,7 @@ define('WinJS/Controls/FlipView',[
                         });
                     }
 
-                    this._pageManager = new _PageManager._FlipPageManager(this._flipviewDiv, this._panningDiv, this._panningDivContainer, this._itemsManager, itemSpacing, allFeaturesSupported,
+                    this._pageManager = new _PageManager._FlipPageManager(this._flipviewDiv, this._panningDiv, this._panningDivContainer, this._itemsManager, itemSpacing, this._environmentSupportsTouch,
                     {
                         hidePreviousButton: function () {
                             that._hasPrevContent = false;
@@ -2506,7 +2612,7 @@ define('WinJS/Controls/FlipView',[
                         }
                     });
 
-                    this._pageManager.initialize(initialIndex, this._horizontal, this._environmentSupportsTouch);
+                    this._pageManager.initialize(initialIndex, this._isHorizontal);
 
                     this._dataSource.getCount().then(function (count) {
                         that._pageManager._cachedSize = count;
@@ -2546,52 +2652,57 @@ define('WinJS/Controls/FlipView',[
                         }
                     }
 
-                    if (this._environmentSupportsTouch) {
-                        _ElementUtilities._addEventListener(this._contentDiv, "pointerdown", function (e) {
-                            if (e.pointerType === PT_TOUCH) {
-                                that._mouseInViewport = false;
-                                that._touchInteraction = true;
-                                that._fadeOutButtons(true);
-                            } else {
-                                that._touchInteraction = false;
-                                if (!that._isInteractive(e.target)) {
-                                    // Disable the default behavior of the mouse wheel button to avoid auto-scroll
-                                    if ((e.buttons & 4) !== 0) {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                    }
+                    function handlePointerDown(e) {
+                        if (e.pointerType === PT_TOUCH) {
+                            that._mouseInViewport = false;
+                            that._touchInteraction = true;
+                            that._fadeOutButtons(true);
+                        } else {
+                            that._touchInteraction = false;
+                            if (!that._isInteractive(e.target)) {
+                                // Disable the default behavior of the mouse wheel button to avoid auto-scroll
+                                if ((e.buttons & 4) !== 0) {
+                                    e.stopPropagation();
+                                    e.preventDefault();
                                 }
                             }
-                        }, false);
+                        }
+                    }
 
+                    function handlePointerUp (e) {
+                        if (e.pointerType !== PT_TOUCH) {
+                            that._touchInteraction = false;
+                        }
+                    }
+
+                    if (this._environmentSupportsTouch) {
+                        _ElementUtilities._addEventListener(this._contentDiv, "pointerdown", handlePointerDown, false);
                         _ElementUtilities._addEventListener(this._contentDiv, "pointermove", handleShowButtons, false);
-                        
-                        _ElementUtilities._addEventListener(this._contentDiv, "pointerup", function (e) {
-                            if (e.pointerType !== PT_TOUCH) {
-                                that._touchInteraction = false;
-                            }
-                        }, false);
+                        _ElementUtilities._addEventListener(this._contentDiv, "pointerup", handlePointerUp, false);
                     }
 
                     this._panningDivContainer.addEventListener("scroll", function () {
                         that._scrollPosChanged();
                     }, false);
 
-                    this._panningDiv.addEventListener("deactivate", function () {
+                    this._panningDiv.addEventListener("blur", function () {
                         if (!that._touchInteraction) {
                             that._fadeOutButtons();
                         }
                     }, true);
 
-                    // When an element is removed and inserted, its scroll position gets reset to 0 (and no onscroll event is generated). This is a major problem
-                    // for the flipview thanks to the fact that we 1) Do a lot of inserts/removes of child elements, and 2) Depend on our scroll location being right to
-                    // display the right stuff. The page manager preserves scroll location. When a flipview element is reinserted, it'll fire DOMNodeInserted and we can reset
-                    // its scroll location there.
-                    // This event handler won't be hit in IE8.
-                    this._flipviewDiv.addEventListener("DOMNodeInserted", function (event) {
-                        if (event.target === that._flipviewDiv) {
-                            that._pageManager.resized();
+                    // Scroll position isn't maintained when an element is added/removed from
+                    // the DOM so every time we are placed back in, let the PageManager
+                    // fix the scroll position.
+                    var initiallyParented = _Global.document.body.contains(this._flipviewDiv);
+                    _ElementUtilities._addInsertedNotifier(this._flipviewDiv);
+                    this._flipviewDiv.addEventListener("WinJSNodeInserted", function (event) {
+                        // WinJSNodeInserted fires even if the element is already in the DOM
+                        if (initiallyParented) {
+                            initiallyParented = false;
+                            return;
                         }
+                        that._pageManager.resized();
                     }, false);
 
                     this._flipviewDiv.addEventListener("keydown", function (event) {
@@ -2599,7 +2710,7 @@ define('WinJS/Controls/FlipView',[
                         if (!that._isInteractive(event.target)) {
                             var Key = _ElementUtilities.Key,
                                 handled = false;
-                            if (that._horizontal) {
+                            if (that._isHorizontal) {
                                 switch (event.keyCode) {
                                     case Key.leftArrow:
                                         (that._rtl ? that.next() : that.previous());
@@ -2664,17 +2775,22 @@ define('WinJS/Controls/FlipView',[
 
                             if (handled) {
                                 event.preventDefault();
-                                event.cancelBubble = cancelBubbleIfHandled;
+                                if (cancelBubbleIfHandled) {
+                                    event.stopPropagation();
+                                }
                                 return true;
                             }
                         }
                     }, false);
+
+                    flipViewInitialized = true;
                 },
 
                 _windowWheelHandler: function FlipView_windowWheelHandler(ev) {
                     // When you are using the mouse wheel to scroll a horizontal area such as a WinJS.UI.Hub and one of the sections
                     // has a WinJS.UI.FlipView you may get stuck on that item. This logic is to allow a scroll event to skip the flipview's
                     // overflow scroll div and instead go to the parent scroller. We only skip the scroll wheel event for a fixed amount of time
+                    ev = ev.detail.originalEvent;
                     var wheelWithinFlipper = ev.target && (this._flipviewDiv.contains(ev.target) || this._flipviewDiv === ev.target);
                     var that = this;
                     var now = _BaseUtils._now();
@@ -2691,7 +2807,7 @@ define('WinJS/Controls/FlipView',[
                             // Avoid being stuck between items
                             that._pageManager._ensureCentered();
 
-                            if (that._horizontal) {
+                            if (that._isHorizontal) {
                                 that._panningDivContainer.style["overflowX"] = (that._environmentSupportsTouch ? "scroll" : "hidden");
                                 that._panningDivContainer.style["overflowY"] = "hidden";
                             } else {
@@ -2699,6 +2815,8 @@ define('WinJS/Controls/FlipView',[
                                 that._panningDivContainer.style["overflowX"] = "hidden";
                             }
                         });
+                    } else if (wheelWithinFlipper) {
+                        this._pageManager.simulateMouseWheelScroll(ev);
                     }
                 },
 
@@ -2969,11 +3087,11 @@ define('WinJS/Controls/FlipView',[
                 },
 
                 _axisAsString: function FlipView_axisAsString() {
-                    return (this._horizontal ? "horizontal" : "vertical");
+                    return (this._isHorizontal ? "horizontal" : "vertical");
                 },
 
                 _setupOrientation: function FlipView_setupOrientation() {
-                    if (this._horizontal) {
+                    if (this._isHorizontal) {
                         this._panningDivContainer.style["overflowX"] = (this._environmentSupportsTouch ? "scroll" : "hidden");
                         this._panningDivContainer.style["overflowY"] = "hidden";
                         var rtl = _Global.getComputedStyle(this._flipviewDiv, null).direction === "rtl";
@@ -3079,8 +3197,8 @@ define('WinJS/Controls/FlipView',[
                     next.style.top = "0px";
                     next.style.opacity = 0.0;
                     var pageDirection = ((curr.itemIndex > next.itemIndex) ? -animationMoveDelta : animationMoveDelta);
-                    incomingPageMove.left = (this._horizontal ? (this._rtl ? -pageDirection : pageDirection) : 0) + "px";
-                    incomingPageMove.top = (this._horizontal ? 0 : pageDirection) + "px";
+                    incomingPageMove.left = (this._isHorizontal ? (this._rtl ? -pageDirection : pageDirection) : 0) + "px";
+                    incomingPageMove.top = (this._isHorizontal ? 0 : pageDirection) + "px";
                     var fadeOutPromise = Animations.fadeOut(curr),
                         enterContentPromise = Animations.enterContent(next, [incomingPageMove], { mechanism: "transition" });
                     return Promise.join([fadeOutPromise, enterContentPromise]);
@@ -3113,11 +3231,3 @@ define('WinJS/Controls/FlipView',[
     });
 
 });
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

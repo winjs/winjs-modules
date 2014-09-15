@@ -80,10 +80,10 @@ define('WinJS/Controls/NavBar/_Command',[
                 _resetPointer: function _WinPressed_resetPointer() {
                     this._pointerId = null;
 
-                    _Global.removeEventListener("pointerup", this._pointerUpBound, true);
-                    _Global.removeEventListener("pointercancel", this._pointerCancelBound, true);
-                    this._element.removeEventListener("pointerover", this._pointerOverBound, true);
-                    this._element.removeEventListener("pointerout", this._pointerOutBound, true);
+                    _ElementUtilities._removeEventListener(_Global, "pointerup", this._pointerUpBound, true);
+                    _ElementUtilities._removeEventListener(_Global, "pointercancel", this._pointerCancelBound, true);
+                    _ElementUtilities._removeEventListener(this._element, "pointerover", this._pointerOverBound, true);
+                    _ElementUtilities._removeEventListener(this._element, "pointerout", this._pointerOutBound, true);
 
                     _ElementUtilities.removeClass(this._element, WinPressed.winPressed);
                 },
@@ -116,14 +116,14 @@ define('WinJS/Controls/NavBar/_Command',[
         /// <part name="splitbutton" class="win-navbarcommand-splitbutton" locid="WinJS.UI.NavBarCommand_part:splitbutton">Styles the split button in a NavBarCommand</part>
         /// <part name="icon" class="win-navbarcommand-icon" locid="WinJS.UI.NavBarCommand_part:icon">Styles the icon in the main button of a NavBarCommand.</part>
         /// <part name="label" class="win-navbarcommand-label" locid="WinJS.UI.NavBarCommand_part:label">Styles the label in the main button of a NavBarCommand.</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         NavBarCommand: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
             var strings = {
-                get duplicateConstruction() { return _Resources._getWinJSString("ui/duplicateConstruction").value; }
+                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; }
             };
 
             var NavBarCommand = _Base.Class.define(function NavBarCommand_ctor(element, options) {
@@ -135,9 +135,9 @@ define('WinJS/Controls/NavBar/_Command',[
                 /// The DOM element that will host the new  NavBarCommand control.
                 /// </param>
                 /// <param name="options" type="Object" isOptional="true" locid="WinJS.UI.NavBarCommand.constructor_p:options">
-                /// An object that contains one or more property/value pairs to apply to the new control. 
-                /// Each property of the options object corresponds to one of the control's properties or events. 
-                /// Event names must begin with "on". 
+                /// An object that contains one or more property/value pairs to apply to the new control.
+                /// Each property of the options object corresponds to one of the control's properties or events.
+                /// Event names must begin with "on".
                 /// </param>
                 /// <returns type="WinJS.UI.NavBarCommand" locid="WinJS.UI.NavBarCommand.constructor_returnValue">
                 /// The new NavBarCommand.
@@ -161,7 +161,7 @@ define('WinJS/Controls/NavBar/_Command',[
                 this._splitOpened = false;
                 this._buildDom();
                 element.addEventListener('keydown', this._keydownHandler.bind(this));
-                
+
                 _Control.setOptions(this, options);
             }, {
                 /// <field type="HTMLElement" domElement="true" hidden="true" locid="WinJS.UI.NavBarCommand.element" helpKeyword="WinJS.UI.NavBarCommand.element">
@@ -207,7 +207,7 @@ define('WinJS/Controls/NavBar/_Command',[
                 },
 
                 /// <field type="String" locid="WinJS.UI.NavBarCommand.icon" helpKeyword="WinJS.UI.NavBarCommand.icon">
-                /// Gets or sets the icon of the NavBarCommand. This value is either one of the values of the AppBarIcon enumeration or the path of a custom PNG file. 
+                /// Gets or sets the icon of the NavBarCommand. This value is either one of the values of the AppBarIcon enumeration or the path of a custom PNG file.
                 /// <compatibleWith platform="Windows" minVersion="8.1"/>
                 /// </field>
                 icon: {
@@ -240,7 +240,7 @@ define('WinJS/Controls/NavBar/_Command',[
                 },
 
                 /// <field type="String" locid="WinJS.UI.NavBarCommand.location" helpKeyword="WinJS.UI.NavBarCommand.location">
-                /// Gets or sets the command's target location. 
+                /// Gets or sets the command's target location.
                 /// <compatibleWith platform="Windows" minVersion="8.1"/>
                 /// </field>
                 location: {
@@ -253,7 +253,7 @@ define('WinJS/Controls/NavBar/_Command',[
                 },
 
                 /// <field type="String" locid="WinJS.UI.NavBarCommand.state" helpKeyword="WinJS.UI.NavBarCommand.state">
-                /// Gets or sets the state value used for navigation. The command passes this object to the WinJS.Navigation.navigate function. 
+                /// Gets or sets the state value used for navigation. The command passes this object to the WinJS.Navigation.navigate function.
                 /// <compatibleWith platform="Windows" minVersion="8.1"/>
                 /// </field>
                 state: {
@@ -325,14 +325,12 @@ define('WinJS/Controls/NavBar/_Command',[
                     var rightStr = this._rtl ? Key.leftArrow : Key.rightArrow;
 
                     if (!ev.altKey && (ev.keyCode === leftStr || ev.keyCode === Key.home || ev.keyCode === Key.end) && ev.target === this._splitButtonEl) {
-                        this._splitButtonActive = false;
                         _ElementUtilities._setActive(this._buttonEl);
                         if (ev.keyCode === leftStr) {
                             ev.stopPropagation();
                         }
                         ev.preventDefault();
                     } else if (!ev.altKey && ev.keyCode === rightStr && this.splitButton && (ev.target === this._buttonEl || this._buttonEl.contains(ev.target))) {
-                        this._splitButtonActive = true;
                         _ElementUtilities._setActive(this._splitButtonEl);
                         if (ev.keyCode === rightStr) {
                             ev.stopPropagation();
@@ -351,10 +349,8 @@ define('WinJS/Controls/NavBar/_Command',[
                 _getFocusInto: function NavBarCommand_getFocusInto(keyCode) {
                     var leftStr = this._rtl ? Key.rightArrow : Key.leftArrow;
                     if ((keyCode === leftStr) && this.splitButton) {
-                        this._splitButtonActive = true;
                         return this._splitButtonEl;
                     } else {
-                        this._splitButtonActive = false;
                         return this._buttonEl;
                     }
                 },
@@ -367,7 +363,7 @@ define('WinJS/Controls/NavBar/_Command',[
                                 '<div class="' + NavBarCommand._ClassName.navbarcommandlabel + '"></div>' +
                             '</div>' +
                         '</div>' +
-                        '<div tabindex="0" aria-expanded="false" class="' + NavBarCommand._ClassName.navbarcommandsplitbutton + '"></div>';
+                        '<div tabindex="-1" aria-expanded="false" class="' + NavBarCommand._ClassName.navbarcommandsplitbutton + '"></div>';
                     this.element.insertAdjacentHTML("afterBegin", markup);
 
                     this._buttonEl = this.element.firstElementChild;
@@ -384,14 +380,10 @@ define('WinJS/Controls/NavBar/_Command',[
                     this._splitButtonEl.setAttribute("aria-labelledby", this._buttonEl.id);
 
                     this._buttonEl.addEventListener("click", this._handleButtonClick.bind(this));
-                    this._buttonEl.addEventListener("beforeactivate", this._beforeactivateButtonHandler.bind(this));
-                    this._buttonEl.addEventListener("pointerdown", this._MSPointerDownButtonHandler.bind(this));
 
                     var mutationObserver = new _ElementUtilities._MutationObserver(this._splitButtonAriaExpandedPropertyChangeHandler.bind(this));
                     mutationObserver.observe(this._splitButtonEl, { attributes: true, attributeFilter: ["aria-expanded"] });
                     this._splitButtonEl.addEventListener("click", this._handleSplitButtonClick.bind(this));
-                    this._splitButtonEl.addEventListener("beforeactivate", this._beforeactivateSplitButtonHandler.bind(this));
-                    this._splitButtonEl.addEventListener("pointerdown", this._MSPointerDownSplitButtonHandler.bind(this));
 
                     // reparent any other elements.
                     var tempEl = this._splitButtonEl.nextSibling;
@@ -402,14 +394,6 @@ define('WinJS/Controls/NavBar/_Command',[
                         }
                         tempEl = this._splitButtonEl.nextSibling;
                     }
-                },
-
-                _MSPointerDownButtonHandler: function NavBarCommand_MSPointerDownButtonHandler() {
-                    this._splitButtonActive = false;
-                },
-
-                _MSPointerDownSplitButtonHandler: function NavBarCommand_MSPointerDownSplitButtonHandler() {
-                    this._splitButtonActive = true;
                 },
 
                 _handleButtonClick: function NavBarCommand_handleButtonClick(ev) {
@@ -430,20 +414,6 @@ define('WinJS/Controls/NavBar/_Command',[
 
                 _handleSplitButtonClick: function NavBarCommand_handleSplitButtonClick() {
                     this._toggleSplit();
-                },
-
-                _beforeactivateSplitButtonHandler: function NavBarCommand_beforeactivateSplitButtonHandler(ev) {
-                    if (!this._splitButtonActive) {
-                        ev.stopPropagation();
-                        ev.preventDefault();
-                    }
-                },
-
-                _beforeactivateButtonHandler: function NavBarCommand_beforeactivateButtonHandler(ev) {
-                    if (this._splitButtonActive) {
-                        ev.stopPropagation();
-                        ev.preventDefault();
-                    }
                 },
 
                 _fireEvent: function NavBarCommand_fireEvent(type, detail) {
@@ -522,7 +492,7 @@ define('WinJS/Controls/NavBar/_Container',[
     _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
         /// <field>
         /// <summary locid="WinJS.UI.NavBarContainer">
-        /// Contains a group of NavBarCommand objects in a NavBar. 
+        /// Contains a group of NavBarCommand objects in a NavBar.
         /// </summary>
         /// <compatibleWith platform="Windows" minVersion="8.1"/>
         /// </field>
@@ -545,9 +515,9 @@ define('WinJS/Controls/NavBar/_Container',[
         /// <part name="navigationArrow" class="win-navbarcontainer-navarrow" locid="WinJS.UI.NavBarContainer_part:navigationArrow">Styles left and right navigation arrows.</part>
         /// <part name="leftNavigationArrow" class="win-navbarcontainer-navleft" locid="WinJS.UI.NavBarContainer_part:leftNavigationArrow">Styles the left navigation arrow.</part>
         /// <part name="rightNavigationArrow" class="win-navbarcontainer-navright" locid="WinJS.UI.NavBarContainer_part:rightNavigationArrow">Styles the right navigation arrow.</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         NavBarContainer: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -562,7 +532,7 @@ define('WinJS/Controls/NavBar/_Container',[
             };
 
             var strings = {
-                get duplicateConstruction() { return _Resources._getWinJSString("ui/duplicateConstruction").value; },
+                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
                 get navBarContainerViewportAriaLabel() { return _Resources._getWinJSString("ui/navBarContainerViewportAriaLabel").value; }
             };
 
@@ -575,16 +545,16 @@ define('WinJS/Controls/NavBar/_Container',[
                 /// The DOM element that will host the NavBarContainer control.
                 /// </param>
                 /// <param name="options" type="Object" isOptional="true" locid="WinJS.UI.NavBarContainer.constructor_p:options">
-                /// An object that contains one or more property/value pairs to apply to the new control. 
-                /// Each property of the options object corresponds to one of the control's properties or events. 
-                /// Event names must begin with "on". 
+                /// An object that contains one or more property/value pairs to apply to the new control.
+                /// Each property of the options object corresponds to one of the control's properties or events.
+                /// Event names must begin with "on".
                 /// </param>
                 /// <returns type="WinJS.UI.NavBarContainer" locid="WinJS.UI.NavBarContainer.constructor_returnValue">
                 /// The new NavBarContainer.
                 /// </returns>
                 /// <compatibleWith platform="Windows" minVersion="8.1"/>
                 /// </signature>
-                
+
                 element = element || _Global.document.createElement("DIV");
                 this._id = element.id || _ElementUtilities._uniqueID(element);
                 this._writeProfilerMark("constructor,StartTM");
@@ -603,11 +573,12 @@ define('WinJS/Controls/NavBar/_Container',[
                 if (!element.getAttribute("tabIndex")) {
                     element.tabIndex = -1;
                 }
-                
+
                 this._focusCurrentItemPassivelyBound = this._focusCurrentItemPassively.bind(this);
                 this._closeSplitAndResetBound = this._closeSplitAndReset.bind(this);
                 this._currentManipulationState = MS_MANIPULATION_STATE_STOPPED;
 
+                this._panningDisabled = false;
                 this._fixedSize = false;
                 this._maxRows = 1;
                 this._sizes = {};
@@ -645,8 +616,20 @@ define('WinJS/Controls/NavBar/_Container',[
                     this.currentIndex = options.currentIndex;
                 }
 
-                this._updatePageUI();
-                
+                var that = this;
+                var updatedPageUI = false;
+                _ElementUtilities._detectSnapPointsSupport().then(function (supportsSnap) {
+                    that._panningDisabled = !supportsSnap;
+                    if (!that._disposed) {
+                        that._updatePageUI();
+                        updatedPageUI = true;
+                    }
+                });
+
+                if (!updatedPageUI) {
+                    this._updatePageUI();
+                }
+
                 Scheduler.schedule(function NavBarContainer_async_initialize() {
                     this._updateAppBarReference();
                 }, Scheduler.Priority.normal, this, "WinJS.UI.NavBarContainer_async_initialize");
@@ -824,9 +807,6 @@ define('WinJS/Controls/NavBar/_Container',[
                             var hadFocus = this.element.contains(_Global.document.activeElement);
 
                             this._keyboardBehavior.currentIndex = value;
-                            if (this._surfaceEl.children.length > 0) {
-                                this._surfaceEl.children[this._keyboardBehavior.currentIndex].winControl._splitButtonActive = false;
-                            }
 
                             this._ensureVisible(this._keyboardBehavior.currentIndex, true);
 
@@ -838,8 +818,8 @@ define('WinJS/Controls/NavBar/_Container',[
                 },
 
                 /// <field type="Boolean" locid="WinJS.UI.NavBarContainer.fixedSize" helpKeyword="WinJS.UI.NavBarContainer.fixedSize">
-                /// Gets or sets a value that specifies whether child NavBarCommand  objects should be a fixed width when there are multiple pages. A value of true indicates 
-                /// that the NavBarCommand objects use a fixed width; a value of false indicates that they use a dynamic width. 
+                /// Gets or sets a value that specifies whether child NavBarCommand  objects should be a fixed width when there are multiple pages. A value of true indicates
+                /// that the NavBarCommand objects use a fixed width; a value of false indicates that they use a dynamic width.
                 /// <compatibleWith platform="Windows" minVersion="8.1"/>
                 /// </field>
                 fixedSize: {
@@ -876,7 +856,7 @@ define('WinJS/Controls/NavBar/_Container',[
                 forceLayout: function NavBarContainer_forceLayout() {
                     /// <signature helpKeyword="WinJS.UI.NavBarContainer.forceLayout">
                     /// <summary locid="WinJS.UI.NavBarContainer.forceLayout">
-                    /// Forces the NavBarContainer to update scroll positions and if the NavBar has changed size, it will also re-measure. 
+                    /// Forces the NavBarContainer to update scroll positions and if the NavBar has changed size, it will also re-measure.
                     /// Use this function when making the NavBarContainer visible again after you set its style.display property to "none".
                     /// </summary>
                     /// <compatibleWith platform="Windows" minVersion="8.1"/>
@@ -899,13 +879,13 @@ define('WinJS/Controls/NavBar/_Container',[
                             this._appBarEl.removeEventListener('beforeshow', this._resizeImplBound);
                             this._appBarEl.removeEventListener('aftershow', this._focusCurrentItemPassivelyBound);
                         }
-                    
+
                         var appBarEl = this.element.parentNode;
                         while (appBarEl && !_ElementUtilities.hasClass(appBarEl, _Constants.appBarClass)) {
                             appBarEl = appBarEl.parentNode;
                         }
                         this._appBarEl = appBarEl;
-                        
+
                         if (this._appBarEl) {
                             this._appBarEl.addEventListener('beforeshow', this._closeSplitAndResetBound);
                             this._appBarEl.addEventListener('aftershow', this._focusCurrentItemPassivelyBound);
@@ -982,18 +962,15 @@ define('WinJS/Controls/NavBar/_Container',[
                     this._ensureVisible(this._keyboardBehavior.currentIndex, true);
                     this._updatePageUI();
                 },
-                
+
                 _focusCurrentItemPassively: function NavBarContainer_focusCurrentItemPassively() {
                     if (this.element.contains(_Global.document.activeElement)) {
                         this._keyboardBehavior._focus();
                     }
                 },
-                
+
                 _reset: function NavBarContainer_reset() {
                     this._keyboardBehavior.currentIndex = 0;
-                    if (this._surfaceEl.children.length > 0) {
-                        this._surfaceEl.children[this._keyboardBehavior.currentIndex].winControl._splitButtonActive = false;
-                    }
 
                     if (this.element.contains(_Global.document.activeElement)) {
                         this._keyboardBehavior._focus(0);
@@ -1190,14 +1167,14 @@ define('WinJS/Controls/NavBar/_Container',[
                             ? this._sizes.viewportOffsetWidth !== parseFloat(_Global.getComputedStyle(this._viewportEl).width)
                             : this._sizes.viewportOffsetHeight !== parseFloat(_Global.getComputedStyle(this._viewportEl).height);
                     if (!viewportResized) { return; }
-                    
+
                     this._measured = false;
 
                     if (!this._pendingResize) {
                         this._pendingResize = true;
 
                         this._resizeImplBound = this._resizeImplBound || this._resizeImpl.bind(this);
-                        
+
                         this._updateAppBarReference();
 
                         if (this._appBarEl && this._appBarEl.winControl && this._appBarEl.winControl.hidden) {
@@ -1219,9 +1196,6 @@ define('WinJS/Controls/NavBar/_Container',[
                         }
 
                         this._keyboardBehavior.currentIndex = 0;
-                        if (this._surfaceEl.children.length > 0) {
-                            this._surfaceEl.children[0].winControl._splitButtonActive = false;
-                        }
                         if (this.element.contains(_Global.document.activeElement)) {
                             this._keyboardBehavior._focus(this._keyboardBehavior.currentIndex);
                         }
@@ -1289,7 +1263,6 @@ define('WinJS/Controls/NavBar/_Container',[
                             this._keyboardBehavior.currentIndex = index;
 
                             var element = this._surfaceEl.children[index].winControl._buttonEl;
-                            this._surfaceEl.children[index].winControl._splitButtonActive = false;
 
                             if (scrollPositionTarget !== null) {
                                 this._scrollTo(scrollPositionTarget);
@@ -1341,7 +1314,6 @@ define('WinJS/Controls/NavBar/_Container',[
                             this._keyboardBehavior.currentIndex = index;
 
                             var element = this._surfaceEl.children[index].winControl._buttonEl;
-                            this._surfaceEl.children[index].winControl._splitButtonActive = false;
 
                             if (scrollPositionTarget !== null) {
                                 this._scrollTo(scrollPositionTarget);
@@ -1478,7 +1450,7 @@ define('WinJS/Controls/NavBar/_Container',[
 
                 _scrollHandler: function NavBarContainer_scrollHandler() {
                     if (this._disposed) { return; }
-                    
+
                     this._measured = false;
                     if (!this._checkingScroll) {
                         var that = this;
@@ -1512,9 +1484,6 @@ define('WinJS/Controls/NavBar/_Container',[
                         if (this._keyboardBehavior.currentIndex < firstIndexOnPage || this._keyboardBehavior.currentIndex > lastIndexOnPage) {
                             // Page change occurred.
                             this._keyboardBehavior.currentIndex = firstIndexOnPage;
-                            if (this._surfaceEl.children.length > 0) {
-                                this._surfaceEl.children[this._keyboardBehavior.currentIndex].winControl._splitButtonActive = false;
-                            }
 
                             if (this.element.contains(_Global.document.activeElement)) {
                                 this._keyboardBehavior._focus(this._keyboardBehavior.currentIndex);
@@ -1651,7 +1620,7 @@ define('WinJS/Controls/NavBar/_Container',[
                                 var spaceToDistribute = sizes.extraSpace - (sizes.maxColumns - sizes.columnsPerPage) * sizes.itemWidth;
                                 width = (sizes.itemOffsetWidth + (spaceToDistribute / sizes.maxColumns)) + "px";
                             }
-                            
+
                             var extraMarginRight;
                             var extraMarginLeft;
 
@@ -1669,7 +1638,7 @@ define('WinJS/Controls/NavBar/_Container',[
                             marginRight = "";
                             marginLeft = "";
                         }
-                        
+
                         if (itemEl.style.marginRight !== marginRight) {
                             itemEl.style.marginRight = marginRight;
                         }
@@ -1705,7 +1674,7 @@ define('WinJS/Controls/NavBar/_Container',[
                     }
 
                     if (this._sizes.pages > 1) {
-                        this._viewportEl.style.overflowX = "";
+                        this._viewportEl.style.overflowX = this._panningDisabled ? "hidden" : "";
                         this._pageindicatorsEl.style.visibility = "";
                     } else {
                         this._viewportEl.style.overflowX = "hidden";
@@ -1742,10 +1711,10 @@ define('WinJS/Controls/NavBar/_Container',[
                     var hasRightContent = this._sizes.rtl ? this._hasPreviousContent : this._hasNextContent;
 
                     var that = this;
-                    // Previous and next are the arrows, not states. On mouse hover the arrows fade in immediately. If you 
-                    // mouse out the arrows fade out after a delay. When you reach the last/first page, the corresponding 
+                    // Previous and next are the arrows, not states. On mouse hover the arrows fade in immediately. If you
+                    // mouse out the arrows fade out after a delay. When you reach the last/first page, the corresponding
                     // arrow fades out immediately as well.
-                    if (this._mouseInViewport && hasLeftContent) {
+                    if ((this._mouseInViewport || this._panningDisabled) && hasLeftContent) {
                         this._leftArrowWaitingToFadeOut && this._leftArrowWaitingToFadeOut.cancel();
                         this._leftArrowWaitingToFadeOut = null;
                         this._leftArrowFadeOut && this._leftArrowFadeOut.cancel();
@@ -1773,7 +1742,7 @@ define('WinJS/Controls/NavBar/_Container',[
                     }
 
                     // Same pattern for Next arrow.
-                    if (this._mouseInViewport && hasRightContent) {
+                    if ((this._mouseInViewport || this._panningDisabled) && hasRightContent) {
                         this._rightArrowWaitingToFadeOut && this._rightArrowWaitingToFadeOut.cancel();
                         this._rightArrowWaitingToFadeOut = null;
                         this._rightArrowFadeOut && this._rightArrowFadeOut.cancel();
@@ -1917,12 +1886,13 @@ define('WinJS/Controls/NavBar',[
     '../Promise',
     '../Scheduler',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_Hoverable',
     './AppBar',
     './NavBar/_Command',
     './NavBar/_Container',
     'require-style!less/desktop/controls',
     'require-style!less/phone/controls'
-], function NavBarInit(_Global,_WinRT, _Base, _BaseUtils, _Events, _WriteProfilerMark, Promise, Scheduler, _ElementUtilities, AppBar, _Command, _Container) {
+], function NavBarInit(_Global,_WinRT, _Base, _BaseUtils, _Events, _WriteProfilerMark, Promise, Scheduler, _ElementUtilities, _Hoverable, AppBar, _Command, _Container) {
     "use strict";
 
     var customLayout = "custom";
@@ -1947,9 +1917,9 @@ define('WinJS/Controls/NavBar',[
         /// <event name="afterhide" locid="WinJS.UI.NavBar_e:afterhide">Raised immediately after the NavBar is fully hidden.</event>
         /// <event name="childrenprocessed" locid="WinJS.UI.NavBar_e:childrenprocessed">Fired when children of NavBar control have been processed from a WinJS.UI.processAll call.</event>
         /// <part name="navbar" class="win-navbar" locid="WinJS.UI.NavBar_part:navbar">Styles the entire NavBar.</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         NavBar: _Base.Namespace._lazy(function () {
             var childrenProcessedEventName = "childrenprocessed";
             var createEvent = _Events._createEventProperty;
@@ -2109,11 +2079,3 @@ define('WinJS/Controls/NavBar',[
     });
 
 });
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

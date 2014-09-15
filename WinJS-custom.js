@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-/* global WinJS */
 define([
+    'WinJS/Core/_WinJS',
     'WinJS/Core',
     'WinJS/Promise',
     'WinJS/_Signal',
@@ -17,11 +17,8 @@ define([
     'WinJS/Pages',
     'WinJS/ControlProcessor',
     'WinJS/Controls/HtmlControl',
-    'require-style!less/animation-library',
-    'require-style!less/typography',
-    'require-style!less/desktop/styles-intrinsic',
-    'require-style!less/desktop/colors-intrinsic',
     'WinJS/VirtualizedDataSource',
+    'WinJS/Controls/IntrinsicControls',
     'WinJS/Controls/ListView',
     'WinJS/Controls/FlipView',
     'WinJS/Controls/ItemContainer',
@@ -42,8 +39,8 @@ define([
     'WinJS/Controls/NavBar',
     'WinJS/Controls/Tooltip',
     'WinJS/Controls/ViewBox'
-    ], function() {
+    ], function (_WinJS) {
     "use strict";
 
-    return WinJS;
+    return _WinJS;
 });

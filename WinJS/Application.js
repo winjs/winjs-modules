@@ -248,14 +248,14 @@ define('WinJS/Application/_State',[
         initWithStub();
     }
 
-    var sessionState;
+    var sessionState = {};
 
     _Base.Namespace._moduleDefine(exports, "WinJS.Application", {
         sessionState: {
-            get: function() {
+            get: function () {
                 return sessionState;
             },
-            set: function(value) {
+            set: function (value) {
                 sessionState = value;
             }
         },
@@ -274,8 +274,7 @@ define('WinJS/Application/_State',[
                     then(null, function () {
                         exports.sessionState = {};
                     });
-            }
-            else {
+            } else {
                 return Promise.as();
             }
         },
@@ -349,7 +348,7 @@ define('WinJS/Application',[
         var str;
         try {
             var seenObjects = [];
-            str = JSON.stringify(obj, function(key, value) {
+            str = JSON.stringify(obj, function (key, value) {
                 if (value === _Global) {
                     return "[window]";
                 } else if (value instanceof _Global.HTMLElement) {
@@ -357,7 +356,7 @@ define('WinJS/Application',[
                 } else if (typeof value === "function") {
                     return "[function]";
                 } else if (typeof value === "object") {
-                    if(value === null) {
+                    if (value === null) {
                         return value;
                     } else if (seenObjects.indexOf(value) === -1) {
                         seenObjects.push(value);
@@ -373,10 +372,10 @@ define('WinJS/Application',[
         }
         catch (err) {
             // primitives, undefined, null, etc, all get serialized fine. In the
-            // case that stringify fails (typically due to circular graphs) we 
+            // case that stringify fails (typically due to circular graphs) we
             // just show "[object]". While we may be able to tighten the condition
             // for the exception, we never way this serialize to fail.
-            // 
+            //
             // Note: we make this be a JSON string, so that consumers of the log
             // can always call JSON.parse.
             str = JSON.stringify("[object]");
@@ -393,7 +392,7 @@ define('WinJS/Application',[
         // For more information on debugging and exception handling go to http://go.microsoft.com/fwlink/p/?LinkId=253583.
 
         debugger; // jshint ignore:line
-        if(_Global.MSApp) {
+        if (_Global.MSApp) {
             _Global.MSApp.terminateApp(data);
         }
     }
@@ -408,7 +407,7 @@ define('WinJS/Application',[
         // If we have a deferralID we our table to find the
         // deferral. Since we remove it on completion, this
         // ensures that we never double notify a deferral
-        // in the case of a user call "Application.stop" in 
+        // in the case of a user call "Application.stop" in
         // the middle of processing an event
         //
         if (deferralID) {
@@ -436,7 +435,7 @@ define('WinJS/Application',[
             /// <signature helpKeyword="WinJS.Application.eventRecord.setPromise">
             /// <summary locid="WinJS.Application.event.setPromise">
             /// Used to inform the application object that asynchronous work is being performed, and that this
-            /// event handler should not be considered complete until the promise completes. 
+            /// event handler should not be considered complete until the promise completes.
             /// </summary>
             /// <param name="promise" type="WinJS.Promise" locid="WinJS.Application.eventRecord.setPromise_p:promise">
             /// The promise to wait for.
@@ -668,7 +667,7 @@ define('WinJS/Application',[
     }
     function errorHandler(e) {
         var flattenedError = {};
-        for(var key in e) {
+        for (var key in e) {
             flattenedError[key] = e[key];
         }
         var data;
@@ -716,7 +715,7 @@ define('WinJS/Application',[
         }
 
         // Work around browsers that don't serialize exceptions
-        if(details.exception instanceof Error) {
+        if (details.exception instanceof Error) {
             var error = {
                 stack: details.exception.stack,
                 message: details.exception.message
@@ -758,7 +757,7 @@ define('WinJS/Application',[
     }
 
     function hardwareButtonBackPressed(winRTBackPressedEvent) {
-        // Fire WinJS.Application 'backclick' event. If the winRTBackPressedEvent is not handled, the app will get suspended.            
+        // Fire WinJS.Application 'backclick' event. If the winRTBackPressedEvent is not handled, the app will get suspended.
         var eventRecord = { type: backClickET };
         Object.defineProperty(eventRecord, "_winRTBackPressedEvent", {
             value: winRTBackPressedEvent,
@@ -915,10 +914,10 @@ define('WinJS/Application',[
         queueEvent: queueEvent,
 
         _terminateApp: {
-            get: function() {
+            get: function () {
                 return terminateAppHandler;
             },
-            set: function(value) {
+            set: function (value) {
                 terminateAppHandler = value;
             }
         },
@@ -932,13 +931,13 @@ define('WinJS/Application',[
         /// </field>
         onunload: createEvent(unloadET),
         /// <field type="Function" locid="WinJS.Application.onactivated" helpKeyword="WinJS.Application.onactivated">
-        /// Occurs when Windows Runtime activation has occurred. 
-        /// The name of this event is "activated" (and also "mainwindowactivated".) 
+        /// Occurs when Windows Runtime activation has occurred.
+        /// The name of this event is "activated" (and also "mainwindowactivated".)
         /// This event occurs after the loaded event and before the ready event.
         /// </field>
         onactivated: createEvent(activatedET),
         /// <field type="Function" locid="WinJS.Application.onloaded" helpKeyword="WinJS.Application.onloaded">
-        /// Occurs after the DOMContentLoaded event, which fires after the page has been parsed but before all the resources are loaded. 
+        /// Occurs after the DOMContentLoaded event, which fires after the page has been parsed but before all the resources are loaded.
         /// This event occurs before the activated event and the ready event.
         /// </field>
         onloaded: createEvent(loadedET),

@@ -62,9 +62,8 @@ define('WinJS/Res',[
                 setMembers(e, e, decls, count);
             }
 
-        }
-        else if (_BaseUtils.validation) {
-            throw new _ErrorFromName("WinJS.Res.NestingExceeded", _Resources._getWinJSString("base/nestingExceeded").value);
+        } else if (_BaseUtils.validation) {
+            throw new _ErrorFromName("WinJS.Res.NestingExceeded", "NestingExceeded");
         }
 
         return Promise.as(rootElement);
@@ -88,15 +87,14 @@ define('WinJS/Res',[
 
                         root.lang = data.lang;
                     }
-            }
-            else if (_BaseUtils.validation) {
+            } else if (_BaseUtils.validation) {
                 notFound(value);
             }
         }
     }
 
     function notFound(name) {
-        throw new _ErrorFromName("WinJS.Res.NotFound", _Resources._formatString(_Resources._getWinJSString("base/notFound").value, name));
+        throw new _ErrorFromName("WinJS.Res.NotFound", _Resources._formatString("NotFound: {0}", name));
     }
 
     function setMembers(root, target, descriptor, count) {
@@ -123,16 +121,13 @@ define('WinJS/Res',[
                     if (name === "innerHTML") {
                         processAllImpl(target, count + 1);
                     }
-                }
-                else if (_BaseUtils.validation) {
+                } else if (_BaseUtils.validation) {
                     notFound(value);
                 }
-            }
-            else if (root === target && name === "attributes") {
+            } else if (root === target && name === "attributes") {
                 //Exposing setAttribute for attributes that don't have HTML properties, like aria, through a fake 'attributes' property
                 setAttributes(root, value);
-            }
-            else {
+            } else {
                 setMembers(root, target[name], value, count);
             }
         }
@@ -145,8 +140,8 @@ define('WinJS/Res',[
             /// with localized strings.
             /// </summary>
             /// <param name="rootElement" locid="WinJS.Resources.processAll_p:rootElement">
-            /// The DOM element at which to start processing. processAll processes the element and its child elements. 
-            /// If you don't specify root element, processAll processes the entire document. 
+            /// The DOM element at which to start processing. processAll processes the element and its child elements.
+            /// If you don't specify root element, processAll processes the entire document.
             /// </param>
             /// </signature>
 
@@ -155,8 +150,7 @@ define('WinJS/Res',[
                     readyComplete = true;
                     return processAllImpl(rootElement);
                 });
-            }
-            else {
+            } else {
                 try {
                     return processAllImpl(rootElement);
                 }

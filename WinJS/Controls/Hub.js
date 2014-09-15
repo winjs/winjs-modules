@@ -11,15 +11,14 @@ define('WinJS/Controls/Hub/_Section',[
     '../../Utilities/_Control',
     '../../Utilities/_Dispose',
     '../../Utilities/_ElementUtilities',
-    '../../Utilities/_KeyboardBehavior',
-    '../../Utilities/_UIUtilities'
-    ], function hubSectionInit(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Resources, ControlProcessor, Promise, _Control, _Dispose, _ElementUtilities, _KeyboardBehavior, _UIUtilities) {
+    '../../Utilities/_KeyboardBehavior'
+    ], function hubSectionInit(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Resources, ControlProcessor, Promise, _Control, _Dispose, _ElementUtilities, _KeyboardBehavior) {
     "use strict";
 
     _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
         /// <field>
         /// <summary locid="WinJS.UI.HubSection">
-        /// Defines a section of a Hub control. 
+        /// Defines a section of a Hub control.
         /// </summary>
         /// <compatibleWith platform="Windows" minVersion="8.1"/>
         /// </field>
@@ -32,12 +31,12 @@ define('WinJS/Controls/Hub/_Section',[
         /// <part name="headercontent" class="win-hub-section-header-content" locid="WinJS.UI.HubSection_part:headercontent">The content region of the header region of the HubSection.</part>
         /// <part name="headerchevron" class="win-hub-section-header-chevron" locid="WinJS.UI.HubSection_part:headerchevron">The chevron region of the header region of the HubSection.</part>
         /// <part name="content" class="win-hub-section-content" locid="WinJS.UI.HubSection_part:content">The content region of the HubSection.</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         HubSection: _Base.Namespace._lazy(function () {
             var strings = {
-                get duplicateConstruction() { return _Resources._getWinJSString("ui/duplicateConstruction").value; }
+                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; }
             };
 
             var HubSection = _Base.Class.define(function HubSection_ctor(element, options) {
@@ -49,8 +48,8 @@ define('WinJS/Controls/Hub/_Section',[
                 /// The DOM element that hosts the HubSection control.
                 /// </param>
                 /// <param name="options" type="Object" isOptional="true" locid="WinJS.UI.HubSection.constructor_p:options">
-                /// An object that contains one or more property/value pairs to apply to the new control. 
-                /// Each property of the options object corresponds to one of the control's properties or events. 
+                /// An object that contains one or more property/value pairs to apply to the new control.
+                /// Each property of the options object corresponds to one of the control's properties or events.
                 /// </param>
                 /// <returns type="WinJS.UI.HubSection" locid="WinJS.UI.HubSection.constructor_returnValue">
                 /// The new HubSection.
@@ -75,7 +74,7 @@ define('WinJS/Controls/Hub/_Section',[
                 this._headerElement.className = HubSection._ClassName.hubSectionHeader;
                 this._headerElement.innerHTML =
                     '<button type="button" role="link" class="' + HubSection._ClassName.hubSectionInteractive + ' ' + HubSection._ClassName.hubSectionHeaderTabStop + '">' +
-                        '<div class="' +  HubSection._ClassName.hubSectionHeaderWrapper + '">' +
+                        '<div class="' +  HubSection._ClassName.hubSectionHeaderWrapper + '" tabindex="-1">' +
                             '<h2 class="' + HubSection._ClassName.hubSectionHeaderContent + ' ' + HubSection._Constants.ellipsisTypeClassName + ' ' + HubSection._Constants.xLargeTypeClassName + '"></h2>' +
                             '<span class="' + HubSection._ClassName.hubSectionHeaderChevron + ' ' + HubSection._Constants.ellipsisTypeClassName + ' ' + HubSection._Constants.xLargeTypeClassName + '"></span>' +
                         '</div>' +
@@ -119,7 +118,7 @@ define('WinJS/Controls/Hub/_Section',[
                     }
                 },
                 /// <field type="Boolean" locid="WinJS.UI.HubSection.isHeaderStatic" helpKeyword="WinJS.UI.HubSection.isHeaderStatic">
-                /// Gets or sets a value that specifies whether the header is static. Set this value to true to disable clicks and other interactions. 
+                /// Gets or sets a value that specifies whether the header is static. Set this value to true to disable clicks and other interactions.
                 /// <compatibleWith platform="Windows" minVersion="8.1"/>
                 /// </field>
                 isHeaderStatic: {
@@ -161,7 +160,7 @@ define('WinJS/Controls/Hub/_Section',[
                     }
                 },
                 _setHeaderTemplate: function HubSection_setHeaderTemplate(template) {
-                    this._template = _UIUtilities._syncRenderer(template);
+                    this._template = _ElementUtilities._syncRenderer(template);
                     this._renderHeader();
                 },
                 _renderHeader: function HubSection_renderHeader() {
@@ -259,12 +258,12 @@ define('WinJS/Controls/Hub',[
     '../Scheduler',
     '../Utilities/_Control',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_Hoverable',
     '../Utilities/_UI',
-    '../Utilities/_UIUtilities',
     './Hub/_Section',
     'require-style!less/desktop/controls',
     'require-style!less/phone/controls'
-    ], function hubInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, ControlProcessor, Promise, _Signal, Scheduler, _Control, _ElementUtilities, _UI, _UIUtilities, _Section) {
+    ], function hubInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, ControlProcessor, Promise, _Signal, Scheduler, _Control, _ElementUtilities, _Hoverable, _UI, _Section) {
     "use strict";
 
     _Base.Namespace.define("WinJS.UI", {
@@ -286,9 +285,9 @@ define('WinJS/Controls/Hub',[
         /// <part name="progress" class="win-hub-progress" locid="WinJS.UI.Hub_part:progress">The progress indicator for the Hub.</part>
         /// <part name="viewport" class="win-hub-viewport" locid="WinJS.UI.Hub_part:viewport">The viewport of the Hub.</part>
         /// <part name="surface" class="win-hub-surface" locid="WinJS.UI.Hub_part:surface">The scrollable region of the Hub.</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         Hub: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -453,7 +452,16 @@ define('WinJS/Controls/Hub',[
                         return this._orientation;
                     },
                     set: function (value) {
+                        if (value === this._orientation) {
+                            return;
+                        }
                         this._measured = false;
+                        // clear existing scroll before we switch orientation
+                        if (this._names) { // handle setting orientation before we measure
+                            var newScrollPos = {};
+                            newScrollPos[this._names.scrollPos] = 0;
+                            _ElementUtilities.setScrollPosition(this._viewportElement, newScrollPos);
+                        }
                         if (value === _UI.Orientation.vertical) {
                             _ElementUtilities.removeClass(this.element, Hub._ClassName.hubHorizontal);
                             _ElementUtilities.addClass(this.element, Hub._ClassName.hubVertical);
@@ -1340,13 +1348,13 @@ define('WinJS/Controls/Hub',[
                         for (var i = indexToFocus; i < this.sections.length; i++) {
                             var section = this.sections.getAt(i);
 
-                            var focusAttempt = _UIUtilities._trySetActive(section._headerTabStopElement, this._viewportElement);
+                            var focusAttempt = _ElementUtilities._trySetActive(section._headerTabStopElement, this._viewportElement);
 
                             if (focusAttempt) {
                                 return;
                             }
 
-                            if (_UIUtilities._setActiveFirstFocusableElement(section.contentElement, this._viewportElement)) {
+                            if (_ElementUtilities._setActiveFirstFocusableElement(section.contentElement, this._viewportElement)) {
                                 return;
                             }
                         }
@@ -1354,11 +1362,11 @@ define('WinJS/Controls/Hub',[
                         for (var i = indexToFocus - 1; i >= 0; i--) {
                             var section = this.sections.getAt(i);
 
-                            if (_UIUtilities._setActiveFirstFocusableElement(section.contentElement, this._viewportElement)) {
+                            if (_ElementUtilities._setActiveFirstFocusableElement(section.contentElement, this._viewportElement)) {
                                 return;
                             }
 
-                            var focusAttempt = _UIUtilities._trySetActive(section._headerTabStopElement, this._viewportElement);
+                            var focusAttempt = _ElementUtilities._trySetActive(section._headerTabStopElement, this._viewportElement);
 
                             if (focusAttempt) {
                                 return;
@@ -1643,9 +1651,9 @@ define('WinJS/Controls/Hub',[
             });
 
             var strings = {
-                get duplicateConstruction() { return _Resources._getWinJSString("ui/duplicateConstruction").value; },
-                get duplicateSection() { return _Resources._getWinJSString("ui/duplicateSection").value; },
-                get invalidContent() { return _Resources._getWinJSString("ui/invalidHubContent").value; },
+                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
+                get duplicateSection() { return "Hub duplicate sections: Each HubSection must be unique"; },
+                get invalidContent() { return "Invalid content: Hub content must be made up of HubSections."; },
                 get hubViewportAriaLabel() { return _Resources._getWinJSString("ui/hubViewportAriaLabel").value; }
             };
 
@@ -1654,11 +1662,3 @@ define('WinJS/Controls/Hub',[
     });
 
 });
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

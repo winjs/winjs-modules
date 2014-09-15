@@ -491,19 +491,19 @@ define('WinJS/Animations/_TransitionAnimation',[
         },
 
         isAnimationEnabled: {
-            get: function() {
+            get: function () {
                 return isAnimationEnabled;
             },
-            set: function(value) {
+            set: function (value) {
                 isAnimationEnabled = value;
             }
         },
 
         _libraryDelay: {
-            get: function() {
+            get: function () {
                 return libraryDelay;
             },
-            set: function(value) {
+            set: function (value) {
                 libraryDelay = value;
             }
         },
@@ -553,10 +553,10 @@ define('WinJS/Animations/_TransitionAnimation',[
         },
 
         _animationTimeAdjustment: {
-            get: function() {
+            get: function () {
                 return animationTimeAdjustment;
             },
-            set: function(value) {
+            set: function (value) {
                 animationTimeAdjustment = value;
             }
         }
@@ -565,10 +565,10 @@ define('WinJS/Animations/_TransitionAnimation',[
 
     _Base.Namespace._moduleDefine(exports, "WinJS.Utilities", {
         _fastAnimations: {
-            get: function() {
+            get: function () {
                 return fastAnimations;
             },
-            set: function(value) {
+            set: function (value) {
                 fastAnimations = value;
             }
         }
@@ -593,7 +593,7 @@ define('WinJS/Animations',[
 
     // Default to 11 pixel from the left (or right if RTL)
     var defaultOffset = [{ top: "0px", left: "11px", rtlflip: true }];
-    
+
     var OffsetArray = _Base.Class.define(function OffsetArray_ctor(offset, keyframe, defOffset) {
         // Constructor
         defOffset = defOffset || defaultOffset;
@@ -763,7 +763,7 @@ define('WinJS/Animations',[
                 property: "opacity",
                 delay: 0,
                 duration: 350,
-                timing: fadeIn ? "cubic-bezier(0,2,0,2)" : "cubic-bezier(1,-0.42,0.995,-0.425)",
+                timing: fadeIn ? "steps(1, start)" : "steps(1, end)",
                 from: fadeIn ? 0 : 1,
                 to: fadeIn ? 1 : 0
             }]);
@@ -1361,7 +1361,7 @@ define('WinJS/Animations',[
             /// AddToListAnimation object whose execute method returns
             /// a Promise that completes when the animation is complete.
             /// </returns>
-            /// </signature>           
+            /// </signature>
             return layoutTransition(AddToListAnimation, added, affected);
         },
 
@@ -1386,7 +1386,7 @@ define('WinJS/Animations',[
             /// DeleteFromListAnimation object whose execute method returns
             /// a Promise that completes when the animation is complete.
             /// </returns>
-            /// </signature>          
+            /// </signature>
             return layoutTransition(DeleteFromListAnimation, deleted, remaining);
         },
 
@@ -1471,7 +1471,7 @@ define('WinJS/Animations',[
             /// <returns type="WinJS.Promise" locid="WinJS.UI.Animation.showEdgeUI_p:returnValue">
             /// Promise object that completes when the animation is complete.
             /// </returns>
-            /// </signature>    
+            /// </signature>
             writeAnimationProfilerMark("showEdgeUI,StartTM");
 
             var offsetArray = new OffsetArray(offset, "WinJS-showEdgeUI", [{ top: "-70px", left: "0px" }]);
@@ -2570,7 +2570,7 @@ define('WinJS/Animations',[
             /// Execute a slide down animation.
             /// </summary>
             /// <param name="outgoingElements" locid="WinJS.UI.Animation.slideDown_p:outgoingElements">
-            /// Single element or collection of elements to animate sliding down. 
+            /// Single element or collection of elements to animate sliding down.
             /// </param>
             /// <returns type="WinJS.Promise" locid="WinJS.UI.Animation.slideDown_returnValue">
             /// Promise object that completes when the animation is complete.
@@ -2606,7 +2606,7 @@ define('WinJS/Animations',[
             /// Execute a slide up animation.
             /// </summary>
             /// <param name="incomingElements" locid="WinJS.UI.Animation.slideUp_p:incomingElements">
-            /// Single element or collection of elements to animate sliding up. 
+            /// Single element or collection of elements to animate sliding up.
             /// </param>
             /// <returns type="WinJS.Promise" locid="WinJS.UI.Animation.slideUp_returnValue">
             /// Promise object that completes when the animation is complete.
@@ -2642,16 +2642,16 @@ define('WinJS/Animations',[
             /// Execute a slide in from left to right animation.
             /// </summary>
             /// <param name="page" locid="WinJS.UI.Animation.slideRightIn_p:page">
-            /// The page containing all elements to slide. 
+            /// The page containing all elements to slide.
             /// </param>
             /// <param name="firstIncomingElements" locid="WinJS.UI.Animation.slideRightIn_p:firstIncomingElements">
-            /// First element or collection of elements to animate sliding in. 
+            /// First element or collection of elements to animate sliding in.
             /// </param>
             /// <param name="secondIncomingElements" locid="WinJS.UI.Animation.slideRightIn_p:secondIncomingElements">
-            /// Second element or collection of elements to animate sliding in, which will be offset slightly farther than the first. 
+            /// Second element or collection of elements to animate sliding in, which will be offset slightly farther than the first.
             /// </param>
             /// <param name="thirdIncomingElements" locid="WinJS.UI.Animation.slideRightIn_p:thirdIncomingElements">
-            /// Third element or collection of elements to animate sliding in, which will be offset slightly farther than the second. 
+            /// Third element or collection of elements to animate sliding in, which will be offset slightly farther than the second.
             /// </param>
             /// <returns type="WinJS.Promise" locid="WinJS.UI.Animation.slideRightIn_returnValue">
             /// Promise object that completes when the animation is complete.
@@ -2669,16 +2669,16 @@ define('WinJS/Animations',[
             /// Execute a slide out from left to right animation.
             /// </summary>
             /// <param name="page" locid="WinJS.UI.Animation.slideRightOut_p:page">
-            /// The page containing all elements to slide. 
+            /// The page containing all elements to slide.
             /// </param>
             /// <param name="firstOutgoingElements" locid="WinJS.UI.Animation.slideRightOut_p:firstOutgoingElements">
-            /// First element or collection of elements to animate sliding out. 
+            /// First element or collection of elements to animate sliding out.
             /// </param>
             /// <param name="secondOutgoingElements" locid="WinJS.UI.Animation.slideRightOut_p:secondOutgoingElements">
-            /// Second element or collection of elements to animate sliding out, which will be offset slightly farther than the first. 
+            /// Second element or collection of elements to animate sliding out, which will be offset slightly farther than the first.
             /// </param>
             /// <param name="thirdOutgoingElements" locid="WinJS.UI.Animation.slideRightOut_p:thirdOutgoingElements">
-            /// Third element or collection of elements to animate sliding out, which will be offset slightly farther than the second. 
+            /// Third element or collection of elements to animate sliding out, which will be offset slightly farther than the second.
             /// </param>
             /// <returns type="WinJS.Promise" locid="WinJS.UI.Animation.slideRightOut_returnValue">
             /// Promise object that completes when the animation is complete.
@@ -2696,16 +2696,16 @@ define('WinJS/Animations',[
             /// Execute a slide in from right to left animation.
             /// </summary>
             /// <param name="page" locid="WinJS.UI.Animation.slideLeftIn_p:page">
-            /// The page containing all elements to slide. 
+            /// The page containing all elements to slide.
             /// </param>
             /// <param name="firstIncomingElements" locid="WinJS.UI.Animation.slideLeftIn_p:firstIncomingElements">
-            /// First element or collection of elements to animate sliding in. 
+            /// First element or collection of elements to animate sliding in.
             /// </param>
             /// <param name="secondIncomingElements" locid="WinJS.UI.Animation.slideLeftIn_p:secondIncomingElements">
-            /// Second element or collection of elements to animate sliding in, which will be offset slightly farther than the first. 
+            /// Second element or collection of elements to animate sliding in, which will be offset slightly farther than the first.
             /// </param>
             /// <param name="thirdIncomingElements" locid="WinJS.UI.Animation.slideLeftIn_p:thirdIncomingElements">
-            /// Third element or collection of elements to animate sliding in, which will be offset slightly farther than the second. 
+            /// Third element or collection of elements to animate sliding in, which will be offset slightly farther than the second.
             /// </param>
             /// <returns type="WinJS.Promise" locid="WinJS.UI.Animation.slideLeftIn_returnValue">
             /// Promise object that completes when the animation is complete.
@@ -2723,16 +2723,16 @@ define('WinJS/Animations',[
             /// Execute a slide out from right to left animation.
             /// </summary>
             /// <param name="page" locid="WinJS.UI.Animation.slideLeftOut_p:page">
-            /// The page containing all elements to slide. 
+            /// The page containing all elements to slide.
             /// </param>
             /// <param name="firstOutgoingElements" locid="WinJS.UI.Animation.slideLeftOut_p:firstOutgoingElements">
-            /// First element or collection of elements to animate sliding out. 
+            /// First element or collection of elements to animate sliding out.
             /// </param>
             /// <param name="secondOutgoingElements" locid="WinJS.UI.Animation.slideLeftOut_p:secondOutgoingElements">
-            /// Second element or collection of elements to animate sliding out, which will be offset slightly farther than the first. 
+            /// Second element or collection of elements to animate sliding out, which will be offset slightly farther than the first.
             /// </param>
             /// <param name="thirdOutgoingElements" locid="WinJS.UI.Animation.slideLeftOut_p:thirdOutgoingElements">
-            /// Third element or collection of elements to animate sliding out, which will be offset slightly farther than the second. 
+            /// Third element or collection of elements to animate sliding out, which will be offset slightly farther than the second.
             /// </param>
             /// <returns type="WinJS.Promise" locid="WinJS.UI.Animation.slideLeftOut_returnValue">
             /// Promise object that completes when the animation is complete.
@@ -2750,13 +2750,13 @@ define('WinJS/Animations',[
             /// Execute a continuum animation, scaling up the incoming page while scaling, rotating, and translating the incoming item.
             /// </summary>
             /// <param name="incomingPage" locid="WinJS.UI.Animation.continuumForwardIn_p:incomingPage">
-            /// Single element to be scaled up that is the page root and does not contain the incoming item. 
+            /// Single element to be scaled up that is the page root and does not contain the incoming item.
             /// </param>
             /// <param name="incomingItemRoot" locid="WinJS.UI.Animation.continuumForwardIn_p:incomingItemRoot">
             /// Root of the item that will be translated as part of the continuum animation.
             /// </param>
             /// <param name="incomingItemContent" locid="WinJS.UI.Animation.continuumForwardIn_p:incomingItemContent">
-            /// Content of the item that will be scaled and rotated as part of the continuum animation. 
+            /// Content of the item that will be scaled and rotated as part of the continuum animation.
             /// </param>
             /// <returns type="WinJS.Promise" locid="WinJS.UI.Animation.continuumForwardIn_returnValue">
             /// Promise object that completes when the animation is complete.
@@ -2826,10 +2826,10 @@ define('WinJS/Animations',[
             /// Execute a continuum animation, scaling down the outgoing page while scaling, rotating, and translating the outgoing item.
             /// </summary>
             /// <param name="outgoingPage" locid="WinJS.UI.Animation.continuumForwardOut_p:outgoingPage">
-            /// Single element to be scaled down that is the page root and contains the outgoing item. 
+            /// Single element to be scaled down that is the page root and contains the outgoing item.
             /// </param>
             /// <param name="outgoingItem" locid="WinJS.UI.Animation.continuumForwardOut_p:outgoingItem">
-            /// Single element to be scaled, rotated, and translated away from the outgoing page. 
+            /// Single element to be scaled, rotated, and translated away from the outgoing page.
             /// </param>
             /// <returns type="WinJS.Promise" locid="WinJS.UI.Animation.continuumForwardOut_returnValue">
             /// Promise object that completes when the animation is complete.
@@ -2882,10 +2882,10 @@ define('WinJS/Animations',[
             /// Execute a continuum animation, scaling down the incoming page while scaling, rotating, and translating the incoming item.
             /// </summary>
             /// <param name="incomingPage" locid="WinJS.UI.Animation.continuumBackwardIn_p:incomingPage">
-            /// Single element to be scaled down that is the page root and contains the incoming item. 
+            /// Single element to be scaled down that is the page root and contains the incoming item.
             /// </param>
             /// <param name="incomingItem" locid="WinJS.UI.Animation.continuumBackwardIn_p:incomingItem">
-            /// Single element to be scaled, rotated, and translated into its final position on the page. 
+            /// Single element to be scaled, rotated, and translated into its final position on the page.
             /// </param>
             /// <returns type="WinJS.Promise" locid="WinJS.UI.Animation.continuumBackwardIn_returnValue">
             /// Promise object that completes when the animation is complete.
@@ -2938,7 +2938,7 @@ define('WinJS/Animations',[
             /// Execute a continuum animation, scaling down the outgoing page while.
             /// </summary>
             /// <param name="outgoingPage" locid="WinJS.UI.Animation.continuumBackwardOut_p:outgoingPage">
-            /// Single element to be scaled down that is the page root. 
+            /// Single element to be scaled down that is the page root.
             /// </param>
             /// <returns type="WinJS.Promise" locid="WinJS.UI.Animation.continuumBackwardOut_returnValue">
             /// Promise object that completes when the animation is complete.
@@ -2970,7 +2970,7 @@ define('WinJS/Animations',[
             /// <signature helpKeyword="WinJS.UI.Animation.createPageNavigationAnimations" >
             /// <summary locid="WinJS.UI.Animation.createPageNavigationAnimations">
             /// Creates an exit and entrance animation to play for a page navigation given the current and incoming pages'
-            /// animation preferences and whether the pages are navigating forwards or backwards. 
+            /// animation preferences and whether the pages are navigating forwards or backwards.
             /// </summary>
             /// <param name="currentPreferredAnimation" locid="WinJS.UI.Animation.createPageNavigationAnimations_p:currentPreferredAnimation">
             /// A value from WinJS.UI.PageNavigationAnimation describing the animation the current page prefers to use.

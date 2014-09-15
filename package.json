@@ -2,7 +2,7 @@
     "name": "winjs-modules",
     "title": "WinJS Modules SDK",
     "description": "This is a modular build seed for custom compiling your own version of WinJS.",
-    "version": "0.0.1",
+    "version": "3.0.0",
     "homepage": "http://try.buildwinjs.com/",
     "author": {
         "name": "Microsoft Open Technologies, Inc. and other contributors",
@@ -10,7 +10,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/xirzec/winjs-modules"
+        "url": "https://github.com/winjs/winjs-modules"
     },
     "licenses": [
         {

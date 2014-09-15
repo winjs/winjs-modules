@@ -1,17 +1,20 @@
 ({
     "baseUrl": ".",
-    "name": "amd",
+    "name": "WinJS-custom",
+    "deps": [
+        "amd"
+    ],
     "optimize": "none",
     "useStrict": true,
-    "include": "WinJS-custom",
     "out": "bin/WinJS.js",
     "wrap": {
-        "startFile": "node_modules/winjs-modules/build/startWinJS.js",
-        "endFile": "node_modules/winjs-modules//build/endWinJS-custom.js"
+        "start": "\n/*! Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information. */\n(function (global) {\n\n    (function (factory) {\n        if (typeof define === 'function' && define.amd) {\n            define([], factory);\n        } else {\n            global.msWriteProfilerMark && msWriteProfilerMark('WinJS.3.0 3.0.0.winjs.2014.9.15 WinJS-custom.js,StartTM');\n            factory(global.WinJS);\n            global.msWriteProfilerMark && msWriteProfilerMark('WinJS.3.0 3.0.0.winjs.2014.9.15 WinJS-custom.js,StopTM');\n        }\n    }(function (WinJS) {\n\n",
+        "end": "\n        require(['WinJS/Core/_WinJS', 'WinJS-custom'], function (_WinJS) {\n            global.WinJS = _WinJS;\n            return _WinJS;\n        });\n    }));\n}(this));\n\n"
     },
     "paths": {
         "amd": "node_modules/winjs-modules/amd",
         "require-style": "node_modules/winjs-modules/require-style",
+        "require-json": "node_modules/winjs-modules/require-json",
         "WinJS": "node_modules/winjs-modules/WinJS",
         "less-phone": "empty:",
         "less-desktop": "empty:"
@@ -82,7 +85,11 @@
             "WinJS/Controls/Pivot/_Constants",
             "WinJS/Controls/Pivot/_Item"
         ],
+        "WinJS/Controls/SearchBox": [
+            "WinJS/Controls/SearchBox/_SearchSuggestionManagerShim"
+        ],
         "WinJS/Core": [
+            "require-json!en-US/ui.resjson",
             "WinJS/Core/_Base",
             "WinJS/Core/_BaseCoreUtils",
             "WinJS/Core/_BaseUtils",
@@ -93,7 +100,11 @@
             "WinJS/Core/_Resources",
             "WinJS/Core/_Trace",
             "WinJS/Core/_WinRT",
-            "WinJS/Core/_WriteProfilerMark"
+            "WinJS/Core/_WriteProfilerMark",
+            "WinJS/Core/_WinJS"
+        ],
+        "WinJS/Pages": [
+            "WinJS/Pages/_BasePage"
         ],
         "WinJS/Promise": [
             "WinJS/Promise/_StateMachine"
@@ -103,6 +114,7 @@
             "WinJS/Utilities/_Dispose",
             "WinJS/Utilities/_ElementListUtilities",
             "WinJS/Utilities/_ElementUtilities",
+            "WinJS/Utilities/_Hoverable",
             "WinJS/Utilities/_ItemsManager",
             "WinJS/Utilities/_KeyboardBehavior",
             "WinJS/Utilities/_ParallelWorkQueue",
@@ -110,7 +122,6 @@
             "WinJS/Utilities/_Select",
             "WinJS/Utilities/_TabContainer",
             "WinJS/Utilities/_UI",
-            "WinJS/Utilities/_UIUtilities",
             "WinJS/Utilities/_VersionManager",
             "WinJS/Utilities/_Xhr"
         ],

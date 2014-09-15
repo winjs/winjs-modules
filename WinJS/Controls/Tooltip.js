@@ -15,9 +15,10 @@ define('WinJS/Controls/Tooltip',[
     '../Utilities/_Control',
     '../Utilities/_Dispose',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_Hoverable',
     'require-style!less/desktop/controls',
     'require-style!less/phone/controls'
-    ], function tooltipInit(exports, _Global, _WinRT, _Base, _BaseUtils, _Events, Animations, _TransitionAnimation, _Control, _Dispose, _ElementUtilities) {
+    ], function tooltipInit(exports, _Global, _WinRT, _Base, _BaseUtils, _Events, Animations, _TransitionAnimation, _Control, _Dispose, _ElementUtilities, _Hoverable) {
     "use strict";
 
     // Tooltip control implementation
@@ -36,9 +37,9 @@ define('WinJS/Controls/Tooltip',[
         /// <event name="beforeclose" bubbles="false" locid="WinJS.UI.Tooltip_e:beforeclose">Raised when the tooltip is about to become hidden.</event>
         /// <event name="closed" bubbles="false" locid="WinJS.UI.Tooltip_e:close">Raised when the tooltip is hidden.</event>
         /// <part name="tooltip" class="win-tooltip" locid="WinJS.UI.Tooltip_e:tooltip">The entire Tooltip control.</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         Tooltip: _Base.Namespace._lazy(function () {
             var lastCloseTime = 0;
             var Key = _ElementUtilities.Key;
@@ -68,7 +69,7 @@ define('WinJS/Controls/Tooltip',[
                 EVENTS_UPDATE = { "pointermove": "" },
                 EVENTS_DISMISS = { "pointerdown": "", "keydown": "", "focusout": "", "pointerout": "", "pointercancel": "", "pointerup": "" },
                 EVENTS_BY_CHILD = { "pointerover": "", "pointerout": "" };
-            
+
             function isInvokeEvent(eventType, pointerType) {
                 if (eventType === "pointerdown") {
                     return pointerType === PT_TOUCH;
@@ -76,7 +77,7 @@ define('WinJS/Controls/Tooltip',[
                     return eventType in EVENTS_INVOKE;
                 }
             }
-            
+
             function isDismissEvent(eventType, pointerType) {
                 if (eventType === "pointerdown") {
                     return pointerType !== PT_TOUCH;
@@ -130,10 +131,10 @@ define('WinJS/Controls/Tooltip',[
                 // Set system attributes if it is in WWA, otherwise, use the default values
                 if (!hasInitWinRTSettings && _WinRT.Windows.UI.ViewManagement.UISettings) { // in WWA
                     var uiSettings = new _WinRT.Windows.UI.ViewManagement.UISettings();
-                    mouseHoverTime = uiSettings.mouseHoverTime;
+                    mouseHoverTime = _TransitionAnimation._animationTimeAdjustment(uiSettings.mouseHoverTime);
                     nonInfoTooltipNonTouchShowDelay = 2 * mouseHoverTime;
                     infoTooltipNonTouchShowDelay = 2.5 * mouseHoverTime;
-                    messageDuration = uiSettings.messageDuration * 1000;  // uiSettings.messageDuration is in seconds.
+                    messageDuration = _TransitionAnimation._animationTimeAdjustment(uiSettings.messageDuration * 1000);  // uiSettings.messageDuration is in seconds.
                     var handedness = uiSettings.handPreference;
                     isLeftHanded = (handedness === _WinRT.Windows.UI.ViewManagement.HandPreference.leftHanded);
                 }
@@ -539,7 +540,7 @@ define('WinJS/Controls/Tooltip',[
                                 //   - pointerover (from mouseover; causes the Tooltip to show)
                                 // At the end, the Tooltip should be hidden but instead it'll be shown due to mouseover coming
                                 // after touchend. To avoid this problem, we use the _skipMouseOver flag to ignore the mouseover
-                                // that follows touchend. 
+                                // that follows touchend.
                                 this._skipMouseOver = false;
                                 return;
                             } else {
@@ -584,7 +585,7 @@ define('WinJS/Controls/Tooltip',[
                         if (this._hideDelay !== "never") {
                             var that = this;
                             var delay = this._infotip ? Math.min(3 * messageDuration, HIDE_DELAY_MAX) : messageDuration;
-                            this._hideDelayTimer = _Global.setTimeout(function () {
+                            this._hideDelayTimer = this._setTimeout(function () {
                                 that._onDismiss();
                             }, delay);
                         }
@@ -612,16 +613,14 @@ define('WinJS/Controls/Tooltip',[
                     if (type === "nodelay") {
                         value = 0;
                         this._useAnimation = false;
-                    }
-                    else {
+                    } else {
                         var curTime = (new Date()).getTime();
                         // If the mouse is moved immediately from another anchor that has
                         // tooltip open, we should use a shorter delay
                         if (curTime - lastCloseTime <= RESHOW_THRESHOLD) {
                             if (type === "touch") {
                                 value = this._infotip ? DELAY_RESHOW_INFOTIP_TOUCH : DELAY_RESHOW_NONINFOTIP_TOUCH;
-                            }
-                            else {
+                            } else {
                                 value = this._infotip ? DELAY_RESHOW_INFOTIP_NONTOUCH : DELAY_RESHOW_NONINFOTIP_NONTOUCH;
                             }
                             this._useAnimation = false;
@@ -732,8 +731,7 @@ define('WinJS/Controls/Tooltip',[
 
                     if (this._contactPoint && (contactType === "touch" || contactType === "mouse")) {
                         anchor = this._getAnchorPositionFromPointerWindowCoord(this._contactPoint);
-                    }
-                    else {
+                    } else {
                         // keyboard or programmatic is relative to element
                         anchor = this._getAnchorPositionFromElementWindowCoord();
                     }
@@ -862,14 +860,14 @@ define('WinJS/Controls/Tooltip',[
                         }
                     }
 
-                    _Global.clearTimeout(this._delayTimer);
-                    _Global.clearTimeout(this._hideDelayTimer);
+                    this._clearTimeout(this._delayTimer);
+                    this._clearTimeout(this._hideDelayTimer);
 
                     // Set the delay time
                     var delay = this._decideOnDelay(type);
                     if (delay > 0) {
                         var that = this;
-                        this._delayTimer = _Global.setTimeout(function () {
+                        this._delayTimer = this._setTimeout(function () {
                             that._showTooltip(type);
                         }, delay);
                     } else {
@@ -903,6 +901,14 @@ define('WinJS/Controls/Tooltip',[
                         this._raiseEvent("beforeclose");
                         this._raiseEvent("closed");
                     }
+                },
+
+                _setTimeout: function (callback, delay) {
+                    return _Global.setTimeout(callback, delay);
+                },
+
+                _clearTimeout: function (id) {
+                    _Global.clearTimeout(id);
                 }
             }, {
 
@@ -950,11 +956,3 @@ define('WinJS/Controls/Tooltip',[
     });
 
 });
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

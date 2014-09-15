@@ -49,7 +49,7 @@ define('WinJS/Controls/Pivot/_Item',[
     _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
         /// <field>
         /// <summary locid="WinJS.UI.PivotItem">
-        /// Defines a Item of a Pivot control. 
+        /// Defines a Item of a Pivot control.
         /// </summary>
         /// <compatibleWith platform="WindowsPhoneApp" minVersion="8.1"/>
         /// </field>
@@ -58,12 +58,12 @@ define('WinJS/Controls/Pivot/_Item',[
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.PivotItem" data-win-options="{header: 'PivotItem Header'}">PivotItem Content</div>]]></htmlSnippet>
         /// <part name="pivotitem" class="win-pivot-item" locid="WinJS.UI.PivotItem_part:pivotitem">The entire PivotItem control.</part>
         /// <part name="content" class="win-pivot-item-content" locid="WinJS.UI.PivotItem_part:content">The content region of the PivotItem.</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         PivotItem: _Base.Namespace._lazy(function () {
             var strings = {
-                get duplicateConstruction() { return _Resources._getWinJSString("ui/duplicateConstruction").value; }
+                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; }
             };
 
             var PivotItem = _Base.Class.define(function PivotItem_ctor(element, options) {
@@ -75,8 +75,8 @@ define('WinJS/Controls/Pivot/_Item',[
                 /// The DOM element that hosts the PivotItem control.
                 /// </param>
                 /// <param name="options" type="Object" isOptional="true" locid="WinJS.UI.PivotItem.constructor_p:options">
-                /// An object that contains one or more property/value pairs to apply to the new control. 
-                /// Each property of the options object corresponds to one of the control's properties or events. 
+                /// An object that contains one or more property/value pairs to apply to the new control.
+                /// Each property of the options object corresponds to one of the control's properties or events.
                 /// </param>
                 /// <returns type="WinJS.UI.PivotItem" locid="WinJS.UI.PivotItem.constructor_returnValue">
                 /// The new PivotItem.
@@ -238,13 +238,14 @@ define('WinJS/Controls/Pivot',[
     '../Utilities/_Control',
     '../Utilities/_Dispose',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_Hoverable',
     '../Utilities/_TabContainer',
-    '../Utilities/_UIUtilities',
+    '../Utilities/_KeyboardBehavior',
     './Pivot/_Constants',
     './Pivot/_Item',
     'require-style!less/desktop/controls',
     'require-style!less/phone/controls'
-    ], function pivotInit(_Global,_Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, ControlProcessor, Promise, Scheduler, _Signal, _Control, _Dispose, _ElementUtilities, _TabContainer, _UIUtilities, _Constants, _Item) {
+    ], function pivotInit(_Global,_Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, ControlProcessor, Promise, Scheduler, _Signal, _Control, _Dispose, _ElementUtilities, _Hoverable, _TabContainer, _KeyboardBehavior, _Constants, _Item) {
         "use strict";
 
         _Base.Namespace.define("WinJS.UI", {
@@ -265,9 +266,9 @@ define('WinJS/Controls/Pivot',[
             /// <part name="pivot" class="win-pivot" locid="WinJS.UI.Pivot_part:pivot">The entire Pivot control.</part>
             /// <part name="title" class="win-pivot-title" locid="WinJS.UI.Pivot_part:title">The title for the Pivot control.</part>
             /// <part name="header" class="win-pivot-header" locid="WinJS.UI.Pivot_part:header">A header of a Pivot Item.</part>
-            /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-            /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-            /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+            /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+            /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+            /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
             Pivot: _Base.Namespace._lazy(function () {
                 var PT_MOUSE = _ElementUtilities._MSPointerEvent.MSPOINTER_TYPE_MOUSE || "mouse";
                 var PT_TOUCH = _ElementUtilities._MSPointerEvent.MSPOINTER_TYPE_TOUCH || "touch";
@@ -286,6 +287,9 @@ define('WinJS/Controls/Pivot',[
                 };
                 var MSManipulationEventStates = _ElementUtilities._MSManipulationEvent;
 
+                var supportsSnap = false;
+                var ready = null;
+
                 var Pivot = _Base.Class.define(function Pivot_ctor(element, options) {
                     /// <signature helpKeyword="WinJS.UI.Pivot.Pivot">
                     /// <summary locid="WinJS.UI.Pivot.constructor">
@@ -303,8 +307,13 @@ define('WinJS/Controls/Pivot',[
                     /// <returns type="WinJS.UI.Pivot" locid="WinJS.UI.Pivot.constructor_returnValue">
                     /// The new Pivot.
                     /// </returns>
-                    /// <compatibleWith platform="WindowsPhoneApp" minVersion="8.1" />
                     /// </signature>
+
+                    if (!ready) {
+                        ready = _ElementUtilities._detectSnapPointsSupport().then(function (value) {
+                            supportsSnap = value;
+                        });
+                    }
 
                     element = element || _Global.document.createElement("DIV");
                     options = options || {};
@@ -321,10 +330,6 @@ define('WinJS/Controls/Pivot',[
 
                     this._id = element.id || _ElementUtilities._uniqueID(element);
                     this._writeProfilerMark("constructor,StartTM");
-
-                    if (!_ElementUtilities._supportsSnapPoints) {
-                        _ElementUtilities.addClass(element, Pivot._ClassName.pivotNoSnap);
-                    }
 
                     // Attaching JS control to DOM element
                     element.winControl = this;
@@ -354,6 +359,7 @@ define('WinJS/Controls/Pivot',[
                     _ElementUtilities._addEventListener(this._headersContainerElement, "pointerdown", this._headersPointerDownHandler.bind(this));
                     _ElementUtilities._addEventListener(this._headersContainerElement, "pointerup", this._headersPointerUpHandler.bind(this));
 
+                    this._winKeyboard = new _KeyboardBehavior._WinKeyboard(this._headersContainerElement);
                     this._tabContainer = new _TabContainer.TabContainer(this._headersContainerElement);
 
                     this._viewportElement = _Global.document.createElement("DIV");
@@ -489,7 +495,7 @@ define('WinJS/Controls/Pivot',[
                         }
                     },
 
-                    /// <field type="Number" integer="true" locid="WinJS.UI.Pivot.selectedItem" helpKeyword="WinJS.UI.Pivot.selectedItem">
+                    /// <field type="WinJS.UI.PivotItem" locid="WinJS.UI.Pivot.selectedItem" helpKeyword="WinJS.UI.Pivot.selectedItem">
                     /// Gets or sets the item in view. This property is useful for restoring a previous view when your app launches or resumes.
                     /// <compatibleWith platform="WindowsPhoneApp" minVersion="8.1" />
                     /// </field>
@@ -589,7 +595,7 @@ define('WinJS/Controls/Pivot',[
                         get: function () {
                             if (!this._viewportElWidth) {
                                 this._viewportElWidth = parseFloat(_Global.getComputedStyle(this._viewportElement).width);
-                                if (_ElementUtilities._supportsSnapPoints) {
+                                if (supportsSnap) {
                                     this._viewportElement.style[_BaseUtils._browserStyleEquivalents["scroll-snap-points-x"].scriptName] = "snapInterval(0%, " + Math.ceil(this._viewportElWidth) + "px)";
                                 }
                             }
@@ -605,8 +611,6 @@ define('WinJS/Controls/Pivot',[
                         if (this._disposed) {
                             return;
                         }
-
-                        this._pendingRefresh = false;
 
                         if (this._pendingItems) {
                             this._updateEvents(this._items, this._pendingItems);
@@ -626,9 +630,18 @@ define('WinJS/Controls/Pivot',[
                         this._pendingIndexOnScreen = null;
                         this._currentIndexOnScreen = 0;
                         this._skipHeaderSlide = true;
-                        this.selectedIndex = Math.min(pendingIndexOnScreen, this.items.length - 1);
-                        this._skipHeaderSlide = false;
-                        this._recenterUI();
+
+                        var that = this;
+                        ready.done(function () {
+                            if (!supportsSnap) {
+                                _ElementUtilities.addClass(that.element, Pivot._ClassName.pivotNoSnap);
+                            }
+
+                            that._pendingRefresh = false;
+                            that.selectedIndex = Math.min(pendingIndexOnScreen, that.items.length - 1);
+                            that._skipHeaderSlide = false;
+                            that._recenterUI();
+                        });
                     },
 
                     _attachItems: function pivot_attachItems() {
@@ -685,7 +698,7 @@ define('WinJS/Controls/Pivot',[
                         }
 
                         var restoreFocus = this._headersContainerElement.contains(_Global.document.activeElement);
-                        var template = _UIUtilities._syncRenderer(pivotDefaultHeaderTemplate);
+                        var template = _ElementUtilities._syncRenderer(pivotDefaultHeaderTemplate);
 
                         _Dispose._disposeElement(this._headersContainerElement);
                         _ElementUtilities.empty(this._headersContainerElement);
@@ -860,7 +873,7 @@ define('WinJS/Controls/Pivot',[
                             this.selectedIndex = index;
                         } else {
                             // Move focus into content for Narrator.
-                            _UIUtilities._setActiveFirstFocusableElement(this.selectedItem.element);
+                            _ElementUtilities._setActiveFirstFocusableElement(this.selectedItem.element);
                         }
                     },
 
@@ -917,7 +930,7 @@ define('WinJS/Controls/Pivot',[
                         }
 
                         var zooming = false;
-                        if (_ElementUtilities._supportsSnapPoints && _ElementUtilities._supportsZoomTo && this._currentManipulationState !== MSManipulationEventStates.MS_MANIPULATION_STATE_INERTIA) {
+                        if (supportsSnap && _ElementUtilities._supportsZoomTo && this._currentManipulationState !== MSManipulationEventStates.MS_MANIPULATION_STATE_INERTIA) {
                             if (this._skipHeaderSlide) {
                                 _Log.log && _Log.log('_skipHeaderSlide index:' + this.selectedIndex + ' offset: ' + this._offsetFromCenter + ' scrollLeft: ' + this._currentScrollTargetLocation, "winjs pivot", "log");
                                 _ElementUtilities.setScrollPosition(this._viewportElement, { scrollLeft: this._currentScrollTargetLocation });
@@ -942,7 +955,7 @@ define('WinJS/Controls/Pivot',[
                             if (that._disposed || loadId !== that._loadId) {
                                 return;
                             }
-                            if (_ElementUtilities._supportsSnapPoints) {
+                            if (supportsSnap) {
                                 // Position item:
                                 item.element.style[that._getDirectionAccessor()] = that._currentScrollTargetLocation + "px";
                                 that._showPivotItem(item.element, goPrevious);
@@ -989,7 +1002,7 @@ define('WinJS/Controls/Pivot',[
 
                     _MSManipulationStateChangedHandler: function pivot_MSManipulationStateChangedHandler(ev) {
                         this._currentManipulationState = ev.currentState;
-                        if (!_ElementUtilities._supportsSnapPoints || ev.target !== this._viewportElement) {
+                        if (!supportsSnap || ev.target !== this._viewportElement) {
                             // Ignore sub scroller manipulations.
                             return;
                         }
@@ -1053,7 +1066,7 @@ define('WinJS/Controls/Pivot',[
                     },
 
                     _scrollHandler: function pivot_scrollHandler() {
-                        if (!_ElementUtilities._supportsSnapPoints || this._disposed) {
+                        if (!supportsSnap || this._disposed) {
                             return;
                         }
 
@@ -1083,7 +1096,7 @@ define('WinJS/Controls/Pivot',[
                     },
 
                     _recenterUI: function pivot_recenterUI() {
-                        if (!_ElementUtilities._supportsSnapPoints) {
+                        if (!supportsSnap) {
                             return;
                         }
 
@@ -1250,7 +1263,8 @@ define('WinJS/Controls/Pivot',[
 
                     // Input Handlers
                     _elementClickedHandler: function pivot_elementClickedHandler(ev) {
-                        if (this.locked) {
+                        if (this.locked || this._navigationHandled) {
+                            this._navigationHandled = false;
                             return;
                         }
 
@@ -1317,19 +1331,19 @@ define('WinJS/Controls/Pivot',[
 
                         var dx = e.clientX - this._headersPointerDownPoint.x;
                         dx = this._rtl ? -dx : dx;
-                        var swiped = false;
+                        this._navigationHandled = false;
                         if ((!_ElementUtilities._supportsTouchDetection || (this._headersPointerDownPoint.type === e.pointerType && e.pointerType === PT_TOUCH))) {
                             // Header swipe navigation detection
                             // If touch detection is not supported then we will detect swipe gestures for any pointer type.
                             if (dx < -Pivot._headerSwipeTriggerDistance) {
                                 this._goNext();
-                                swiped = true;
+                                this._navigationHandled = true;
                             } else if (dx > Pivot._headerSwipeTriggerDistance) {
                                 this._goPrevious();
-                                swiped = true;
+                                this._navigationHandled = true;
                             }
                         }
-                        if (!swiped) {
+                        if (!this._navigationHandled) {
                             // Detect header click
                             var element = e.target;
                             while (element !== null && !_ElementUtilities.hasClass(element, Pivot._ClassName.pivotHeader)) {
@@ -1337,6 +1351,7 @@ define('WinJS/Controls/Pivot',[
                             }
                             if (element !== null) {
                                 this._activateHeader(element);
+                                this._navigationHandled = true;
                             }
                         }
                         this._headersPointerDownPoint = null;
@@ -1555,9 +1570,9 @@ define('WinJS/Controls/Pivot',[
                 _Base.Class.mix(Pivot, _Control.DOMEventMixin);
 
                 var strings = {
-                    get duplicateConstruction() { return _Resources._getWinJSString("ui/duplicateConstruction").value; },
+                    get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
                     get duplicateItem() { return _Resources._getWinJSString("ui/duplicateItem").value; },
-                    get invalidContent() { return _Resources._getWinJSString("ui/invalidPivotContent").value; },
+                    get invalidContent() { return "Invalid content: Pivot content must be made up of PivotItems."; },
                     get pivotAriaLabel() { return _Resources._getWinJSString("ui/pivotAriaLabel").value; },
                     get pivotViewportAriaLabel() { return _Resources._getWinJSString("ui/pivotViewportAriaLabel").value; }
                 };
@@ -1566,11 +1581,3 @@ define('WinJS/Controls/Pivot',[
             })
         });
     });
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

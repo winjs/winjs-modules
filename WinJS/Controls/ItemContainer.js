@@ -7,6 +7,7 @@ define('WinJS/Controls/ItemContainer/_Constants',[
 
     var members = {};
     members._listViewClass = "win-listview";
+    members._listViewSupportsCrossSlideClass = "win-listview-supports-cross-slide";
     members._viewportClass = "win-viewport";
     members._rtlListViewClass = "win-rtl";
     members._horizontalClass = "win-horizontal";
@@ -57,7 +58,7 @@ define('WinJS/Controls/ItemContainer/_Constants',[
     members._clipClass = "win-clip";
     members._selectionModeClass = "win-selectionmode";
     members._noCSSGrid = "win-nocssgrid";
-    
+
     members._INVALID_INDEX = -1;
     members._UNINITIALIZED = -1;
 
@@ -65,7 +66,7 @@ define('WinJS/Controls/ItemContainer/_Constants',[
     members._RIGHT_MSPOINTER_BUTTON = 2;
 
     members._TAP_END_THRESHOLD = 10;
-    
+
     members._DEFAULT_PAGES_TO_LOAD = 5;
     members._DEFAULT_PAGE_LOAD_THRESHOLD = 2;
 
@@ -253,8 +254,8 @@ define('WinJS/Controls/ItemContainer/_ItemEventsHandler',[
                     }
                     this._disposed = true;
                     this._gestureRecognizer = null;
-                    _Global.removeEventListener("pointerup", this._resetPointerDownStateBound);
-                    _Global.removeEventListener("pointercancel", this._resetPointerDownStateBound);
+                    _ElementUtilities._removeEventListener(_Global, "pointerup", this._resetPointerDownStateBound);
+                    _ElementUtilities._removeEventListener(_Global, "pointercancel", this._resetPointerDownStateBound);
                 },
 
                 onMSManipulationStateChanged: function ItemEventsHandler_onMSManipulationStateChanged(eventObject) {
@@ -835,7 +836,8 @@ define('WinJS/Controls/ItemContainer/_ItemEventsHandler',[
                 },
 
                 _dispatchSwipeBehavior: function ItemEventsHandler_dispatchSwipeBehavior(manipulationState) {
-                    if (this._site.pressedEntity.type === _UI.ObjectType.groupHeader) {
+                    if (this._site.pressedEntity.type === _UI.ObjectType.groupHeader ||
+                        this._site.swipeBehavior !== _UI.SwipeBehavior.select) {
                         return;
                     }
                     this._site.selection._pivot = _Constants._INVALID_INDEX;
@@ -920,8 +922,8 @@ define('WinJS/Controls/ItemContainer/_ItemEventsHandler',[
                         this._endSwipeBehavior();
                     }
                     this._site.pressedElement = null;
-                    _Global.removeEventListener("pointerup", this._resetPointerDownStateBound);
-                    _Global.removeEventListener("pointercancel", this._resetPointerDownStateBound);
+                    _ElementUtilities._removeEventListener(_Global, "pointerup", this._resetPointerDownStateBound);
+                    _ElementUtilities._removeEventListener(_Global, "pointercancel", this._resetPointerDownStateBound);
 
                     this._resetPressedContainer();
 
@@ -1349,11 +1351,12 @@ define('WinJS/Controls/ItemContainer',[
     '../Utilities/_Control',
     '../Utilities/_Dispose',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_Hoverable',
     '../Utilities/_KeyboardBehavior',
     '../Utilities/_UI',
     './ItemContainer/_Constants',
     './ItemContainer/_ItemEventsHandler'
-    ], function itemContainerInit(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Promise, Scheduler, _Control, _Dispose, _ElementUtilities, _KeyboardBehavior, _UI, _Constants, _ItemEventsHandler) {
+    ], function itemContainerInit(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Promise, Scheduler, _Control, _Dispose, _ElementUtilities, _Hoverable, _KeyboardBehavior, _UI, _Constants, _ItemEventsHandler) {
     "use strict";
 
     var createEvent = _Events._createEventProperty;
@@ -1366,7 +1369,7 @@ define('WinJS/Controls/ItemContainer',[
     _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
         /// <field>
         /// <summary locid="WinJS.UI.ItemContainer">
-        /// Defines an item that can be pressed, swiped, and dragged. 
+        /// Defines an item that can be pressed, swiped, and dragged.
         /// </summary>
         /// </field>
         /// <icon src="ui_winjs.ui.itemcontainer.12x12.png" width="12" height="12" />
@@ -1381,12 +1384,12 @@ define('WinJS/Controls/ItemContainer',[
         /// <part name="selectionbackground" class="win-selectionbackground" locid="WinJS.UI.ItemContainer_part:selectionbackground">The background of a selection checkmark.</part>
         /// <part name="selectioncheckmark" class="win-selectioncheckmark" locid="WinJS.UI.ItemContainer_part:selectioncheckmark">A selection checkmark.</part>
         /// <part name="focusedoutline" class="win-focusedoutline" locid="WinJS.UI.ItemContainer_part:focusedoutline">Used to display an outline when the main container has keyboard focus.</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         ItemContainer: _Base.Namespace._lazy(function () {
             var strings = {
-                get duplicateConstruction() { return _Resources._getWinJSString("ui/duplicateConstruction").value; }
+                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; }
             };
 
             var ItemContainer = _Base.Class.define(function ItemContainer_ctor(element, options) {
@@ -1615,7 +1618,7 @@ define('WinJS/Controls/ItemContainer',[
                 },
 
                 /// <field type="Boolean" locid="WinJS.UI.ItemContainer.draggable" helpKeyword="WinJS.UI.ItemContainer.draggable">
-                /// Gets or sets a value that specifies whether the item can be dragged. The default value is false. 
+                /// Gets or sets a value that specifies whether the item can be dragged. The default value is false.
                 /// <compatibleWith platform="Windows" minVersion="8.1"/>
                 /// </field>
                 draggable: {
@@ -1672,7 +1675,7 @@ define('WinJS/Controls/ItemContainer',[
 
                 /// <field type="String" oamOptionsDatatype="WinJS.UI.TapBehavior" locid="WinJS.UI.ItemContainer.tapBehavior" helpKeyword="WinJS.UI.ItemContainer.tapBehavior">
                 /// Gets or sets how the ItemContainer control reacts when the user taps or clicks an item.
-                /// The tap or click can invoke the item, select it and invoke it, or have no effect. 
+                /// The tap or click can invoke the item, select it and invoke it, or have no effect.
                 /// Possible values: "toggleSelect", "invokeOnly", and "none". The default value is "invokeOnly".
                 /// </field>
                 tapBehavior: {
@@ -1705,7 +1708,7 @@ define('WinJS/Controls/ItemContainer',[
                 },
 
                 /// <field type="Boolean" locid="WinJS.UI.ItemContainer.selectionDisabled" helpKeyword="WinJS.UI.ItemContainer.selectionDisabled">
-                /// Gets or sets whether the item selection is disabled. The default value is false. 
+                /// Gets or sets whether the item selection is disabled. The default value is false.
                 /// </field>
                 selectionDisabled: {
                     get: function () {
@@ -1725,7 +1728,7 @@ define('WinJS/Controls/ItemContainer',[
                 },
 
                 /// <field type="Function" locid="WinJS.UI.ItemCotrol.oninvoked" helpKeyword="WinJS.UI.ItemCotrol.oninvoked">
-                /// Raised when the item is invoked. You can use the tapBehavior property to specify whether taps and clicks invoke the item. 
+                /// Raised when the item is invoked. You can use the tapBehavior property to specify whether taps and clicks invoke the item.
                 /// </field>
                 oninvoked: createEvent(eventNames.invoked),
 
@@ -2123,11 +2126,3 @@ define('WinJS/Controls/ItemContainer',[
         })
     });
 });
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

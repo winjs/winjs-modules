@@ -12,11 +12,11 @@ define('WinJS/Fragments',[
     './Utilities/_ElementUtilities',
     './Utilities/_SafeHtml',
     './Utilities/_Xhr'
-    ], function fragmentLoaderInit(exports, _Global, _WinRT, _Base, _BaseUtils, _ErrorFromName, _Resources, _WriteProfilerMark, Promise, _ElementUtilities, _SafeHtml, _Xhr) {
+], function fragmentLoaderInit(exports, _Global, _WinRT, _Base, _BaseUtils, _ErrorFromName, _Resources, _WriteProfilerMark, Promise, _ElementUtilities, _SafeHtml, _Xhr) {
     "use strict";
 
     var strings = {
-        get invalidFragmentUri() { return _Resources._getWinJSString("base/invalidFragmentUri").value; },
+        get invalidFragmentUri() { return "Unsupported uri for fragment loading. Fragments in the local context can only load from package content or local sources. To load fragments from other sources, use a web context."; },
     };
 
     // not supported in WebWorker
@@ -184,9 +184,9 @@ define('WinJS/Fragments',[
         forEach(cd.getElementsByTagName('style'), function (e, i) { addStyle(e, href, i); });
 
         // In DOCMODE 11 IE moved to the standards based script loading behavior of
-        // having out-of-line script elements which are dynamically added to the DOM 
+        // having out-of-line script elements which are dynamically added to the DOM
         // asynchronously load. This raises two problems for our fragment loader,
-        // 
+        //
         //  1) out-of-line scripts need to execute in order
         //
         //  2) so do in-line scripts.
@@ -288,8 +288,8 @@ define('WinJS/Fragments',[
 
     function renderImpl(href, target, copy) {
         var profilerMarkIdentifier = (href instanceof _Global.HTMLElement ? _BaseUtils._getProfilerMarkIdentifier(href) : " href='" + href + "'") + "[" + (++uniqueId) + "]";
-        _WriteProfilerMark("WinJS.UI.Fragments:render" + profilerMarkIdentifier + ",StartTM");
-    
+        writeProfilerMark("WinJS.UI.Fragments:render" + profilerMarkIdentifier + ",StartTM");
+
         initialize();
         return getStateRecord(href, !copy).then(function (state) {
             var frag = state.docfrag;
@@ -312,7 +312,7 @@ define('WinJS/Fragments',[
             } else {
                 retVal = frag;
             }
-            _WriteProfilerMark("WinJS.UI.Fragments:render" + profilerMarkIdentifier + ",StopTM");
+            writeProfilerMark("WinJS.UI.Fragments:render" + profilerMarkIdentifier + ",StopTM");
             return retVal;
         });
     }
@@ -382,15 +382,15 @@ define('WinJS/Fragments',[
             //
             var a = _Global.document.createElement("a");
             a.href = uri;
-            
+
             var absolute = a.href;
 
             // WinRT Uri class doesn't provide URI construction, but can crack the URI
             // appart to let us reliably discover the scheme.
             //
             var wuri = new _WinRT.Windows.Foundation.Uri(absolute);
-            
-            // Only "ms-appx" (local package content) are allowed when running in the local 
+
+            // Only "ms-appx" (local package content) are allowed when running in the local
             // context. Both strings are known to be safe to compare in any culture (including Turkish).
             //
             var scheme = wuri.schemeName;
@@ -405,12 +405,12 @@ define('WinJS/Fragments',[
     }
 
     function populateDocument(state, href) {
-        // Because we later use "setInnerHTMLUnsafe" ("Unsafe" is the magic word here), we 
+        // Because we later use "setInnerHTMLUnsafe" ("Unsafe" is the magic word here), we
         // want to force the href to only support local package content when running
         // in the local context. When running in the web context, this will be a no-op.
         //
         href = forceLocal(href);
-    
+
         var htmlDoc = _Global.document.implementation.createHTMLDocument("frag");
         var base = htmlDoc.createElement("base");
         htmlDoc.head.appendChild(base);
@@ -427,8 +427,9 @@ define('WinJS/Fragments',[
         });
     }
 
-    var getFragmentContents = getFragmentContentsXHR;
+    var writeProfilerMark = _WriteProfilerMark;
 
+    var getFragmentContents = getFragmentContentsXHR;
     function getFragmentContentsXHR(href) {
         return _Xhr({ url: href }).then(function (req) {
             return req.responseText;
@@ -443,11 +444,19 @@ define('WinJS/Fragments',[
         _cacheStore: { get: function () { return cacheStore; } },
         _forceLocal: forceLocal,
         _getFragmentContents: {
-            get: function() {
+            get: function () {
                 return getFragmentContents;
             },
-            set: function(value) {
+            set: function (value) {
                 getFragmentContents = value;
+            }
+        },
+        _writeProfilerMark: {
+            get: function () {
+                return writeProfilerMark;
+            },
+            set: function (value) {
+                writeProfilerMark = value;
             }
         }
     });

@@ -43,30 +43,18 @@ WinJS/Controls/AppBar/_Icon.js
 WinJS/Controls/AppBar/_Command.js
 WinJS/Controls/AppBar/_Layouts.js
 WinJS/Controls/AppBar.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/BackButton.js
 ----------------
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/BackButton.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/DatePicker.js
 ----------------
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/DatePicker.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/FlipView.js
 ----------------
@@ -75,10 +63,6 @@ WinJS/Controls/FlipView/_PageManager.js
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/FlipView.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/Flyout.js
 ----------------
@@ -86,18 +70,10 @@ WinJS/Controls/Flyout/_Overlay.js
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/Flyout.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/HtmlControl.js
 ----------------
 WinJS/Controls/HtmlControl.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/Hub.js
 ----------------
@@ -105,20 +81,20 @@ WinJS/Controls/Hub/_Section.js
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/Hub.js
-require-style!less/animation-library.less
-require-style!less/typography.less
+
+WinJS/Controls/IntrinsicControls.js
+----------------
 require-style!less/desktop/styles-intrinsic.less
 require-style!less/desktop/colors-intrinsic.less
+require-style!empty:/styles-intrinsic.less
+require-style!empty:/colors-intrinsic.less
+WinJS/Controls/IntrinsicControls.js
 
 WinJS/Controls/ItemContainer.js
 ----------------
 WinJS/Controls/ItemContainer/_Constants.js
 WinJS/Controls/ItemContainer/_ItemEventsHandler.js
 WinJS/Controls/ItemContainer.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/ListView.js
 ----------------
@@ -134,10 +110,6 @@ WinJS/Controls/ListView/_VirtualizeContentsView.js
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/ListView.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/Menu.js
 ----------------
@@ -145,10 +117,6 @@ require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/Menu/_Command.js
 WinJS/Controls/Menu.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/NavBar.js
 ----------------
@@ -157,10 +125,6 @@ require-style!empty:/controls.less
 WinJS/Controls/NavBar/_Command.js
 WinJS/Controls/NavBar/_Container.js
 WinJS/Controls/NavBar.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/Pivot.js
 ----------------
@@ -169,101 +133,63 @@ WinJS/Controls/Pivot/_Item.js
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/Pivot.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/Rating.js
 ----------------
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/Rating.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/Repeater.js
 ----------------
 WinJS/Controls/Repeater.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/SearchBox.js
 ----------------
+WinJS/Controls/SearchBox/_SearchSuggestionManagerShim.js
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/SearchBox.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/SemanticZoom.js
 ----------------
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/SemanticZoom.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/SettingsFlyout.js
 ----------------
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/SettingsFlyout.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/TimePicker.js
 ----------------
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/TimePicker.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/ToggleSwitch.js
 ----------------
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/ToggleSwitch.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/Tooltip.js
 ----------------
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/Tooltip.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Controls/ViewBox.js
 ----------------
 require-style!less/desktop/controls.less
 require-style!empty:/controls.less
 WinJS/Controls/ViewBox.js
-require-style!less/animation-library.less
-require-style!less/typography.less
-require-style!less/desktop/styles-intrinsic.less
-require-style!less/desktop/colors-intrinsic.less
 
 WinJS/Core.js
 ----------------
+WinJS/Core/_WinJS.js
 WinJS/Core/_Global.js
 WinJS/Core/_BaseCoreUtils.js
 WinJS/Core/_WriteProfilerMark.js
@@ -271,6 +197,7 @@ WinJS/Core/_Base.js
 WinJS/Core/_ErrorFromName.js
 WinJS/Core/_WinRT.js
 WinJS/Core/_Events.js
+require-json!en-US/ui.resjson
 WinJS/Core/_Resources.js
 WinJS/Core/_Trace.js
 WinJS/Core/_Log.js
@@ -287,6 +214,7 @@ WinJS/Navigation.js
 
 WinJS/Pages.js
 ----------------
+WinJS/Pages/_BasePage.js
 WinJS/Pages.js
 
 WinJS/Promise.js
@@ -308,15 +236,15 @@ WinJS/Utilities/_Control.js
 WinJS/Utilities/_ElementUtilities.js
 WinJS/Utilities/_Dispose.js
 WinJS/Utilities/_ElementListUtilities.js
+WinJS/Utilities/_Hoverable.js
 WinJS/Utilities/_ParallelWorkQueue.js
 WinJS/Utilities/_VersionManager.js
 WinJS/Utilities/_ItemsManager.js
+WinJS/Utilities/_TabContainer.js
 WinJS/Utilities/_KeyboardBehavior.js
 WinJS/Utilities/_SafeHtml.js
 WinJS/Utilities/_Select.js
-WinJS/Utilities/_TabContainer.js
 WinJS/Utilities/_UI.js
-WinJS/Utilities/_UIUtilities.js
 WinJS/Utilities/_Xhr.js
 WinJS/Utilities.js
 

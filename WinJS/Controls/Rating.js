@@ -11,11 +11,12 @@ define('WinJS/Controls/Rating',[
     '../Core/_Resources',
     '../Utilities/_Control',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_Hoverable',
     '../Utilities/_SafeHtml',
     './Tooltip',
     'require-style!less/desktop/controls',
     'require-style!less/phone/controls'
-    ], function ratingInit(_Global,_Base, _ErrorFromName, _Events, _Resources, _Control, _ElementUtilities, _SafeHtml, Tooltip) {
+    ], function ratingInit(_Global,_Base, _ErrorFromName, _Events, _Resources, _Control, _ElementUtilities, _Hoverable, _SafeHtml, Tooltip) {
     "use strict";
 
     // Rating control implementation
@@ -41,9 +42,9 @@ define('WinJS/Controls/Rating',[
         /// <part name="tentative-full" class="win-star win-tentative win-full" locid="WinJS.UI.Rating_part:tentative-full">The full star when the Rating control shows the tentative rating.</part>
         /// <part name="disabled-empty" class="win-star win-disabled win-empty" locid="WinJS.UI.Rating_part:disabled-empty">The empty star when the control is disabled.</part>
         /// <part name="disabled-full" class="win-star win-disabled win-full" locid="WinJS.UI.Rating_part:disabled-full">The full star when the control is disabled.</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         Rating: _Base.Namespace._lazy(function () {
             var createEvent = _Events._createEventProperty;
 
@@ -51,7 +52,7 @@ define('WinJS/Controls/Rating',[
                 get averageRating() { return _Resources._getWinJSString("ui/averageRating").value; },
                 get clearYourRating() { return _Resources._getWinJSString("ui/clearYourRating").value; },
                 get tentativeRating() { return _Resources._getWinJSString("ui/tentativeRating").value; },
-                get tooltipStringsIsInvalid() { return _Resources._getWinJSString("ui/tooltipStringsIsInvalid").value; },
+                get tooltipStringsIsInvalid() { return "Invalid argument: tooltipStrings must be null or an array of strings."; },
                 get unrated() { return _Resources._getWinJSString("ui/unrated").value; },
                 get userRating() { return _Resources._getWinJSString("ui/userRating").value; },
             };
@@ -366,8 +367,7 @@ define('WinJS/Controls/Rating',[
                     for (var i = 0; i <= this._maxRating; i++) {
                         if (i === this._maxRating) {
                             html = html + "<div class='" + msRatingAverageFull + "' style='" + hiddenAverageRatingCss + "'></div>";
-                        }
-                        else {
+                        } else {
                             html = html + "<div class='" + msRatingUserEmpty + "'></div>";
                         }
                     }
@@ -674,8 +674,7 @@ define('WinJS/Controls/Rating',[
                     var starNum;
                     if (star && (star.parentElement === this._element)) {
                         starNum = _ElementUtilities.data(star).msStarRating || 0;
-                    }
-                    else {
+                    } else {
                         var left = 0, right = this.maxRating;
                         if (_Global.getComputedStyle(this._element).direction === "rtl") {
                             left = right;
@@ -683,8 +682,7 @@ define('WinJS/Controls/Rating',[
                         }
                         if (eventObject.clientX < pointerAt.x) {
                             starNum = left;
-                        }
-                        else {
+                        } else {
                             starNum = right;
                         }
                     }
@@ -1155,11 +1153,3 @@ define('WinJS/Controls/Rating',[
 
 });
 
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

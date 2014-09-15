@@ -12,10 +12,11 @@ define('WinJS/Controls/DatePicker',[
     '../Core/_Resources',
     '../Utilities/_Control',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_Hoverable',
     '../Utilities/_Select',
     'require-style!less/desktop/controls',
     'require-style!less/phone/controls'
-    ], function datePickerInit(_Global, _WinRT, _Base, _BaseUtils, _Events, _Resources, _Control, _ElementUtilities, _Select) {
+    ], function datePickerInit(_Global, _WinRT, _Base, _BaseUtils, _Events, _Resources, _Control, _ElementUtilities, _Hoverable, _Select) {
     "use strict";
 
     _Base.Namespace.define("WinJS.UI", {
@@ -28,9 +29,9 @@ define('WinJS/Controls/DatePicker',[
         /// <icon src="ui_winjs.ui.datepicker.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.DatePicker"></div>]]></htmlSnippet>
         /// <event name="change" locid="WinJS.UI.DatePicker_e:change">Occurs when the current date changes.</event>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         DatePicker: _Base.Namespace._lazy(function () {
             // Constants definition
             var DEFAULT_DAY_PATTERN = 'day',
@@ -536,9 +537,13 @@ define('WinJS/Controls/DatePicker',[
                         year: localdatepattern.indexOf("{year")
                     };
                     order.sort(function (a, b) {
-                        if (indexes[a] < indexes[b]) { return -1; }
-                        else if (indexes[a] > indexes[b]) { return 1; }
-                        else { return 0; }
+                        if (indexes[a] < indexes[b]) {
+                            return -1;
+                        } else if (indexes[a] > indexes[b]) {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
                     });
 
                     var yearSource = (function () {
@@ -754,11 +759,3 @@ define('WinJS/Controls/DatePicker',[
 
 });
 
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

@@ -1,3 +1,237 @@
+// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+define('WinJS/Controls/SearchBox/_SearchSuggestionManagerShim',[
+    'exports',
+    '../../_Signal',
+    '../../Core/_Base',
+    '../../Core/_BaseUtils',
+    '../../Core/_Events',
+    '../../BindingList',
+], function SearchSuggestionManagerShimInit(exports, _Signal, _Base, _BaseUtils, _Events, BindingList) {
+    "use strict";
+
+    var CollectionChange = {
+        reset: 0,
+        itemInserted: 1,
+        itemRemoved: 2,
+        itemChanged: 3
+    };
+    var SearchSuggestionKind = {
+        Query: 0,
+        Result: 1,
+        Separator: 2
+    };
+
+    var SuggestionVectorShim = _Base.Class.derive(Array, function SuggestionVectorShim_ctor() {
+    }, {
+        reset: function () {
+            this.length = 0;
+            this.dispatchEvent("vectorchanged", { collectionChange: CollectionChange.reset, index: 0 });
+        },
+
+        insert: function (index, data) {
+            this.splice(index, 0, data);
+            this.dispatchEvent("vectorchanged", { collectionChange: CollectionChange.itemInserted, index: index });
+        },
+
+        remove: function (index) {
+            this.splice(index, 1);
+            this.dispatchEvent("vectorchanged", { collectionChange: CollectionChange.itemRemoved, index: index });
+        },
+    });
+    _Base.Class.mix(SuggestionVectorShim, _Events.eventMixin);
+
+    var SearchSuggestionCollectionShim = _Base.Class.define(function SearchSuggestionCollectionShim_ctor() {
+        this._data = [];
+    }, {
+        size: {
+            get: function () {
+                return this._data.length;
+            }
+        },
+
+        appendQuerySuggestion: function (text) {
+            this._data.push({ kind: SearchSuggestionKind.Query, text: text });
+        },
+        appendQuerySuggestions: function (suggestions) {
+            suggestions.forEach(this.appendQuerySuggestion.bind(this));
+        },
+        appendResultSuggestion: function (text, detailText, tag, imageUrl, imageAlternateText) {
+            // 'image' must be null (not undefined) for SearchBox to fallback to use imageUrl instead
+            this._data.push({ kind: SearchSuggestionKind.Result, text: text, detailText: detailText, tag: tag, imageUrl: imageUrl, imageAlternateText: imageAlternateText, image: null });
+        },
+        appendSearchSeparator: function (label) {
+            this._data.push({ kind: SearchSuggestionKind.Separator, text: label });
+        }
+    });
+
+    var SuggestionsRequestedEventArgShim = _Base.Class.define(function SuggestionsRequestedEventArgShim_ctor(queryText, language, linguisticDetails) {
+        this._queryText = queryText;
+        this._language = language;
+        this._linguisticDetails = linguisticDetails;
+        this._searchSuggestionCollection = new SearchSuggestionCollectionShim();
+    }, {
+        language: {
+            get: function () {
+                return this._language;
+            }
+        },
+        linguisticDetails: {
+            get: function () {
+                return this._linguisticDetails;
+            }
+        },
+        queryText: {
+            get: function () {
+                return this._queryText;
+            }
+        },
+        searchSuggestionCollection: {
+            get: function () {
+                return this._searchSuggestionCollection;
+            }
+        },
+        getDeferral: function () {
+            return this._deferralSignal || (this._deferralSignal = new _Signal());
+        },
+
+        _deferralSignal: null,
+    });
+
+    var SearchSuggestionManagerShim = _Base.Class.define(function SearchSuggestionManagerShim_ctor() {
+        this._updateVector = this._updateVector.bind(this);
+
+        this._suggestionVector = new SuggestionVectorShim();
+        this._query = "";
+        this._history = { "": [] };
+
+        this._dataSource = [];
+
+        this.searchHistoryContext = "";
+        this.searchHistoryEnabled = true;
+    }, {
+        addToHistory: function (queryText /*, language */) {
+            if (!queryText || !queryText.trim()) {
+                return;
+            }
+
+            var history = this._history[this.searchHistoryContext];
+            var dupeIndex = -1;
+            for (var i = 0, l = history.length; i < l; i++) {
+                var item = history[i];
+                if (item.text.toLowerCase() === queryText.toLowerCase()) {
+                    dupeIndex = i;
+                    break;
+                }
+            }
+            if (dupeIndex >= 0) {
+                history.splice(dupeIndex, 1);
+            }
+
+            history.splice(0, 0, { text: queryText, kind: SearchSuggestionKind.Query });
+            this._updateVector();
+        },
+
+        clearHistory: function () {
+            this._history[this.searchHistoryContext] = [];
+            this._updateVector();
+        },
+
+        setLocalContentSuggestionSettings: function (settings) {
+        },
+
+        setQuery: function (queryText) {
+            var that = this;
+            function update(arr) {
+                that._dataSource = arr;
+                that._updateVector();
+            }
+
+            this._query = queryText;
+            var arg = new SuggestionsRequestedEventArgShim(queryText);
+            this.dispatchEvent("suggestionsrequested", { request: arg });
+            if (arg._deferralSignal) {
+                arg._deferralSignal.promise.then(update.bind(this, arg.searchSuggestionCollection._data));
+            } else {
+                update(arg.searchSuggestionCollection._data);
+            }
+        },
+
+        searchHistoryContext: {
+            get: function () {
+                return "" + this._searchHistoryContext;
+            },
+            set: function (value) {
+                value = "" + value;
+                if (!this._history[value]) {
+                    this._history[value] = [];
+                }
+                this._searchHistoryContext = value;
+            }
+        },
+
+        searchHistoryEnabled: {
+            get: function () {
+                return this._searchHistoryEnabled;
+            },
+            set: function (value) {
+                this._searchHistoryEnabled = value;
+            }
+        },
+
+        suggestions: {
+            get: function () {
+                return this._suggestionVector;
+            }
+        },
+
+        _updateVector: function () {
+            // Can never clear the entire suggestions list or it will cause a visual flash because
+            // the SearchBox control removes the suggestions list UI when the SSM fires vectorChanged
+            // with size === 0, then re-renders it when the first suggestion is added.
+            // Workaround is to insert a dummy entry, remove all old entries, add the new set of
+            // eligible suggestions, then remove the dummy entry.
+            this.suggestions.insert(this.suggestions.length, { text: "", kind: SearchSuggestionKind.Query });
+
+            while (this.suggestions.length > 1) {
+                this.suggestions.remove(0);
+            }
+
+            var index = 0;
+            var added = {};
+            if (this.searchHistoryEnabled) {
+                var q = this._query.toLowerCase();
+                this._history[this.searchHistoryContext].forEach(function (item) {
+                    var text = item.text.toLowerCase();
+                    if (text.indexOf(q) === 0) {
+                        this.suggestions.insert(index, item);
+                        added[text] = true;
+                        index++;
+                    }
+                }, this);
+            }
+            this._dataSource.forEach(function (item) {
+                if (item.kind === SearchSuggestionKind.Query) {
+                    if (!added[item.text.toLowerCase()]) {
+                        this.suggestions.insert(index, item);
+                        index++;
+                    }
+                } else {
+                    this.suggestions.insert(index, item);
+                    index++;
+                }
+            }, this);
+
+            this.suggestions.remove(this.suggestions.length - 1);
+        },
+    });
+    _Base.Class.mix(SearchSuggestionManagerShim, _Events.eventMixin);
+
+    _Base.Namespace._moduleDefine(exports, null, {
+        _CollectionChange: CollectionChange,
+        _SearchSuggestionKind: SearchSuggestionKind,
+        _SearchSuggestionManagerShim: SearchSuggestionManagerShim,
+    });
+});
 
 define('require-style!less/desktop/controls',[],function(){});
 
@@ -16,9 +250,11 @@ define('WinJS/Controls/SearchBox',[
     '../Utilities/_Control',
     '../Utilities/_ElementListUtilities',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_Hoverable',
+    './SearchBox/_SearchSuggestionManagerShim',
     'require-style!less/desktop/controls',
-    'require-style!less/phone/controls'
-    ], function searchboxInit(_Global, _WinRT, _Base, _ErrorFromName, _Events, _Resources, Animations, BindingList, Repeater, _Control, _ElementListUtilities, _ElementUtilities) {
+    'require-style!less/phone/controls',
+], function searchboxInit(_Global, _WinRT, _Base, _ErrorFromName, _Events, _Resources, Animations, BindingList, Repeater, _Control, _ElementListUtilities, _ElementUtilities, _Hoverable, _SearchSuggestionManagerShim) {
     "use strict";
 
     _Base.Namespace.define("WinJS.UI", {
@@ -50,9 +286,9 @@ define('WinJS/Controls/SearchBox',[
         /// <part name="searchbox-suggestion-selected" class="win-searchbox-suggestion-selected" locid="WinJS.UI.SearchBox_part:Suggestion_Selected">
         /// Styles the currently selected suggestion.
         /// </part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         SearchBox: _Base.Namespace._lazy(function () {
             var createEvent = _Events._createEventProperty;
             var Key = _ElementUtilities.Key;
@@ -84,15 +320,9 @@ define('WinJS/Controls/SearchBox',[
                 receivingfocusonkeyboardinput: "receivingfocusonkeyboardinput"
             };
 
-            var SearchSuggestionKind = {
-                Query: 0,
-                Result: 1,
-                Separator: 2
-            };
-
             var strings = {
-                get duplicateConstruction() { return _Resources._getWinJSString("ui/duplicateConstruction").value; },
-                get invalidSearchBoxSuggestionKind() { return _Resources._getWinJSString("ui/invalidSearchBoxSuggestionKind").value; },
+                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
+                get invalidSearchBoxSuggestionKind() { return "Error: Invalid search suggestion kind."; },
                 get ariaLabel() { return _Resources._getWinJSString("ui/searchBoxAriaLabel").value; },
                 get ariaLabelInputNoPlaceHolder() { return _Resources._getWinJSString("ui/searchBoxAriaLabelInputNoPlaceHolder").value; },
                 get ariaLabelInputPlaceHolder() { return _Resources._getWinJSString("ui/searchBoxAriaLabelInputPlaceHolder").value; },
@@ -165,6 +395,8 @@ define('WinJS/Controls/SearchBox',[
                 this._requestingFocusOnKeyboardInputHandlerBind = this._requestingFocusOnKeyboardInputHandler.bind(this);
                 this._suggestionsRequestedHandlerBind = this._suggestionsRequestedHandler.bind(this);
                 this._suggestionsChangedHandlerBind = this._suggestionsChangedHandler.bind(this);
+                this._keydownCaptureHandlerBind = this._keydownCaptureHandler.bind(this);
+                this._frameLoadCaptureHandlerBind = this._frameLoadCaptureHandler.bind(this);
 
                 // Find out if we are in local compartment and if search APIs are available.
                 this._searchSuggestionManager = null;
@@ -173,8 +405,10 @@ define('WinJS/Controls/SearchBox',[
                 // Get the search suggestion provider if it is available
                 if (_WinRT.Windows.ApplicationModel.Search.Core.SearchSuggestionManager) {
                     this._searchSuggestionManager = new _WinRT.Windows.ApplicationModel.Search.Core.SearchSuggestionManager();
-                    this._searchSuggestions = this._searchSuggestionManager.suggestions;
+                } else {
+                    this._searchSuggestionManager = new _SearchSuggestionManagerShim._SearchSuggestionManagerShim();
                 }
+                this._searchSuggestions = this._searchSuggestionManager.suggestions;
 
                 this._hitFinder = null;
                 this._setElement(element);
@@ -277,13 +511,19 @@ define('WinJS/Controls/SearchBox',[
                     },
                     set: function (value) {
                         if (this._focusOnKeyboardInput && !value) {
-                            if (this._searchSuggestionManager) {
+                            if (!(this._searchSuggestionManager instanceof _SearchSuggestionManagerShim._SearchSuggestionManagerShim)) {
                                 this._searchSuggestionManager.removeEventListener("requestingfocusonkeyboardinput", this._requestingFocusOnKeyboardInputHandlerBind);
+                            } else {
+                                this._updateKeydownCaptureListeners(_Global.top, false /*add*/);
                             }
+
                         } else if (!this._focusOnKeyboardInput && !!value) {
-                            if (this._searchSuggestionManager) {
+                            if (!(this._searchSuggestionManager instanceof _SearchSuggestionManagerShim._SearchSuggestionManagerShim)) {
                                 this._searchSuggestionManager.addEventListener("requestingfocusonkeyboardinput", this._requestingFocusOnKeyboardInputHandlerBind);
+                            } else {
+                                this._updateKeydownCaptureListeners(_Global.top, true /*add*/);
                             }
+
                         }
                         this._focusOnKeyboardInput = !!value;
                     }
@@ -376,18 +616,15 @@ define('WinJS/Controls/SearchBox',[
 
                     // Detach winrt events.
                     if (this._focusOnKeyboardInput) {
-                        if (this._searchSuggestionManager) {
+                        if (!(this._searchSuggestionManager instanceof _SearchSuggestionManagerShim._SearchSuggestionManagerShim)) {
                             this._searchSuggestionManager.removeEventListener("requestingfocusonkeyboardinput", this._requestingFocusOnKeyboardInputHandlerBind);
+                        } else {
+                            this._updateKeydownCaptureListeners(_Global.top, false /*add*/);
                         }
-                    }
 
-                    if (this._searchSuggestions) {
-                        this._searchSuggestions.removeEventListener("vectorchanged", this._suggestionsChangedHandlerBind);
                     }
-
-                    if (this._searchSuggestionManager) {
-                        this._searchSuggestionManager.removeEventListener("suggestionsrequested", this._suggestionsRequestedHandlerBind);
-                    }
+                    this._searchSuggestions.removeEventListener("vectorchanged", this._suggestionsChangedHandlerBind);
+                    this._searchSuggestionManager.removeEventListener("suggestionsrequested", this._suggestionsRequestedHandlerBind);
 
                     this._searchSuggestionManager = null;
                     this._searchSuggestions = null;
@@ -569,7 +806,7 @@ define('WinJS/Controls/SearchBox',[
                         var firstChild = element.firstChild;
 
                         var hitsProvided = item.hits;
-                        if ((!hitsProvided) && (this._hitFinder !== null) && (item.kind !== SearchSuggestionKind.Separator)) {
+                        if ((!hitsProvided) && (this._hitFinder !== null) && (item.kind !== _SearchSuggestionManagerShim._SearchSuggestionKind.Separator)) {
                             hitsProvided = this._hitFinder.find(text);
                         }
 
@@ -608,8 +845,8 @@ define('WinJS/Controls/SearchBox',[
                 },
 
                 _isSuggestionSelectable: function SearchBox_isSuggestionSelectable(suggestion) {
-                    return ((suggestion.kind === SearchSuggestionKind.Query) ||
-                            (suggestion.kind === SearchSuggestionKind.Result));
+                    return ((suggestion.kind === _SearchSuggestionManagerShim._SearchSuggestionKind.Query) ||
+                            (suggestion.kind === _SearchSuggestionManagerShim._SearchSuggestionKind.Result));
                 },
 
                 _findNextSuggestionElementIndex: function SearchBox_findNextSuggestionElementIndex(curIndex) {
@@ -717,7 +954,7 @@ define('WinJS/Controls/SearchBox',[
                     _ElementUtilities.addClass(root, ClassName.searchBoxSuggestionQuery);
 
                     var that = this;
-                    root.addEventListener('click', function (ev) {
+                    _ElementUtilities._addEventListener(root, "pointerup", function (ev) {
                         that._inputElement.focus();
                         that._processSuggestionChosen(item, ev);
                     });
@@ -790,7 +1027,7 @@ define('WinJS/Controls/SearchBox',[
                     _ElementUtilities.addClass(root, ClassName.searchBoxSuggestionResult);
 
                     var that = this;
-                    root.addEventListener('click', function (ev) {
+                    _ElementUtilities._addEventListener(root, "pointerup", function (ev) {
                         that._inputElement.focus();
                         that._processSuggestionChosen(item, ev);
                     });
@@ -806,11 +1043,11 @@ define('WinJS/Controls/SearchBox',[
                     if (!item) {
                         return root;
                     }
-                    if (item.kind === SearchSuggestionKind.Query) {
+                    if (item.kind === _SearchSuggestionManagerShim._SearchSuggestionKind.Query) {
                         root = this._querySuggestionRenderer(item);
-                    } else if (item.kind === SearchSuggestionKind.Separator) {
+                    } else if (item.kind === _SearchSuggestionManagerShim._SearchSuggestionKind.Separator) {
                         root = this._separatorSuggestionRenderer(item);
-                    } else if (item.kind === SearchSuggestionKind.Result) {
+                    } else if (item.kind === _SearchSuggestionManagerShim._SearchSuggestionKind.Result) {
                         root = this._resultSuggestionRenderer(item);
                     } else {
                         throw new _ErrorFromName("WinJS.UI.SearchBox.invalidSearchBoxSuggestionKind", strings.invalidSearchBoxSuggestionKind);
@@ -901,9 +1138,9 @@ define('WinJS/Controls/SearchBox',[
 
                 _processSuggestionChosen: function Searchbox_processSuggestionChosen(item, event) {
                     this.queryText = item.text;
-                    if (item.kind === SearchSuggestionKind.Query) {
+                    if (item.kind === _SearchSuggestionManagerShim._SearchSuggestionKind.Query) {
                         this._submitQuery(item.text, false /*fillLinguisticDetails*/, event); // force empty linguistic details since explicitly chosen suggestion from list
-                    } else if (item.kind === SearchSuggestionKind.Result) {
+                    } else if (item.kind === _SearchSuggestionManagerShim._SearchSuggestionKind.Result) {
                         this._fireEvent(SearchBox._EventName.resultsuggestionchosen, {
                             tag: item.tag,
                             keyModifiers: SearchBox._getKeyModifiers(event),
@@ -1010,8 +1247,7 @@ define('WinJS/Controls/SearchBox',[
                             if ((this._inputElement.value !== this._prevQueryText) || (this._prevCompositionLength === 0) || (compositionLength > 0)) {
                                 queryTextPrefix = this._inputElement.value.substring(0, compositionStartOffset);
                                 queryTextSuffix = this._inputElement.value.substring(compositionStartOffset + compositionLength);
-                            }
-                            else {
+                            } else {
                                 // composition ended, but alternatives have been kept, need to reuse the previous query prefix/suffix, but still report to the client that the composition has ended (start & length of composition of 0)
                                 queryTextPrefix = this._inputElement.value.substring(0, this._prevCompositionStart);
                                 queryTextSuffix = this._inputElement.value.substring(this._prevCompositionStart + this._prevCompositionLength);
@@ -1062,14 +1298,11 @@ define('WinJS/Controls/SearchBox',[
                     this._lastKeyPressLanguage = event.locale;
                     if (event.keyCode === Key.tab) {
                         this._isProcessingTabKey = true;
-                    }
-                    else if (event.keyCode === Key.upArrow) {
+                    } else if (event.keyCode === Key.upArrow) {
                         this._isProcessingUpKey = true;
-                    }
-                    else if (event.keyCode === Key.downArrow) {
+                    } else if (event.keyCode === Key.downArrow) {
                         this._isProcessingDownKey = true;
-                    }
-                    else if ((event.keyCode === Key.enter) && (event.locale === "ko")) {
+                    } else if ((event.keyCode === Key.enter) && (event.locale === "ko")) {
                         this._isProcessingEnterKey = true;
                     }
                     // Ignore keys handled by ime.
@@ -1146,19 +1379,16 @@ define('WinJS/Controls/SearchBox',[
                 _keyUpHandler: function SearchBox_keyUpHandler(event) {
                     if (event.keyCode === Key.tab) {
                         this._isProcessingTabKey = false;
-                    }
-                    else if (event.keyCode === Key.upArrow) {
+                    } else if (event.keyCode === Key.upArrow) {
                         this._isProcessingUpKey = false;
-                    }
-                    else if (event.keyCode === Key.downArrow) {
+                    } else if (event.keyCode === Key.downArrow) {
                         this._isProcessingDownKey = false;
-                    }
-                    else if (event.keyCode === Key.enter) {
+                    } else if (event.keyCode === Key.enter) {
                         this._isProcessingEnterKey = false;
                     }
                 },
 
-                _searchBoxFocusInHandler: function SearchBox__searchBoxFocusInHandler(event) {
+                _searchBoxFocusHandler: function SearchBox__searchBoxFocusHandler(event) {
                     // Refresh hit highlighting if text has changed since focus was present
                     // This can happen if the user committed a suggestion previously.
                     if (this._inputElement.value !== this._prevQueryText) {
@@ -1194,7 +1424,7 @@ define('WinJS/Controls/SearchBox',[
                     this._updateSearchButtonClass();
                 },
 
-                _searchBoxFocusOutHandler: function SearchBox_searchBoxFocusOutHandler(event) {
+                _searchBoxBlurHandler: function SearchBox_searchBoxBlurHandler(event) {
                     this._hideFlyoutIfLeavingSearchControl(event.relatedTarget);
                     _ElementUtilities.removeClass(this.element, ClassName.searchBoxInputFocus);
                     this._updateSearchButtonClass();
@@ -1236,8 +1466,7 @@ define('WinJS/Controls/SearchBox',[
                         var animation = Animations.createRepositionAnimation(this._flyoutDivElement.children);
                         this._flyoutDivElement.style.paddingTop = "";
                         animation.execute();
-                    }
-                    else {
+                    } else {
                         this._reflowImeOnPointerRelease = true;
                     }
                 },
@@ -1249,13 +1478,13 @@ define('WinJS/Controls/SearchBox',[
                     this._inputElement.addEventListener("keydown", this._keyDownHandler.bind(this));
                     this._inputElement.addEventListener("keypress", this._keyPressHandler.bind(this));
                     this._inputElement.addEventListener("keyup", this._keyUpHandler.bind(this));
+                    this._inputElement.addEventListener("focus", this._searchBoxFocusHandler.bind(this));
+                    this._inputElement.addEventListener("blur", this._searchBoxBlurHandler.bind(this));
                     _ElementUtilities._addEventListener(this._inputElement, "pointerdown", this._inputPointerDownHandler.bind(this));
                     _ElementUtilities._addEventListener(this._flyoutDivElement, "pointerdown", this._flyoutPointerDownHandler.bind(this));
                     _ElementUtilities._addEventListener(this._flyoutDivElement, "pointerup", this._flyoutPointerReleasedHandler.bind(this));
                     _ElementUtilities._addEventListener(this._flyoutDivElement, "pointercancel", this._flyoutPointerReleasedHandler.bind(this));
                     _ElementUtilities._addEventListener(this._flyoutDivElement, "pointerout", this._flyoutPointerReleasedHandler.bind(this));
-                    _ElementUtilities._addEventListener(this.element, "focusin", this._searchBoxFocusInHandler.bind(this), false);
-                    _ElementUtilities._addEventListener(this.element, "focusout", this._searchBoxFocusOutHandler.bind(this), false);
 
                     this._inputElement.addEventListener("compositionstart", inputOrImeChangeHandler);
                     this._inputElement.addEventListener("compositionupdate", inputOrImeChangeHandler);
@@ -1334,48 +1563,42 @@ define('WinJS/Controls/SearchBox',[
                 },
 
                 _wireupWinRTEvents: function SearchBox_wireupWinRTEvents() {
-                    if (this._searchSuggestions) {
-                        this._searchSuggestions.addEventListener("vectorchanged", this._suggestionsChangedHandlerBind);
-                    }
-                    if (this._searchSuggestionManager) {
-                        this._searchSuggestionManager.addEventListener("suggestionsrequested", this._suggestionsRequestedHandlerBind);
-                    }
+                    this._searchSuggestions.addEventListener("vectorchanged", this._suggestionsChangedHandlerBind);
+                    this._searchSuggestionManager.addEventListener("suggestionsrequested", this._suggestionsRequestedHandlerBind);
                 },
 
                 _suggestionsChangedHandler: function SearchBox_suggestionsChangedHandler(event) {
-                    var collectionChange = event.collectionChange;
-                    if (collectionChange === _WinRT.Windows.Foundation.Collections.CollectionChange.reset) {
+                    var collectionChange = event.collectionChange || event.detail.collectionChange;
+                    var changeIndex = (+event.index === event.index) ? event.index : event.detail.index;
+                    var ChangeEnum = _SearchSuggestionManagerShim._CollectionChange;
+                    if (collectionChange === ChangeEnum.reset) {
                         if (this._isFlyoutShown()) {
                             this._hideFlyout();
                         }
                         this._suggestionsData.splice(0, this._suggestionsData.length);
-                    } else if (collectionChange === _WinRT.Windows.Foundation.Collections.CollectionChange.itemInserted) {
-                        var index = event.index;
-                        var suggestion = this._searchSuggestions[index];
-                        this._suggestionsData.splice(index, 0, suggestion);
+                    } else if (collectionChange === ChangeEnum.itemInserted) {
+                        var suggestion = this._searchSuggestions[changeIndex];
+                        this._suggestionsData.splice(changeIndex, 0, suggestion);
 
                         this._showFlyout();
 
-                    } else if (collectionChange === _WinRT.Windows.Foundation.Collections.CollectionChange.itemRemoved) {
+                    } else if (collectionChange === ChangeEnum.itemRemoved) {
                         if ((this._suggestionsData.length === 1)) {
                             _ElementUtilities._setActive(this._inputElement);
 
                             this._hideFlyout();
                         }
-                        var index = event.index;
-                        this._suggestionsData.splice(index, 1);
-                    } else if (collectionChange === _WinRT.Windows.Foundation.Collections.CollectionChange.itemChanged) {
-                        var index = event.index;
-                        var suggestion = this._searchSuggestions[index];
-                        if (suggestion !== this._suggestionsData.getAt(index)) {
-                            this._suggestionsData.setAt(index, suggestion);
+                        this._suggestionsData.splice(changeIndex, 1);
+                    } else if (collectionChange === ChangeEnum.itemChanged) {
+                        var suggestion = this._searchSuggestions[changeIndex];
+                        if (suggestion !== this._suggestionsData.getAt(changeIndex)) {
+                            this._suggestionsData.setAt(changeIndex, suggestion);
                         } else {
                             // If the suggestions manager gives us an identical item, it means that only the hit highlighted text has changed.
-                            var existingElement = this._repeater.elementFromIndex(index);
+                            var existingElement = this._repeater.elementFromIndex(changeIndex);
                             if (_ElementUtilities.hasClass(existingElement, ClassName.searchBoxSuggestionQuery)) {
                                 this._addHitHighlightedText(existingElement, suggestion, suggestion.text);
-                            }
-                            else {
+                            } else {
                                 var resultSuggestionDiv = existingElement.querySelector("." + ClassName.searchBoxSuggestionResultText);
                                 if (resultSuggestionDiv) {
                                     this._addHitHighlightedText(resultSuggestionDiv, suggestion, suggestion.text);
@@ -1399,16 +1622,16 @@ define('WinJS/Controls/SearchBox',[
                         this._lastKeyPressLanguage = _WinRT.Windows.Globalization.Language.currentInputMethodLanguageTag;
                     }
 
-                    var suggestionsRequestedEventDetail = event;
+                    var request = event.request || event.detail.request;
                     var deferral;
                     this._fireEvent(SearchBox._EventName.suggestionsrequested, {
                         setPromise: function (promise) {
-                            deferral = suggestionsRequestedEventDetail.request.getDeferral();
+                            deferral = request.getDeferral();
                             promise.then(function () {
                                 deferral.complete();
                             });
                         },
-                        searchSuggestionCollection: suggestionsRequestedEventDetail.request.searchSuggestionCollection,
+                        searchSuggestionCollection: request.searchSuggestionCollection,
                         language: this._lastKeyPressLanguage,
                         linguisticDetails: this._getLinguisticDetails(true /*useCache*/, true /*createFilled*/),
                         queryText: this._inputElement.value
@@ -1430,6 +1653,145 @@ define('WinJS/Controls/SearchBox',[
                         } catch (e) {
                         }
                     }
+                },
+
+                _keydownCaptureHandler: function SearchBox_keydownCaptureHandler(event) {
+                    if (this._focusOnKeyboardInput && this._shouldKeyTriggerTypeToSearch(event)) {
+                        this._requestingFocusOnKeyboardInputHandler(event);
+                    }
+                },
+
+                _frameLoadCaptureHandler: function SearchBox_frameLoadCaptureHandler(event) {
+                    if (this._focusOnKeyboardInput) {
+                        this._updateKeydownCaptureListeners(event.target.contentWindow, true /*add*/);
+                    }
+                },
+
+                _updateKeydownCaptureListeners: function SearchBox_updateTypeToSearchListeners(win, add) {
+                    // Register for child frame keydown events in order to support FocusOnKeyboardInput
+                    // when focus is in a child frame.  Also register for child frame load events so
+                    // it still works after frame navigations.
+                    // Note: This won't catch iframes added programmatically later, but that can be worked
+                    // around by toggling FocusOnKeyboardInput off/on after the new iframe is added.
+                    try {
+                        if (add) {
+                            win.document.addEventListener('keydown', this._keydownCaptureHandlerBind, true);
+                        } else {
+                            win.document.removeEventListener('keydown', this._keydownCaptureHandlerBind, true);
+                        }
+                    } catch (e) { // if the IFrame crosses domains, we'll get a permission denied error
+                    }
+
+                    if (win.frames) {
+                        for (var i = 0, l = win.frames.length; i < l; i++) {
+                            var childWin = win.frames[i];
+                            this._updateKeydownCaptureListeners(childWin, add);
+
+                            try {
+                                if (add) {
+                                    if (childWin.frameElement) {
+                                        childWin.frameElement.addEventListener('load', this._frameLoadCaptureHandlerBind, true);
+                                    }
+                                } else {
+                                    if (childWin.frameElement) {
+                                        childWin.frameElement.removeEventListener('load', this._frameLoadCaptureHandlerBind, true);
+                                    }
+                                }
+                            } catch (e) { // if the IFrame crosses domains, we'll get a permission denied error
+                            }
+                        }
+                    }
+                },
+
+                _shouldKeyTriggerTypeToSearch: function SearchBox_shouldKeyTriggerTypeToSearch(event) {
+                    var shouldTrigger = false;
+                    // First, check if a metaKey is pressed (only applies to MacOS). If so, do nothing here.
+                    if (!event.metaKey) {
+                        // We also don't handle CTRL/ALT combinations, unless ALTGR is also set. Since there is no shortcut for checking AltGR,
+                        // we need to use getModifierState, however, Safari currently doesn't support this.
+                        if ((!event.ctrlKey && !event.altKey) || (event.getModifierState && event.getModifierState("AltGraph"))) {
+                            // Show on most keys for visible characters like letters, numbers, etc.
+                            switch (event.keyCode) {
+                                case 0x30:  //0x30 0 key
+                                case 0x31:  //0x31 1 key
+                                case 0x32:  //0x32 2 key
+                                case 0x33:  //0x33 3 key
+                                case 0x34:  //0x34 4 key
+                                case 0x35:  //0x35 5 key
+                                case 0x36:  //0x36 6 key
+                                case 0x37:  //0x37 7 key
+                                case 0x38:  //0x38 8 key
+                                case 0x39:  //0x39 9 key
+
+                                case 0x41:  //0x41 A key
+                                case 0x42:  //0x42 B key
+                                case 0x43:  //0x43 C key
+                                case 0x44:  //0x44 D key
+                                case 0x45:  //0x45 E key
+                                case 0x46:  //0x46 F key
+                                case 0x47:  //0x47 G key
+                                case 0x48:  //0x48 H key
+                                case 0x49:  //0x49 I key
+                                case 0x4A:  //0x4A J key
+                                case 0x4B:  //0x4B K key
+                                case 0x4C:  //0x4C L key
+                                case 0x4D:  //0x4D M key
+                                case 0x4E:  //0x4E N key
+                                case 0x4F:  //0x4F O key
+                                case 0x50:  //0x50 P key
+                                case 0x51:  //0x51 Q key
+                                case 0x52:  //0x52 R key
+                                case 0x53:  //0x53 S key
+                                case 0x54:  //0x54 T key
+                                case 0x55:  //0x55 U key
+                                case 0x56:  //0x56 V key
+                                case 0x57:  //0x57 W key
+                                case 0x58:  //0x58 X key
+                                case 0x59:  //0x59 Y key
+                                case 0x5A:  //0x5A Z key
+
+                                case 0x60:  // VK_NUMPAD0,             //0x60 Numeric keypad 0 key
+                                case 0x61:  // VK_NUMPAD1,             //0x61 Numeric keypad 1 key
+                                case 0x62:  // VK_NUMPAD2,             //0x62 Numeric keypad 2 key
+                                case 0x63:  // VK_NUMPAD3,             //0x63 Numeric keypad 3 key
+                                case 0x64:  // VK_NUMPAD4,             //0x64 Numeric keypad 4 key
+                                case 0x65:  // VK_NUMPAD5,             //0x65 Numeric keypad 5 key
+                                case 0x66:  // VK_NUMPAD6,             //0x66 Numeric keypad 6 key
+                                case 0x67:  // VK_NUMPAD7,             //0x67 Numeric keypad 7 key
+                                case 0x68:  // VK_NUMPAD8,             //0x68 Numeric keypad 8 key
+                                case 0x69:  // VK_NUMPAD9,             //0x69 Numeric keypad 9 key
+                                case 0x6A:  // VK_MULTIPLY,            //0x6A Multiply key
+                                case 0x6B:  // VK_ADD,                 //0x6B Add key
+                                case 0x6C:  // VK_SEPARATOR,           //0x6C Separator key
+                                case 0x6D:  // VK_SUBTRACT,            //0x6D Subtract key
+                                case 0x6E:  // VK_DECIMAL,             //0x6E Decimal key
+                                case 0x6F:  // VK_DIVIDE,              //0x6F Divide key
+
+                                case 0xBA:  // VK_OEM_1,               //0xBA Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the ';:' key
+                                case 0xBB:  // VK_OEM_PLUS,            //0xBB For any country/region, the '+' key
+                                case 0xBC:  // VK_OEM_COMMA,           //0xBC For any country/region, the ',' key
+                                case 0xBD:  // VK_OEM_MINUS,           //0xBD For any country/region, the '-' key
+                                case 0xBE:  // VK_OEM_PERIOD,          //0xBE For any country/region, the '.' key
+                                case 0xBF:  // VK_OEM_2,               //0xBF Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the '/?' key
+                                case 0xC0:  // VK_OEM_3,               //0xC0 Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the '`~' key
+
+                                case 0xDB:  // VK_OEM_4,               //0xDB Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the '[{' key
+                                case 0xDC:  // VK_OEM_5,               //0xDC Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the '\|' key
+                                case 0xDD:  // VK_OEM_6,               //0xDD Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the ']}' key
+                                case 0xDE:  // VK_OEM_7,               //0xDE Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the 'single-quote/double-quote' key
+                                case 0xDF:  // VK_OEM_8,               //0xDF Used for miscellaneous characters; it can vary by keyboard.
+
+                                case 0xE2:  // VK_OEM_102,             //0xE2 Either the angle bracket key or the backslash key on the RT 102-key keyboard
+
+                                case 0xE5:  // VK_PROCESSKEY,          //0xE5 IME PROCESS key
+
+                                case 0xE7:  // VK_PACKET,              //0xE7 Used to pass Unicode characters as if they were keystrokes. The VK_PACKET key is the low word of a 32-bit Virtual Key value used for non-keyboard input methods. For more information, see Remark in KEYBDINPUT, SendInput, WM_KEYDOWN, and WM_KEYUP
+                                    shouldTrigger = true;
+                                    break;
+                            }
+                        }
+                    }
+                    return shouldTrigger;
                 },
 
                 _hasLinguisticDetailsChanged: function SearchBox_hasLinguisticDetailsChanged(newLinguisticDetails) {
@@ -1464,6 +1826,22 @@ define('WinJS/Controls/SearchBox',[
 
                 _Constants: {
                     MIN_POPUP_HEIGHT: 152,
+                },
+
+                createResultSuggestionImage: function SearchBox_createResultSuggestionImage(url) {
+                    /// <signature helpKeyword="WinJS.UI.SearchBox.createResultSuggestionImage">
+                    /// <summary locid="WinJS.UI.SearchBox.createResultSuggestionImage">
+                    /// Creates the image argument for SearchSuggestionCollection.appendResultSuggestion.
+                    /// </summary>
+                    /// <param name="url" type="string" locid="WinJS.UI.SearchBox.SearchBox_createResultSuggestionImage_p:url">
+                    /// The url of the image.
+                    /// </param>
+                    /// <compatibleWith platform="Windows" minVersion="8.1"/>
+                    /// </signature>
+                    if (_WinRT.Windows.Foundation.Uri && _WinRT.Windows.Storage.Streams.RandomAccessStreamReference) {
+                        return _WinRT.Windows.Storage.Streams.RandomAccessStreamReference.createFromUri(new _WinRT.Windows.Foundation.Uri(url));
+                    }
+                    return url;
                 },
 
                 _getKeyModifiers: function SearchBox_getKeyModifiers(ev) {
@@ -1546,11 +1924,3 @@ define('WinJS/Controls/SearchBox',[
 
 });
 
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});

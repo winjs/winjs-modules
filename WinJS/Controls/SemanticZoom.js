@@ -20,9 +20,10 @@ define('WinJS/Controls/SemanticZoom',[
     '../Utilities/_Dispose',
     '../Utilities/_ElementUtilities',
     '../Utilities/_ElementListUtilities',
+    '../Utilities/_Hoverable',
     'require-style!less/desktop/controls',
     'require-style!less/phone/controls'
-    ], function semanticZoomInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, ControlProcessor, Promise, _Control, _Dispose, _ElementUtilities, _ElementListUtilities) {
+    ], function semanticZoomInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, ControlProcessor, Promise, _Control, _Dispose, _ElementUtilities, _ElementListUtilities, _Hoverable) {
     "use strict";
 
     _Base.Namespace.define("WinJS.UI", {
@@ -36,14 +37,14 @@ define('WinJS/Controls/SemanticZoom',[
         /// <icon src="ui_winjs.ui.semanticzoom.16x16.png" width="16" height="16" />
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.SemanticZoom"><div class="zoomedInContainer" data-win-control="WinJS.UI.ListView"></div><div class="zoomedOutContainer" data-win-control="WinJS.UI.ListView"></div></div>]]></htmlSnippet>
         /// <part name="semanticZoom" class="win-semanticzoom" locid="WinJS.UI.SemanticZoom_part:semanticZoom">The entire SemanticZoom control.</part>
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//$(TARGET_DESTINATION)/js/ui.js" shared="true" />
-        /// <resource type="css" src="//$(TARGET_DESTINATION)/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
+        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
+        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
         SemanticZoom: _Base.Namespace._lazy(function () {
             var browserStyleEquivalents = _BaseUtils._browserStyleEquivalents;
 
             var strings = {
-                get invalidZoomFactor() { return _Resources._getWinJSString("ui/invalidZoomFactor").value; },
+                get invalidZoomFactor() { return "Invalid zoomFactor"; },
             };
 
             function identity(item) {
@@ -230,6 +231,7 @@ define('WinJS/Controls/SemanticZoom',[
                 new _ElementUtilities._MutationObserver(onSemanticZoomPropertyChanged).observe(this._element, { attributes: true, attributeFilter: ["aria-checked"] });
 
                 if (!isPhone) {
+                    this._element.addEventListener("wheel", this._onWheel.bind(this), true);
                     this._element.addEventListener("mousewheel", this._onMouseWheel.bind(this), true);
                     this._element.addEventListener("keydown", this._onKeyDown.bind(this), true);
 
@@ -480,7 +482,7 @@ define('WinJS/Controls/SemanticZoom',[
                     //register the appropriate events for display the sezo button
                     this._sezoButton.addEventListener("click", this._onSeZoButtonZoomOutClick.bind(this), false);
                     this._element.addEventListener("scroll", this._onSeZoChildrenScroll.bind(this), true);
-                    this._element.addEventListener("pointermove", this._onPenHover.bind(this), false);
+                    _ElementUtilities._addEventListener(this._element, "pointermove", this._onPenHover.bind(this), false);
                 },
 
                 _removeSemanticZoomButton: function () {
@@ -647,6 +649,10 @@ define('WinJS/Controls/SemanticZoom',[
                 },
 
                 _displayButton: function () {
+                    if (!_Hoverable.isHoverable) {
+                        return;
+                    }
+
                     _Global.clearTimeout(this._dismissButtonTimer);
                     this._showSemanticZoomButton();
 
@@ -692,6 +698,15 @@ define('WinJS/Controls/SemanticZoom',[
                     }
                 },
 
+                _onWheel: function (ev) {
+                    if (ev.ctrlKey) {
+                        this._zoom(ev.deltaY > 0, this._getPointerLocation(ev));
+
+                        ev.stopPropagation();
+                        ev.preventDefault();
+                    }
+                },
+
                 _onMouseWheel: function (ev) {
                     if (ev.ctrlKey) {
                         this._zoom(ev.wheelDelta < 0, this._getPointerLocation(ev));
@@ -721,12 +736,14 @@ define('WinJS/Controls/SemanticZoom',[
                         switch (ev.keyCode) {
                             case Key.add:
                             case Key.equal:
+                            case 61: //Firefox uses a different keycode
                                 this._zoom(false);
                                 handled = true;
                                 break;
 
                             case Key.subtract:
                             case Key.dash:
+                            case 173: //Firefox uses a different keycode
                                 this._zoom(true);
                                 handled = true;
                                 break;
@@ -795,7 +812,6 @@ define('WinJS/Controls/SemanticZoom',[
 
 
                     ev.stopImmediatePropagation();
-                    ev.cancelBubble = true;
                     ev.preventDefault();
                 },
 
@@ -1263,7 +1279,6 @@ define('WinJS/Controls/SemanticZoom',[
 
                         if (stopPropagation && this._pinchedDirection !== PinchDirection.none) {
                             ev.stopImmediatePropagation();
-                            ev.cancelBubble = true;
                         }
 
                         if (this._pointerCount === 0) {
@@ -1398,6 +1413,7 @@ define('WinJS/Controls/SemanticZoom',[
                 _setVisibility: function () {
                     function setVisibility(element, isVisible) {
                         element.style.visibility = (isVisible ? "visible" : "hidden");
+                        element.style.zIndex = (isVisible ? "1" : "0");
                     }
                     setVisibility(this._opticalViewportIn, !this._zoomedOut || _BaseUtils.isPhone);
                     setVisibility(this._opticalViewportOut, this._zoomedOut);
@@ -1522,11 +1538,3 @@ define('WinJS/Controls/SemanticZoom',[
 
 });
 
-
-define('require-style!less/animation-library',[],function(){});
-
-define('require-style!less/typography',[],function(){});
-
-define('require-style!less/desktop/styles-intrinsic',[],function(){});
-
-define('require-style!less/desktop/colors-intrinsic',[],function(){});
