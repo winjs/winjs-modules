@@ -654,7 +654,7 @@ define('WinJS/Core/_Events',[
 
 
 
-define(﻿'require-json!en-US/ui.resjson',{
+define('require-json!en-US/ui.resjson',{
     "appBarAriaLabel": "App Bar",
     "appBarCommandAriaLabel": "App Bar Item",
     "averageRating": "Average Rating",
@@ -1473,6 +1473,9 @@ define('WinJS/Core/_BaseUtils',[
         get notSupportedForProcessing() { return "Value is not supported within a declarative processing context, if you want it to be supported mark it using WinJS.Utilities.markSupportedForProcessing. The value was: '{0}'"; }
     };
 
+    var requestAnimationWorker;
+    var requestAnimationId = 0;
+    var requestAnimationHandlers = {};
     var isPhone = false;
     var validation = false;
     var platform = _Global.navigator.platform;
@@ -1806,6 +1809,25 @@ define('WinJS/Core/_BaseUtils',[
 
         _setImmediate: _BaseCoreUtils._setImmediate,
 
+        _requestAnimationFrame: _Global.requestAnimationFrame ? _Global.requestAnimationFrame.bind(_Global) : function (handler) {
+            var handle = ++requestAnimationId;
+            requestAnimationHandlers[handle] = handler;
+            requestAnimationWorker = requestAnimationWorker || _Global.setTimeout(function () {
+                var toProcess = requestAnimationHandlers;
+                var now = Date.now();
+                requestAnimationHandlers = {};
+                requestAnimationWorker = null;
+                Object.keys(toProcess).forEach(function (key) {
+                    toProcess[key](now);
+                });
+            }, 16);
+            return handle;
+        },
+
+        _cancelAnimationFrame: _Global.cancelAnimationFrame ? _Global.cancelAnimationFrame.bind(_Global) : function (handle) {
+            delete requestAnimationHandlers[handle];
+        },
+
         // Allows the browser to finish dispatching its current set of events before running
         // the callback.
         _yieldForEvents: _Global.setImmediate ? _Global.setImmediate.bind(_Global) : function (handler) {
@@ -1850,7 +1872,7 @@ define('WinJS/Core/_BaseUtils',[
         },
 
         _now: function _now() {
-            return (_Global.performance && _Global.performance.now()) || Date.now();
+            return (_Global.performance && _Global.performance.now && _Global.performance.now()) || Date.now();
         },
 
         _traceAsyncOperationStarting: _Trace._traceAsyncOperationStarting,

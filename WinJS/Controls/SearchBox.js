@@ -1388,7 +1388,7 @@ define('WinJS/Controls/SearchBox',[
                     }
                 },
 
-                _searchBoxFocusHandler: function SearchBox__searchBoxFocusHandler(event) {
+                _inputFocusHandler: function SearchBox_inputFocusHandler(event) {
                     // Refresh hit highlighting if text has changed since focus was present
                     // This can happen if the user committed a suggestion previously.
                     if (this._inputElement.value !== this._prevQueryText) {
@@ -1402,7 +1402,7 @@ define('WinJS/Controls/SearchBox',[
                     }
 
                     // If focus is returning to the input box from outside the search control, show the flyout and refresh the suggestions
-                    if ((event.target === this._inputElement) && !this._isElementInSearchControl(event.relatedTarget)) {
+                    if ((event.target === this._inputElement) && !this._internalFocusMove) {
                         this._showFlyout();
                         // If focus is not in input
                         if (this._currentFocusedIndex !== -1) {
@@ -1420,13 +1420,25 @@ define('WinJS/Controls/SearchBox',[
                         }
                     }
 
+                    this._internalFocusMove = false;
                     _ElementUtilities.addClass(this.element, ClassName.searchBoxInputFocus);
                     this._updateSearchButtonClass();
                 },
 
-                _searchBoxBlurHandler: function SearchBox_searchBoxBlurHandler(event) {
-                    this._hideFlyoutIfLeavingSearchControl(event.relatedTarget);
-                    _ElementUtilities.removeClass(this.element, ClassName.searchBoxInputFocus);
+                _flyoutBlurHandler: function SearchBox_flyoutBlurHandler() {
+                    if (this._isElementInSearchControl(_Global.document.activeElement)) {
+                        this._internalFocusMove = true;
+                    } else {
+                        this._hideFlyout();
+                        _ElementUtilities.removeClass(this.element, ClassName.searchBoxInputFocus);
+                    }
+                },
+
+                _inputBlurHandler: function SearchBox_inputBlurHandler(event) {
+                    if (!this._isElementInSearchControl(_Global.document.activeElement)) {
+                        this._hideFlyout();
+                        _ElementUtilities.removeClass(this.element, ClassName.searchBoxInputFocus);
+                    }
                     this._updateSearchButtonClass();
                     this._isProcessingDownKey = false;
                     this._isProcessingUpKey = false;
@@ -1478,9 +1490,11 @@ define('WinJS/Controls/SearchBox',[
                     this._inputElement.addEventListener("keydown", this._keyDownHandler.bind(this));
                     this._inputElement.addEventListener("keypress", this._keyPressHandler.bind(this));
                     this._inputElement.addEventListener("keyup", this._keyUpHandler.bind(this));
-                    this._inputElement.addEventListener("focus", this._searchBoxFocusHandler.bind(this));
-                    this._inputElement.addEventListener("blur", this._searchBoxBlurHandler.bind(this));
+                    this._inputElement.addEventListener("focus", this._inputFocusHandler.bind(this));
+                    this._inputElement.addEventListener("blur", this._inputBlurHandler.bind(this));
                     _ElementUtilities._addEventListener(this._inputElement, "pointerdown", this._inputPointerDownHandler.bind(this));
+
+                    this._flyoutDivElement.addEventListener("blur", this._flyoutBlurHandler.bind(this));
                     _ElementUtilities._addEventListener(this._flyoutDivElement, "pointerdown", this._flyoutPointerDownHandler.bind(this));
                     _ElementUtilities._addEventListener(this._flyoutDivElement, "pointerup", this._flyoutPointerReleasedHandler.bind(this));
                     _ElementUtilities._addEventListener(this._flyoutDivElement, "pointercancel", this._flyoutPointerReleasedHandler.bind(this));
@@ -1553,7 +1567,7 @@ define('WinJS/Controls/SearchBox',[
                     return this.element.contains(targetElement) || (this.element === targetElement);
                 },
 
-                _hideFlyoutIfLeavingSearchControl: function SearchBox__hideFlyoutIfLeavingSearchControl(targetElement) {
+                _hideFlyoutIfLeavingSearchControl: function SearchBox_hideFlyoutIfLeavingSearchControl(targetElement) {
                     if (!this._isFlyoutShown()) {
                         return;
                     }
@@ -1910,7 +1924,7 @@ define('WinJS/Controls/SearchBox',[
                     return reducedHits;
                 },
 
-                _isTypeToSearchKey: function searchBox__isTypeToSearchKey(event) {
+                _isTypeToSearchKey: function searchBox_isTypeToSearchKey(event) {
                     if (event.shiftKey || event.ctrlKey || event.altKey) {
                         return false;
                     }

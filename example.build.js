@@ -8,7 +8,7 @@
     "useStrict": true,
     "out": "bin/WinJS.js",
     "wrap": {
-        "start": "\n/*! Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information. */\n(function (global) {\n\n    (function (factory) {\n        if (typeof define === 'function' && define.amd) {\n            define([], factory);\n        } else {\n            global.msWriteProfilerMark && msWriteProfilerMark('WinJS.3.0 3.0.0.winjs.2014.9.15 WinJS-custom.js,StartTM');\n            factory(global.WinJS);\n            global.msWriteProfilerMark && msWriteProfilerMark('WinJS.3.0 3.0.0.winjs.2014.9.15 WinJS-custom.js,StopTM');\n        }\n    }(function (WinJS) {\n\n",
+        "start": "\n/*! Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information. */\n(function (global) {\n\n    (function (factory) {\n        if (typeof define === 'function' && define.amd) {\n            define([], factory);\n        } else {\n            global.msWriteProfilerMark && msWriteProfilerMark('WinJS.3.0 3.0.1.winjs.2014.10.2 WinJS-custom.js,StartTM');\n            factory(global.WinJS);\n            global.msWriteProfilerMark && msWriteProfilerMark('WinJS.3.0 3.0.1.winjs.2014.10.2 WinJS-custom.js,StopTM');\n        }\n    }(function (WinJS) {\n\n",
         "end": "\n        require(['WinJS/Core/_WinJS', 'WinJS-custom'], function (_WinJS) {\n            global.WinJS = _WinJS;\n            return _WinJS;\n        });\n    }));\n}(this));\n\n"
     },
     "paths": {

@@ -1155,7 +1155,7 @@ define('WinJS/Controls/Hub',[
                     this._pendingSectionOnScreen = null;
 
                     if (!this._pendingScrollHandler) {
-                        this._pendingScrollHandler = _Global.requestAnimationFrame(function () {
+                        this._pendingScrollHandler = _BaseUtils._requestAnimationFrame(function () {
                             this._pendingScrollHandler = null;
 
                             if (this._pendingSections) {

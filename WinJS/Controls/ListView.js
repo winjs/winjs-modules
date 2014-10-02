@@ -1870,10 +1870,10 @@ define('WinJS/Controls/ListView/_BrowseMode',[
                                             newScrollPos[that.site._scrollProperty] = that.site._viewportScrollPosition + delta;
                                             _ElementUtilities.setScrollPosition(that.site._viewport, newScrollPos);
                                             that._lastDragTimeout = currentTime;
-                                            that._autoScrollFrame = _Global.requestAnimationFrame(nextFrame);
+                                            that._autoScrollFrame = _BaseUtils._requestAnimationFrame(nextFrame);
                                         }
                                     };
-                                    that._autoScrollFrame = _Global.requestAnimationFrame(nextFrame);
+                                    that._autoScrollFrame = _BaseUtils._requestAnimationFrame(nextFrame);
                                 }
                             }, _Constants._AUTOSCROLL_DELAY);
                         }
@@ -4345,7 +4345,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                     }
 
                     if (exports.Layout._debugAnimations) {
-                        _Global.requestAnimationFrame(function () {
+                        _BaseUtils._requestAnimationFrame(function () {
                             startAnimations();
                         });
                     } else {
@@ -4361,7 +4361,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                             // canceled so we shouldn't continue.
                             if (animationSignal) {
                                 if (exports.Layout._debugAnimations) {
-                                    _Global.requestAnimationFrame(function () {
+                                    _BaseUtils._requestAnimationFrame(function () {
                                         nextPhaseCallback();
                                     });
                                 } else {
@@ -4610,7 +4610,7 @@ define('WinJS/Controls/ListView/_Layouts',[
                         site._writeProfilerMark("Animation:prepareReflowedItems,StopTM");
 
                         if (exports.Layout._debugAnimations) {
-                            _Global.requestAnimationFrame(function () {
+                            _BaseUtils._requestAnimationFrame(function () {
                                 directMovePhase(true);
                             });
                         } else {
@@ -13693,7 +13693,7 @@ define('WinJS/Controls/ListView',[
 
                     var currentScrollPosition = this._viewportScrollPosition;
                     if (currentScrollPosition !== this._lastScrollPosition) {
-                        this._pendingScroll = _Global.requestAnimationFrame(this._checkScroller.bind(this));
+                        this._pendingScroll = _BaseUtils._requestAnimationFrame(this._checkScroller.bind(this));
 
                         currentScrollPosition = Math.max(0, currentScrollPosition);
                         var direction =  this._scrollDirection(currentScrollPosition);

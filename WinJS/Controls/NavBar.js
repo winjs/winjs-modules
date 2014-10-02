@@ -463,6 +463,7 @@ define('WinJS/Controls/NavBar/_Container',[
     'exports',
     '../../Core/_Global',
     '../../Core/_Base',
+    '../../Core/_BaseUtils',
     '../../Core/_ErrorFromName',
     '../../Core/_Events',
     '../../Core/_Log',
@@ -482,7 +483,7 @@ define('WinJS/Controls/NavBar/_Container',[
     '../AppBar/_Constants',
     '../Repeater',
     './_Command'
-    ], function NavBarContainerInit(exports, _Global, _Base, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, ControlProcessor, Navigation, Promise, Scheduler, _Control, _ElementUtilities, _KeyboardBehavior, _UI, _Constants, Repeater, _Command) {
+    ], function NavBarContainerInit(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, ControlProcessor, Navigation, Promise, Scheduler, _Control, _ElementUtilities, _KeyboardBehavior, _UI, _Constants, Repeater, _Command) {
     "use strict";
 
     function nobodyHasFocus() {
@@ -578,7 +579,7 @@ define('WinJS/Controls/NavBar/_Container',[
                 this._closeSplitAndResetBound = this._closeSplitAndReset.bind(this);
                 this._currentManipulationState = MS_MANIPULATION_STATE_STOPPED;
 
-                this._panningDisabled = false;
+                this._panningDisabled = !_ElementUtilities._supportsSnapPoints;
                 this._fixedSize = false;
                 this._maxRows = 1;
                 this._sizes = {};
@@ -616,19 +617,7 @@ define('WinJS/Controls/NavBar/_Container',[
                     this.currentIndex = options.currentIndex;
                 }
 
-                var that = this;
-                var updatedPageUI = false;
-                _ElementUtilities._detectSnapPointsSupport().then(function (supportsSnap) {
-                    that._panningDisabled = !supportsSnap;
-                    if (!that._disposed) {
-                        that._updatePageUI();
-                        updatedPageUI = true;
-                    }
-                });
-
-                if (!updatedPageUI) {
                     this._updatePageUI();
-                }
 
                 Scheduler.schedule(function NavBarContainer_async_initialize() {
                     this._updateAppBarReference();
@@ -1454,7 +1443,7 @@ define('WinJS/Controls/NavBar/_Container',[
                     this._measured = false;
                     if (!this._checkingScroll) {
                         var that = this;
-                        this._checkingScroll = _Global.requestAnimationFrame(function () {
+                        this._checkingScroll = _BaseUtils._requestAnimationFrame(function () {
                             if (that._disposed) { return; }
                             that._checkingScroll = null;
 
