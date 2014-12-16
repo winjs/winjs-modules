@@ -18,6 +18,10 @@
             "url": "https://github.com/winjs/winjs/blob/master/License.txt"
         }
     ],
-    "dependencies": {},
+  "dependencies": {
+    "less": "^1.7.4",
+    "fs-extra": "^0.13.0",
+    "requirejs": "^2.1.15"
+  },
     "bugs": "https://github.com/winjs/winjs/issues"
 }
