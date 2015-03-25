@@ -12,10 +12,6 @@
         "end": "\n        require(['WinJS/Core/_WinJS', 'WinJS-custom'], function (_WinJS) {\n            global.WinJS = _WinJS;\n        });\n        return global.WinJS;\n    }));\n}(this));\n\n"
     },
     "paths": {
-        "amd": "node_modules/winjs-modules/amd",
-        "require-style": "node_modules/winjs-modules/require-style",
-        "require-json": "node_modules/winjs-modules/require-json",
-        "WinJS": "node_modules/winjs-modules/WinJS"
     },
     "findNestedDependencies": true
 }
