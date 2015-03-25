@@ -1,9 +1,5 @@
-
-define('require-style!less/desktop/controls',[],function(){});
-
-define('require-style!less/phone/controls',[],function(){});
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-define('WinJS/Controls/Rating',[
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+define([
     '../Core/_Global',
     '../Core/_Base',
     '../Core/_ErrorFromName',
@@ -14,8 +10,8 @@ define('WinJS/Controls/Rating',[
     '../Utilities/_Hoverable',
     '../Utilities/_SafeHtml',
     './Tooltip',
-    'require-style!less/desktop/controls',
-    'require-style!less/phone/controls'
+    'require-style!less/styles-rating',
+    'require-style!less/colors-rating'
     ], function ratingInit(_Global,_Base, _ErrorFromName, _Events, _Resources, _Control, _ElementUtilities, _Hoverable, _SafeHtml, Tooltip) {
     "use strict";
 
@@ -42,9 +38,8 @@ define('WinJS/Controls/Rating',[
         /// <part name="tentative-full" class="win-star win-tentative win-full" locid="WinJS.UI.Rating_part:tentative-full">The full star when the Rating control shows the tentative rating.</part>
         /// <part name="disabled-empty" class="win-star win-disabled win-empty" locid="WinJS.UI.Rating_part:disabled-empty">The empty star when the control is disabled.</part>
         /// <part name="disabled-full" class="win-star win-disabled win-full" locid="WinJS.UI.Rating_part:disabled-full">The full star when the control is disabled.</part>
-        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
-        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
         Rating: _Base.Namespace._lazy(function () {
             var createEvent = _Events._createEventProperty;
 
@@ -783,24 +778,36 @@ define('WinJS/Controls/Rating',[
 
                             break;
                         case Key.leftArrow: // Arrow Left
-                            if (rtlString === "rtl") {
+                            if (rtlString === "rtl" && this.userRating < this.maxRating - 1) {
                                 this._incrementRating();
-                            } else {
+                            } else if (rtlString !== "rtl" && this.userRating > 0) {
                                 this._decrementRating();
+                            } else {
+                                handled = false;
                             }
                             break;
                         case Key.upArrow: // Arrow Up
-                            this._incrementRating();
+                            if (this.userRating < this.maxRating - 1) {
+                                this._incrementRating();
+                            } else {
+                                handled = false;
+                            }
                             break;
                         case Key.rightArrow: // Arrow Right
-                            if (rtlString === "rtl") {
+                            if (rtlString === "rtl" && this.userRating > 0) {
                                 this._decrementRating();
-                            } else {
+                            } else if (rtlString !== "rtl" && this.userRating < this.maxRating - 1) {
                                 this._incrementRating();
+                            } else {
+                                handled = false;
                             }
                             break;
                         case Key.downArrow: // Arrow Down
-                            this._decrementRating();
+                            if (this.userRating > 0) {
+                                this._decrementRating();
+                            } else {
+                                handled = false;
+                            }
                             break;
                         default:
                             var number = 0;
@@ -1152,4 +1159,3 @@ define('WinJS/Controls/Rating',[
     });
 
 });
-

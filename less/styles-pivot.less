@@ -1,0 +1,210 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
+@import "base.less";
+@import "mixins.less";
+
+.win-pivot {
+    @headersHeight: 48px;
+
+    #flex > .display-flex();
+    #flex > .flex-flow(column; nowrap);
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    -ms-scroll-limit-x-max: 0px;
+    touch-action: manipulation;
+
+    .win-pivot-navbutton {
+        position: absolute;
+        width: 20px;
+        height: 36px;
+        padding: 0px;
+        margin: 0px;
+        top: 10px;
+        min-width: 0px;
+        border-width: 0px;
+        cursor: pointer;
+        opacity: 0;
+        font-family: "Segoe MDL2 Assets", "Symbols";
+    }
+
+    .win-pivot-headers.win-pivot-shownavbuttons .win-pivot-navbutton {
+        opacity: 1;
+    }
+
+    .win-pivot-headers .win-pivot-navbutton-prev:before {
+        content: "\E096";
+    }
+
+    .win-pivot-headers .win-pivot-navbutton-next:before {
+        content: "\E09B";
+    }
+
+    .win-pivot-title {
+        #flex > .flex(@shrink: 0);
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        margin: 12px 0 -8px 18px;
+    }
+
+    .win-pivot-title {
+        .RTL( {
+            margin: 12px 18px -8px 0;
+        }
+
+        );
+    }
+
+    & > .win-pivot-item {
+        /*
+        Hide the pivot items defined declaratively until we reparent them to ensure correct
+        measuring and to avoid showing unprocessed content in the wrong location.
+        */
+        display: none;
+    }
+
+    .win-pivot-headers {
+        #flex > .flex(@shrink: 0);
+        white-space: nowrap;
+        position: relative;
+        overflow-y: visible;
+        height: @headersHeight;
+        touch-action: none;
+        -ms-touch-action: none;
+        outline: 0;
+    }
+
+    .win-pivot-header {
+        .win-type-body();
+        display: inline-block;
+        transition: opacity linear 167ms;
+        -webkit-transition: opacity linear 167ms;
+        overflow: hidden;
+        height: 30px;
+        border: 0;
+        padding: 0;
+        outline: 0;
+        margin: 13px 12px 15px 12px;
+    }
+
+    button.win-pivot-header,
+    button.win-pivot-header:hover:active {
+        background-color: transparent;
+        border: 0;
+        padding: 0;
+        letter-spacing: 0px;
+        margin: 13px 12px 15px 12px;
+        min-height: 0;
+        min-width: 0;
+    }
+
+    button.win-pivot-header.win-keyboard:focus {
+        outline-style: dotted;
+        outline-width: 1px;
+    }
+
+    &.win-pivot-locked .win-pivot-header {
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .win-pivot-header.win-pivot-header-selected,
+    &.win-pivot-locked .win-pivot-header.win-pivot-header-selected {
+        .win-type-base();
+        font-weight: 600; /* Font-weight 500 provided by .win-type-base() is indistinguishable from the default 400 in some fonts */
+        opacity: 1.0;
+        visibility: inherit;
+    }
+
+    .win-pivot-viewport {
+        /* Overlap the headers but not the title */
+        height: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -ms-scroll-snap-type: mandatory;
+        -ms-scroll-snap-points-x: snapInterval(0%, 100%);
+        -ms-overflow-style: none;
+        /* The following 3 styles take advantage of a Trident bug to make the viewport pannable on the header track. The viewport is extended over the
+            header track space, and position: relative allows interacting with it as if the viewport was drawn over the header track.
+        */
+        position: relative;
+        padding-top: @headersHeight;
+        margin-top: -@headersHeight;
+    }
+
+    &.win-pivot-mouse .win-pivot-viewport {
+        padding-top: 0px;
+        margin-top: 0px;
+    }
+
+    &.win-pivot-locked .win-pivot-viewport {
+        overflow: hidden;
+    }
+
+    .win-pivot-surface {
+        /* 49 before, 1 current, 50 after */
+        width: 10000%;
+        height: 100%;
+        position: relative;
+    }
+}
+
+html.win-hoverable .win-pivot {
+    button.win-pivot-header:hover {
+        background-color: transparent;
+        border: 0;
+        padding: 0;
+        letter-spacing: 0px;
+        margin: 13px 12px 15px 12px;
+        min-height: 0;
+        min-width: 0;
+    }
+
+    .win-pivot-navbutton:hover {
+        margin: 0px;
+        padding: 0px;
+        border-width: 0px;
+        cursor: pointer;
+        font-family: "Segoe MDL2 Assets", "Symbols";
+    }
+}
+
+/*
+    PivotItem
+*/
+.win-pivot-item {
+    position: absolute;
+    top: 0px;
+    bottom: 0;
+    /* Since the surface is 100x in width, 1% here means the size of the viewport. */
+    width: 1%;
+}
+
+.win-pivot-item .win-pivot-item-content {
+    height: 100%;
+    overflow-y: auto;
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+    padding: 0px 19px;
+    width: ~"calc(100% - 28px)";
+}
+
+/*
+    Modified styles for when the Pivot is in nosnap mode
+*/
+.win-pivot.win-pivot-nosnap {
+    .win-pivot-viewport {
+        padding-top: 0px;
+        margin-top: 0px;
+        overflow: hidden;
+    }
+
+    .win-pivot-surface {
+        width: 100%;
+        position: static;
+    }
+
+    .win-pivot-item {
+        width: 100%;
+    }
+}

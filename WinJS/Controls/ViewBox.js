@@ -1,10 +1,6 @@
-
-define('require-style!less/desktop/controls',[],function(){});
-
-define('require-style!less/phone/controls',[],function(){});
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
 // ViewBox control
-define('WinJS/Controls/ViewBox',[
+define([
     '../Core/_Global',
     '../Core/_Base',
     '../Core/_BaseUtils',
@@ -15,8 +11,7 @@ define('WinJS/Controls/ViewBox',[
     '../Utilities/_Dispose',
     '../Utilities/_ElementUtilities',
     '../Utilities/_Hoverable',
-    'require-style!less/desktop/controls',
-    'require-style!less/phone/controls'
+    'require-style!less/styles-viewbox'
     ], function viewboxInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Resources, Scheduler, _Control, _Dispose, _ElementUtilities, _Hoverable) {
     "use strict";
 
@@ -33,9 +28,8 @@ define('WinJS/Controls/ViewBox',[
         /// <icon src="ui_winjs.ui.viewbox.12x12.png" width="12" height="12" />
         /// <icon src="ui_winjs.ui.viewbox.16x16.png" width="16" height="16" />
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.ViewBox"><div>ViewBox</div></div>]]></htmlSnippet>
-        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
-        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
         ViewBox: _Base.Namespace._lazy(function () {
 
             var strings = {
@@ -182,4 +176,3 @@ define('WinJS/Controls/ViewBox',[
     });
 
 });
-

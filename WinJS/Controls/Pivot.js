@@ -1,225 +1,5 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-define('WinJS/Controls/Pivot/_Constants',[
-    ], function pivotConstantsInit() {
-    "use strict";
-
-    var members = {
-        // Names of classes used by the Pivot.
-        _ClassName: {
-            pivot: "win-pivot",
-            pivotLocked: "win-pivot-locked",
-            pivotTitle: "win-pivot-title",
-            pivotHeaders: "win-pivot-headers",
-            pivotHeader: "win-pivot-header",
-            pivotHeaderSelected: "win-pivot-header-selected",
-            pivotViewport: "win-pivot-viewport",
-            pivotSurface: "win-pivot-surface",
-            pivotNoSnap: "win-pivot-nosnap",
-            pivotNavButton: "win-pivot-navbutton",
-            pivotNavButtonPrev: "win-pivot-navbutton-prev",
-            pivotNavButtonNext: "win-pivot-navbutton-next",
-            pivotShowNavButtons: "win-pivot-shownavbuttons",
-            pivotInputTypeMouse: "win-pivot-mouse",
-            pivotInputTypeTouch: "win-pivot-touch",
-        }
-    };
-
-    return members;
-
-});
-
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-define('WinJS/Controls/Pivot/_Item',[
-    'exports',
-    '../../Core/_Global',
-    '../../Core/_Base',
-    '../../Core/_BaseUtils',
-    '../../Core/_ErrorFromName',
-    '../../Core/_Resources',
-    '../../ControlProcessor',
-    '../../Promise',
-    '../../Scheduler',
-    '../../Utilities/_Control',
-    '../../Utilities/_Dispose',
-    '../../Utilities/_ElementUtilities',
-    './_Constants'
-    ], function pivotItemInit(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Resources, ControlProcessor, Promise, Scheduler, _Control, _Dispose, _ElementUtilities, _Constants) {
-    "use strict";
-
-    _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
-        /// <field>
-        /// <summary locid="WinJS.UI.PivotItem">
-        /// Defines a Item of a Pivot control.
-        /// </summary>
-        /// <compatibleWith platform="WindowsPhoneApp" minVersion="8.1"/>
-        /// </field>
-        /// <icon src="ui_winjs.ui.pivotitem.12x12.png" width="12" height="12" />
-        /// <icon src="ui_winjs.ui.pivotitem.16x16.png" width="16" height="16" />
-        /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.PivotItem" data-win-options="{header: 'PivotItem Header'}">PivotItem Content</div>]]></htmlSnippet>
-        /// <part name="pivotitem" class="win-pivot-item" locid="WinJS.UI.PivotItem_part:pivotitem">The entire PivotItem control.</part>
-        /// <part name="content" class="win-pivot-item-content" locid="WinJS.UI.PivotItem_part:content">The content region of the PivotItem.</part>
-        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
-        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
-        PivotItem: _Base.Namespace._lazy(function () {
-            var strings = {
-                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; }
-            };
-
-            var PivotItem = _Base.Class.define(function PivotItem_ctor(element, options) {
-                /// <signature helpKeyword="WinJS.UI.PivotItem.PivotItem">
-                /// <summary locid="WinJS.UI.PivotItem.constructor">
-                /// Creates a new PivotItem.
-                /// </summary>
-                /// <param name="element" type="HTMLElement" domElement="true" isOptional="true" locid="WinJS.UI.PivotItem.constructor_p:element">
-                /// The DOM element that hosts the PivotItem control.
-                /// </param>
-                /// <param name="options" type="Object" isOptional="true" locid="WinJS.UI.PivotItem.constructor_p:options">
-                /// An object that contains one or more property/value pairs to apply to the new control.
-                /// Each property of the options object corresponds to one of the control's properties or events.
-                /// </param>
-                /// <returns type="WinJS.UI.PivotItem" locid="WinJS.UI.PivotItem.constructor_returnValue">
-                /// The new PivotItem.
-                /// </returns>
-                /// <compatibleWith platform="WindowsPhoneApp" minVersion="8.1"/>
-                /// </signature>
-                element = element || _Global.document.createElement("DIV");
-                options = options || {};
-
-                if (element.winControl) {
-                    throw new _ErrorFromName("WinJS.UI.PivotItem.DuplicateConstruction", strings.duplicateConstruction);
-                }
-
-                // Attaching JS control to DOM element
-                element.winControl = this;
-                this._element = element;
-                _ElementUtilities.addClass(this.element, PivotItem._ClassName.pivotItem);
-                _ElementUtilities.addClass(this.element, "win-disposable");
-                this._element.setAttribute('role', 'tabpanel');
-
-                this._contentElement = _Global.document.createElement("DIV");
-                this._contentElement.className = PivotItem._ClassName.pivotItemContent;
-                element.appendChild(this._contentElement);
-
-                // Reparent any existing elements inside the new pivot item content element.
-                var elementToMove = this.element.firstChild;
-                while (elementToMove !== this._contentElement) {
-                    var nextElement = elementToMove.nextSibling;
-                    this._contentElement.appendChild(elementToMove);
-                    elementToMove = nextElement;
-                }
-
-                this._processors = [ControlProcessor.processAll];
-
-                _Control.setOptions(this, options);
-            }, {
-                /// <field type="HTMLElement" domElement="true" hidden="true" locid="WinJS.UI.PivotItem.element" helpKeyword="WinJS.UI.PivotItem.element">
-                /// Gets the DOM element that hosts the PivotItem.
-                /// <compatibleWith platform="WindowsPhoneApp" minVersion="8.1"/>
-                /// </field>
-                element: {
-                    get: function () {
-                        return this._element;
-                    }
-                },
-                /// <field type="HTMLElement" domElement="true" locid="WinJS.UI.PivotItem.contentElement" helpKeyword="WinJS.UI.PivotItem.contentElement">
-                /// Gets the DOM element that hosts the PivotItem's content.
-                /// <compatibleWith platform="WindowsPhoneApp" minVersion="8.1"/>
-                /// </field>
-                contentElement: {
-                    get: function () {
-                        return this._contentElement;
-                    }
-                },
-                /// <field type="Object" locid="WinJS.UI.PivotItem.header" helpKeyword="WinJS.UI.PivotItem.header">
-                /// Get or set the PivotItem's header. After you set this property, the Pivot renders the header again.
-                /// <compatibleWith platform="WindowsPhoneApp" minVersion="8.1"/>
-                /// </field>
-                header: {
-                    get: function () {
-                        return this._header;
-                    },
-                    set: function (value) {
-                        // Render again even if it is equal to itself.
-                        this._header = value;
-                        this._parentPivot && this._parentPivot._renderHeaders();
-                    }
-                },
-                _parentPivot: {
-                    get: function () {
-                        var el = this._element;
-                        while (el && !_ElementUtilities.hasClass(el, _Constants._ClassName.pivot)) {
-                            el = el.parentNode;
-                        }
-                        return el && el.winControl;
-                    }
-                },
-                _process: function PivotItem_process() {
-                    var that = this;
-
-                    if (this._processors) {
-                        this._processors.push(function () {
-                            return Scheduler.schedulePromiseAboveNormal();
-                        });
-                    }
-
-                    this._processed = (this._processors || []).reduce(function (promise, processor) {
-                        return promise.then(function () {
-                            return processor(that.contentElement);
-                        });
-                    }, this._processed || Promise.as());
-                    this._processors = null;
-
-                    return this._processed;
-                },
-                dispose: function PivotItem_dispose() {
-                    /// <signature helpKeyword="WinJS.UI.PivotItem.dispose">
-                    /// <summary locid="WinJS.UI.PivotItem.dispose">
-                    /// Disposes this control.
-                    /// </summary>
-                    /// <compatibleWith platform="WindowsPhoneApp" minVersion="8.1"/>
-                    /// </signature>
-                    if (this._disposed) {
-                        return;
-                    }
-                    this._disposed = true;
-                    this._processors = null;
-
-                    _Dispose.disposeSubTree(this.contentElement);
-                }
-            }, {
-                // Names of classes used by the PivotItem.
-                _ClassName: {
-                    pivotItem: "win-pivot-item",
-                    pivotItemContent: "win-pivot-item-content"
-                },
-                isDeclarativeControlContainer: _BaseUtils.markSupportedForProcessing(function (item, callback) {
-                    if (callback === ControlProcessor.processAll) {
-                        return;
-                    }
-
-                    item._processors = item._processors || [];
-                    item._processors.push(callback);
-
-                    // Once processed the first time synchronously queue up new processors as they come in
-                    if (item._processed) {
-                        item._process();
-                    }
-                })
-            });
-
-            return PivotItem;
-        })
-    });
-
-});
-
-
-define('require-style!less/desktop/controls',[],function(){});
-
-define('require-style!less/phone/controls',[],function(){});
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-define('WinJS/Controls/Pivot',[
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+define([
     '../Core/_Global',
     '../Core/_Base',
     '../Core/_BaseUtils',
@@ -243,8 +23,8 @@ define('WinJS/Controls/Pivot',[
     '../Utilities/_KeyboardBehavior',
     './Pivot/_Constants',
     './Pivot/_Item',
-    'require-style!less/desktop/controls',
-    'require-style!less/phone/controls'
+    'require-style!less/styles-pivot',
+    'require-style!less/colors-pivot'
 ], function pivotInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, ControlProcessor, Promise, Scheduler, _Signal, _Control, _Dispose, _ElementUtilities, _Hoverable, _TabContainer, _KeyboardBehavior, _Constants, _Item) {
     "use strict";
 
@@ -266,9 +46,8 @@ define('WinJS/Controls/Pivot',[
         /// <part name="pivot" class="win-pivot" locid="WinJS.UI.Pivot_part:pivot">The entire Pivot control.</part>
         /// <part name="title" class="win-pivot-title" locid="WinJS.UI.Pivot_part:title">The title for the Pivot control.</part>
         /// <part name="header" class="win-pivot-header" locid="WinJS.UI.Pivot_part:header">A header of a Pivot Item.</part>
-        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
-        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
         Pivot: _Base.Namespace._lazy(function () {
             var PT_MOUSE = _ElementUtilities._MSPointerEvent.MSPOINTER_TYPE_MOUSE || "mouse";
             var PT_TOUCH = _ElementUtilities._MSPointerEvent.MSPOINTER_TYPE_TOUCH || "touch";
@@ -288,6 +67,525 @@ define('WinJS/Controls/Pivot',[
             var MSManipulationEventStates = _ElementUtilities._MSManipulationEvent;
 
             var supportsSnap = !!(_ElementUtilities._supportsSnapPoints && _Global.HTMLElement.prototype.msZoomTo);
+
+            function _nop() { }
+            var headersStates = {
+                nop: {
+                    // Called when transitioning away from this state
+                    exit: _nop,
+
+                    // Render headers
+                    render: _nop,
+
+                    // Called when a header is activated, i.e. tapped, clicked, arrow keyed to
+                    activateHeader: _nop,
+
+                    // Called when the selectedIndex changed
+                    handleNavigation: _nop,
+
+                    // Called when the control size changed
+                    handleResize: _nop,
+
+                    // Called when the header string of the specified pivotItem changed
+                    handleHeaderChanged: _nop
+                },
+
+                common: {
+                    // This object contains a set of static helper functions for other states to use
+
+                    headersContainerLeadingMargin: 12,
+
+                    headerPadding: 4,
+                    headerHorizontalMargin: 12,
+
+                    getCumulativeHeaderWidth: function headersState_getCumulativeHeaderWidth(pivot, index) {
+                        // Computes the total width of headers from 0 up to the specified index
+                        if (index === 0) {
+                            return 0;
+                        }
+
+                        var originalLength = pivot._headersContainerElement.children.length;
+                        for (var i = 0; i < index; i++) {
+                            var header = headersStates.common.renderHeader(pivot, i, false);
+                            pivot._headersContainerElement.appendChild(header);
+                        }
+
+                        var width = 0;
+                        var leftElement = pivot._rtl ? pivot._headersContainerElement.lastElementChild : pivot._headersContainerElement.children[originalLength];
+                        var rightElement = pivot._rtl ? pivot._headersContainerElement.children[originalLength] : pivot._headersContainerElement.lastElementChild;
+                        width = (rightElement.offsetLeft + rightElement.offsetWidth) - leftElement.offsetLeft;
+                        width += index * headersStates.common.headerPadding;
+                        width += 2 * headersStates.common.headerHorizontalMargin;
+
+                        for (var i = 0; i < index; i++) {
+                            pivot._headersContainerElement.removeChild(pivot._headersContainerElement.lastElementChild);
+                        }
+                        return width;
+                    },
+
+                    refreshHeadersState: function headersState_refreshHeadersState(pivot, invalidateCache) {
+                        // Measures the cumulative header length and switches headers states if necessary
+                        if (invalidateCache) {
+                            this._cachedWidth = 0;
+                        }
+                        var width = this._cachedWidth || this.getCumulativeHeaderWidth(pivot, pivot.items.length);
+                        this._cachedWidth = width;
+
+                        if (width > pivot._viewportWidth && !(pivot._headersState instanceof headersStates.overflowState)) {
+                            pivot._headersState.exit();
+                            pivot._headersState = new headersStates.overflowState(pivot);
+                        } else if (width <= pivot._viewportWidth && !(pivot._headersState instanceof headersStates.staticState)) {
+                            pivot._headersState.exit();
+                            pivot._headersState = new headersStates.staticState(pivot);
+                        }
+                    },
+
+                    renderHeader: function headersState_renderHeader(pivot, index, aria) {
+                        // Renders a single header
+                        var template = _ElementUtilities._syncRenderer(pivotDefaultHeaderTemplate);
+
+                        var item = pivot._items.getAt(index);
+
+                        var headerContainerEl = _Global.document.createElement("BUTTON");
+                        headerContainerEl.style.marginLeft = headerContainerEl.style.marginRight = headersStates.common.headerHorizontalMargin + "px";
+                        _ElementUtilities.addClass(headerContainerEl, Pivot._ClassName.pivotHeader);
+                        headerContainerEl._item = item;
+                        headerContainerEl._pivotItemIndex = index;
+                        template(item, headerContainerEl);
+
+                        function ariaSelectedMutated() {
+                            if (pivot._disposed) {
+                                return;
+                            }
+
+                            if (pivot._headersContainerElement.contains(headerContainerEl) &&
+                                index !== pivot.selectedIndex &&
+                                headerContainerEl.getAttribute('aria-selected') === "true") {
+                                // Ignore aria selected changes on selected item.
+                                // By selecting another tab we change to it.
+                                pivot.selectedIndex = index;
+                            }
+                        }
+                        if (aria) {
+                            headerContainerEl.setAttribute('aria-selected', index === pivot.selectedIndex);
+                            headerContainerEl.setAttribute('role', 'tab');
+                            new _ElementUtilities._MutationObserver(ariaSelectedMutated).observe(headerContainerEl, { attributes: true, attributeFilter: ["aria-selected"] });
+                        }
+
+                        return headerContainerEl;
+                    },
+
+                    freezeHeaderWidth: function headersState_freezeHeaderWidth(headerElement) {
+                        // Depending on whether a header is selected or not, its size grows and shrinks slightly due to different type ramps.
+                        // To prevent that from happening we freeze the header's size to its size at creation as if it was selected. We also
+                        // add a few pixels of padding to the computed size so that when it grows, it won't run into clipping issues.
+                        headerElement.style.width = "";
+                        headerElement.style.width = (headerElement.offsetWidth + headersStates.common.headerPadding) + "px";
+                    },
+
+                    updateHeader: function headersState_updateHeader(pivot, item) {
+                        // Updates the label of a header
+                        var index = pivot.items.indexOf(item);
+                        var headerElement = pivot._headersContainerElement.children[index];
+                        headerElement.innerHTML = "";
+
+                        var template = _ElementUtilities._syncRenderer(pivotDefaultHeaderTemplate);
+                        template(item, headerElement);
+
+                        this.freezeHeaderWidth(headerElement);
+                    },
+
+                    setActiveHeader: function headersState_setActiveHeader(newSelectedHeader, currentSelectedHeader) {
+                        // Updates the selected header and clears the previously selected header if applicable
+                        var focusSelectedHeader = false;
+                        if (currentSelectedHeader) {
+                            currentSelectedHeader.classList.remove(Pivot._ClassName.pivotHeaderSelected);
+                            currentSelectedHeader.setAttribute("aria-selected", false);
+                            focusSelectedHeader = _Global.document.activeElement === currentSelectedHeader;
+                        }
+
+                        newSelectedHeader.classList.add(Pivot._ClassName.pivotHeaderSelected);
+                        newSelectedHeader.setAttribute("aria-selected", true);
+                        focusSelectedHeader && newSelectedHeader.focus();
+                    }
+                },
+
+                staticState: _Base.Class.define(function staticState_ctor(pivot) {
+                    // This state renders headers statically in the order they appear in the binding list.
+                    // There is no animation when the selectedIndex changes, only the highlighted header changes.
+
+                    this.pivot = pivot;
+                    this._firstRender = true;
+                    this._transitionAnimation = Promise.wrap();
+
+                    if (pivot._headersContainerElement.children.length && _TransitionAnimation.isAnimationEnabled()) {
+                        // We transitioned from another headers state, do transition animation
+
+                        // Calculate the offset from the selected header to where the selected header should be in static layout
+                        var selectedHeader = pivot._headersContainerElement.querySelector("." + Pivot._ClassName.pivotHeaderSelected);
+                        var start = 0;
+                        var end = 0;
+                        if (pivot._rtl) {
+                            start = selectedHeader.offsetLeft + selectedHeader.offsetWidth + headersStates.common.headerHorizontalMargin;
+                            end = pivot._viewportWidth - headersStates.common.getCumulativeHeaderWidth(pivot, pivot.selectedIndex) - headersStates.common.headersContainerLeadingMargin;
+                            end += parseFloat(pivot._headersContainerElement.style.marginLeft);
+                        } else {
+                            start = selectedHeader.offsetLeft;
+                            start += parseFloat(pivot._headersContainerElement.style.marginLeft); // overflow state has a hidden first element that we need to account for
+                            end = headersStates.common.getCumulativeHeaderWidth(pivot, pivot.selectedIndex) + headersStates.common.headersContainerLeadingMargin + headersStates.common.headerHorizontalMargin;
+                        }
+                        var offset = start - end;
+
+                        this.render();
+
+                        // Offset every header by the calculated offset so there is no visual difference after the render call
+                        var transformProperty = _BaseUtils._browserStyleEquivalents["transform"].cssName;
+                        var transformValue = "translateX(" + offset + "px)";
+                        for (var i = 0, l = pivot._headersContainerElement.children.length; i < l; i++) {
+                            pivot._headersContainerElement.children[i].style[transformProperty] = transformValue;
+                        }
+
+                        // Transition headers back to their original location
+                        this._transitionAnimation = _TransitionAnimation.executeTransition(
+                            pivot._headersContainerElement.querySelectorAll("." + Pivot._ClassName.pivotHeader), {
+                                property: transformProperty,
+                                delay: 0,
+                                duration: Pivot._headerSlideAnimationDuration,
+                                timing: "ease-out",
+                                to: ""
+                            }
+                        );
+                    }
+                }, {
+                    exit: function staticState_exit() {
+                        this._transitionAnimation.cancel();
+                    },
+
+                    render: function staticState_render() {
+                        var pivot = this.pivot;
+                        if (pivot._pendingRefresh || !pivot._items) {
+                            return;
+                        }
+
+                        _Dispose._disposeElement(pivot._headersContainerElement);
+                        _ElementUtilities.empty(pivot._headersContainerElement);
+
+                        if (pivot._rtl) {
+                            pivot._headersContainerElement.style.marginLeft = "0px";
+                            pivot._headersContainerElement.style.marginRight = headersStates.common.headersContainerLeadingMargin + "px";
+                        } else {
+                            pivot._headersContainerElement.style.marginLeft = headersStates.common.headersContainerLeadingMargin + "px";
+                            pivot._headersContainerElement.style.marginRight = "0px";
+                        }
+                        pivot._viewportElement.style.overflow = pivot.items.length === 1 ? "hidden" : "";
+
+                        if (pivot.items.length) {
+                            for (var i = 0; i < pivot.items.length; i++) {
+                                var header = headersStates.common.renderHeader(pivot, i, true);
+                                pivot._headersContainerElement.appendChild(header);
+                                headersStates.common.freezeHeaderWidth(header);
+
+                                if (i === pivot.selectedIndex) {
+                                    header.classList.add(Pivot._ClassName.pivotHeaderSelected);
+                                }
+                            }
+
+                            pivot._tabContainer.childFocus = pivot._headersContainerElement.children[pivot.selectedIndex];
+                        }
+                        this._firstRender = false;
+                    },
+
+                    activateHeader: function staticState_activateHeader(headerElement) {
+                        var currentActiveHeader = this.pivot._headersContainerElement.children[this.pivot.selectedIndex];
+                        headersStates.common.setActiveHeader(headerElement, currentActiveHeader);
+                        this.pivot._animateToPrevious = headerElement._pivotItemIndex < this.pivot.selectedIndex;
+                        this.pivot.selectedIndex = headerElement._pivotItemIndex;
+                    },
+
+                    handleNavigation: function staticState_handleNavigation(goPrevious, index, oldIndex) {
+                        if (this._firstRender) {
+                            this.render();
+                        }
+                        headersStates.common.setActiveHeader(this.pivot._headersContainerElement.children[index], this.pivot._headersContainerElement.children[oldIndex]);
+                        this.pivot._tabContainer.childFocus = this.pivot._headersContainerElement.children[index];
+                    },
+
+                    handleResize: function staticState_handleResize() {
+                        headersStates.common.refreshHeadersState(this.pivot);
+                    },
+
+                    handleHeaderChanged: function staticState_handleHeaderChanged(pivotItem) {
+                        headersStates.common.updateHeader(this.pivot, pivotItem);
+                        headersStates.common.refreshHeadersState(this.pivot, true);
+                    }
+                }),
+
+                overflowState: _Base.Class.define(function overflowState_ctor(pivot) {
+                    // This state renders the selected header always left-aligned (in ltr) and
+                    // animates the headers when the selectedIndex changes.
+
+                    this.pivot = pivot;
+                    this._blocked = false;
+                    this._firstRender = true;
+                    this._transitionAnimation = Promise.wrap();
+                    pivot._slideHeadersAnimation = Promise.wrap();
+
+                    if (pivot._headersContainerElement.children.length && _TransitionAnimation.isAnimationEnabled()) {
+                        // We transitioned from another headers state, do transition animation
+                        var that = this;
+                        var done = function () {
+                            that._blocked = false;
+                            that.render();
+                        };
+                        this._blocked = true;
+
+                        // Calculate the offset from the selected header to the leading edge of the container
+                        var selectedHeader = pivot._headersContainerElement.querySelector("." + Pivot._ClassName.pivotHeaderSelected);
+                        var start = 0;
+                        var end = 0;
+                        if (pivot._rtl) {
+                            start = pivot._viewportWidth - headersStates.common.headersContainerLeadingMargin;
+                            end = selectedHeader.offsetLeft;
+                            end += headersStates.common.headerHorizontalMargin;
+                            end += selectedHeader.offsetWidth;
+                            end += parseFloat(pivot._headersContainerElement.style.marginLeft);
+                        } else {
+                            start = headersStates.common.headersContainerLeadingMargin;
+                            end = selectedHeader.offsetLeft;
+                            end -= headersStates.common.headerHorizontalMargin;
+                            end += parseFloat(pivot._headersContainerElement.style.marginLeft);
+                        }
+                        var offset = start - end;
+
+                        // Duplicate all the headers up to the selected header so when the transition occurs there will be
+                        // headers on the trailing end of the container to replace the ones that are being transitioned off-screen
+                        for (var i = 0; i < pivot.selectedIndex; i++) {
+                            pivot._headersContainerElement.appendChild(pivot._headersContainerElement.children[i].cloneNode(true));
+                        }
+
+                        // Transition headers to the leading edge of the container, then render the container as usual
+                        var transformProperty = _BaseUtils._browserStyleEquivalents["transform"].cssName;
+                        this._transitionAnimation = _TransitionAnimation.executeTransition(
+                            pivot._headersContainerElement.querySelectorAll("." + Pivot._ClassName.pivotHeader), {
+                                property: transformProperty,
+                                delay: 0,
+                                duration: Pivot._headerSlideAnimationDuration,
+                                timing: "ease-out",
+                                to: "translateX(" + offset + "px)"
+                            }).then(done, done);
+                    }
+                }, {
+                    exit: function overflowState_exit() {
+                        this._transitionAnimation.cancel();
+                        this.pivot._slideHeadersAnimation.cancel();
+                    },
+
+                    render: function overflowState_render(goPrevious) {
+                        var pivot = this.pivot;
+                        if (this._blocked || pivot._pendingRefresh || !pivot._items) {
+                            return;
+                        }
+
+                        var restoreFocus = pivot._headersContainerElement.contains(_Global.document.activeElement);
+
+                        _Dispose._disposeElement(pivot._headersContainerElement);
+                        _ElementUtilities.empty(pivot._headersContainerElement);
+
+
+                        if (pivot._items.length === 1) {
+                            var header = headersStates.common.renderHeader(pivot, 0, true);
+                            header.classList.add(Pivot._ClassName.pivotHeaderSelected);
+                            pivot._headersContainerElement.appendChild(header);
+                            headersStates.common.freezeHeaderWidth(header);
+
+                            pivot._viewportElement.style.overflow = "hidden";
+                            pivot._headersContainerElement.style.marginLeft = "0px";
+                            pivot._headersContainerElement.style.marginRight = "0px";
+                        } else if (pivot._items.length > 1) {
+                            // We always render 1 additional header before the current item.
+                            // When going backwards, we render 2 additional headers, the first one as usual, and the second one for
+                            // fading out the previous last header.
+                            var numberOfHeadersToRender = pivot._items.length + (goPrevious ? 2 : 1);
+                            var maxHeaderWidth = pivot._viewportWidth * 0.8;
+                            var indexToRender = pivot.selectedIndex - 1;
+
+                            if (pivot._viewportElement.style.overflow) {
+                                pivot._viewportElement.style.overflow = "";
+                            }
+
+                            for (var i = 0; i < numberOfHeadersToRender; i++) {
+                                if (indexToRender === -1) {
+                                    indexToRender = pivot._items.length - 1;
+                                } else if (indexToRender === pivot._items.length) {
+                                    indexToRender = 0;
+                                }
+
+                                var header = headersStates.common.renderHeader(pivot, indexToRender, true);
+                                pivot._headersContainerElement.appendChild(header);
+
+                                if (header.offsetWidth > maxHeaderWidth) {
+                                    header.style.textOverflow = "ellipsis";
+                                    header.style.width = maxHeaderWidth + "px";
+                                } else {
+                                    headersStates.common.freezeHeaderWidth(header);
+                                }
+
+                                if (indexToRender === pivot.selectedIndex) {
+                                    header.classList.add(Pivot._ClassName.pivotHeaderSelected);
+                                }
+                                indexToRender++;
+                            }
+                            if (!pivot._firstLoad && !this._firstRender) {
+                                var start, end;
+                                if (goPrevious) {
+                                    start = "";
+                                    end = "0";
+                                } else {
+                                    start = "0";
+                                    end = "";
+                                }
+
+                                var lastHeader = pivot._headersContainerElement.children[numberOfHeadersToRender - 1];
+                                lastHeader.style.opacity = start;
+                                var lastHeaderFadeInDuration = 0.167;
+                                lastHeader.style[_BaseUtils._browserStyleEquivalents["transition"].scriptName] = "opacity " + _TransitionAnimation._animationTimeAdjustment(lastHeaderFadeInDuration) + "s";
+                                _Global.getComputedStyle(lastHeader).opacity;
+                                lastHeader.style.opacity = end;
+                            }
+
+                            pivot._headersContainerElement.children[0].setAttribute("aria-hidden", "true");
+                            pivot._headersContainerElement.style.marginLeft = "0px";
+                            pivot._headersContainerElement.style.marginRight = "0px";
+                            var leadingMargin = pivot._rtl ? "marginRight" : "marginLeft";
+                            var firstHeader = pivot._headersContainerElement.children[0];
+                            var leadingSpace = _ElementUtilities.getTotalWidth(firstHeader) - headersStates.common.headersContainerLeadingMargin;
+                            if (firstHeader !== pivot._headersContainerElement.children[0]) {
+                                // Calling getTotalWidth caused a layout which can trigger a synchronous resize which in turn
+                                // calls renderHeaders. We can ignore this one since its the old headers which are not in the DOM.
+                                return;
+                            }
+                            pivot._headersContainerElement.style[leadingMargin] = (-1 * leadingSpace) + "px";
+
+                            // Create header track nav button elements
+                            pivot._prevButton = _Global.document.createElement("button");
+                            _ElementUtilities.addClass(pivot._prevButton, Pivot._ClassName.pivotNavButton);
+                            _ElementUtilities.addClass(pivot._prevButton, Pivot._ClassName.pivotNavButtonPrev);
+                            pivot._prevButton.addEventListener("click", function () {
+                                if (pivot.locked) {
+                                    return;
+                                }
+                                pivot._rtl ? pivot._goNext() : pivot._goPrevious();
+                            });
+                            pivot._headersContainerElement.appendChild(pivot._prevButton);
+                            pivot._prevButton.style.left = pivot._rtl ? "0px" : leadingSpace + "px";
+
+                            pivot._nextButton = _Global.document.createElement("button");
+                            _ElementUtilities.addClass(pivot._nextButton, Pivot._ClassName.pivotNavButton);
+                            _ElementUtilities.addClass(pivot._nextButton, Pivot._ClassName.pivotNavButtonNext);
+                            pivot._nextButton.addEventListener("click", function () {
+                                if (pivot.locked) {
+                                    return;
+                                }
+                                pivot._rtl ? pivot._goPrevious() : pivot._goNext();
+                            });
+                            pivot._headersContainerElement.appendChild(pivot._nextButton);
+                            pivot._nextButton.style.right = pivot._rtl ? leadingSpace + "px" : "0px";
+                        }
+                        var firstHeaderIndex = pivot._headersContainerElement.children.length > 1 ? 1 : 0;
+                        pivot._tabContainer.childFocus = pivot._headersContainerElement.children[firstHeaderIndex];
+                        if (restoreFocus) {
+                            pivot._headersContainerElement.children[firstHeaderIndex].focus();
+                        }
+                        this._firstRender = false;
+                    },
+
+                    activateHeader: function overflowState_activateHeader(headerElement) {
+                        if (!headerElement.previousSibling) {
+                            // prevent clicking the previous header
+                            return;
+                        }
+                        this.pivot.selectedIndex = headerElement._pivotItemIndex;
+                    },
+
+                    handleNavigation: function overflowState_handleNavigation(goPrevious, index, oldIndex) {
+                        var pivot = this.pivot;
+                        if (this._blocked || index < 0 || pivot._firstLoad) {
+                            this.render(goPrevious);
+                            return;
+                        }
+
+                        var targetHeader;
+
+                        if (goPrevious) {
+                            targetHeader = pivot._headersContainerElement.children[0];
+                        } else {
+                            if (index < oldIndex) {
+                                index += pivot._items.length;
+                            }
+                            targetHeader = pivot._headersContainerElement.children[1 + index - oldIndex];
+                        }
+
+                        if (!targetHeader) {
+                            this.render(goPrevious);
+                            return;
+                        }
+
+                        // Update the selected one:
+                        _ElementUtilities.removeClass(pivot._headersContainerElement.children[1], Pivot._ClassName.pivotHeaderSelected);
+                        _ElementUtilities.addClass(targetHeader, Pivot._ClassName.pivotHeaderSelected);
+
+                        var rtl = pivot._rtl;
+
+                        function offset(element) {
+                            if (rtl) {
+                                return element.offsetParent.offsetWidth - element.offsetLeft - element.offsetWidth;
+                            } else {
+                                return element.offsetLeft;
+                            }
+                        }
+
+                        var endPosition = offset(pivot._headersContainerElement.children[1]) - offset(targetHeader);
+                        if (rtl) {
+                            endPosition *= -1;
+                        }
+
+                        function headerCleanup() {
+                            if (pivot._disposed) {
+                                return;
+                            }
+
+                            pivot._headersState.render(goPrevious);
+                            pivot._slideHeadersAnimation = Promise.wrap();
+                        }
+
+                        var headerAnimation;
+                        if (_TransitionAnimation.isAnimationEnabled()) {
+                            headerAnimation = _TransitionAnimation.executeTransition(
+                            pivot._headersContainerElement.querySelectorAll("." + Pivot._ClassName.pivotHeader),
+                            {
+                                property: _BaseUtils._browserStyleEquivalents["transform"].cssName,
+                                delay: 0,
+                                duration: Pivot._headerSlideAnimationDuration,
+                                timing: "ease-out",
+                                to: "translateX(" + endPosition + "px)"
+                            });
+                        } else {
+                            headerAnimation = Promise.wrap();
+                        }
+
+                        pivot._slideHeadersAnimation = headerAnimation.then(headerCleanup, headerCleanup);
+                    },
+
+                    handleResize: function overflowState_handleResize() {
+                        headersStates.common.refreshHeadersState(this.pivot);
+                    },
+
+                    handleHeaderChanged: function overflowState_handleHeaderChanged(pivotItem) {
+                        this.render();
+                        headersStates.common.refreshHeadersState(this.pivot, true);
+                    }
+                })
+            };
 
             var Pivot = _Base.Class.define(function Pivot_ctor(element, options) {
                 /// <signature helpKeyword="WinJS.UI.Pivot.Pivot">
@@ -326,12 +624,12 @@ define('WinJS/Controls/Pivot',[
                 // Attaching JS control to DOM element
                 element.winControl = this;
                 this._element = element;
+                if (!supportsSnap) {
+                    _ElementUtilities.addClass(this.element, Pivot._ClassName.pivotNoSnap);
+                }
                 this._element.setAttribute('role', 'tablist');
                 if (!this._element.getAttribute("aria-label")) {
                     this._element.setAttribute('aria-label', strings.pivotAriaLabel);
-                }
-                if (!supportsSnap) {
-                    _ElementUtilities.addClass(this.element, Pivot._ClassName.pivotNoSnap);
                 }
                 _ElementUtilities.addClass(this.element, Pivot._ClassName.pivot);
                 _ElementUtilities.addClass(this.element, "win-disposable");
@@ -349,10 +647,10 @@ define('WinJS/Controls/Pivot',[
                 this._headersContainerElement.addEventListener("keydown", this._headersKeyDown.bind(this));
                 this._element.appendChild(this._headersContainerElement);
                 this._element.addEventListener('click', this._elementClickedHandler.bind(this));
+                _ElementUtilities._addEventListener(this._element, "pointerdown", this._elementPointerDownHandler.bind(this));
+                _ElementUtilities._addEventListener(this._element, "pointerup", this._elementPointerUpHandler.bind(this));
                 _ElementUtilities._addEventListener(this._headersContainerElement, "pointerenter", this._showNavButtons.bind(this));
                 _ElementUtilities._addEventListener(this._headersContainerElement, "pointerout", this._hideNavButtons.bind(this));
-                _ElementUtilities._addEventListener(this._headersContainerElement, "pointerdown", this._headersPointerDownHandler.bind(this));
-                _ElementUtilities._addEventListener(this._headersContainerElement, "pointerup", this._headersPointerUpHandler.bind(this));
 
                 this._winKeyboard = new _KeyboardBehavior._WinKeyboard(this._headersContainerElement);
                 this._tabContainer = new _TabContainer.TabContainer(this._headersContainerElement);
@@ -379,6 +677,7 @@ define('WinJS/Controls/Pivot',[
                 this._loadId = 0;
                 this._navMode = Pivot._NavigationModes.none;
                 this._currentManipulationState = MSManipulationEventStates.MS_MANIPULATION_STATE_STOPPED;
+                this._headersState = headersStates.nop;
 
                 // This internally assigns this.items which causes item to be used (even from options) before selectedIndex
                 this._parse();
@@ -520,12 +819,27 @@ define('WinJS/Controls/Pivot',[
 
                     this._updateEvents(this._items);
                     _ElementUtilities._resizeNotifier.unsubscribe(this.element, this._resizeHandlerBound);
+                    this._headersState.exit();
 
                     _Dispose._disposeElement(this._headersContainerElement);
 
                     for (var i = 0, len = this.items.length; i < len; i++) {
                         this.items.getAt(i).dispose();
                     }
+                },
+
+                forceLayout: function pivot_forceLayout() {
+                    /// <signature helpKeyword="WinJS.UI.Pivot.forceLayout">
+                    /// <summary locid="WinJS.UI.Pivot.forceLayout">
+                    /// Forces the control to relayout its content. This function is expected to be called
+                    /// when the pivot element is manually resized.
+                    /// </summary>
+                    /// <compatibleWith platform="WindowsPhoneApp" minVersion="8.1" />
+                    /// </signature>
+                    if (this._disposed) {
+                        return;
+                    }
+                    this._resizeHandler();
                 },
 
                 /// <field type="Function" locid="WinJS.UI.Pivot.onselectionchanged" helpKeyword="WinJS.UI.Pivot.onselectionchanged">
@@ -624,11 +938,13 @@ define('WinJS/Controls/Pivot',[
                     var pendingIndexOnScreen = this._pendingIndexOnScreen;
                     this._pendingIndexOnScreen = null;
                     this._currentIndexOnScreen = 0;
-                    this._skipHeaderSlide = true;
-
+                    this._firstLoad = true;
+                    this._cachedRTL = _Global.getComputedStyle(this._element, null).direction === "rtl";
+                    headersStates.common.refreshHeadersState(this, true);
                     this._pendingRefresh = false;
+
                     this.selectedIndex = Math.min(pendingIndexOnScreen, this.items.length - 1);
-                    this._skipHeaderSlide = false;
+                    this._firstLoad = false;
                     this._recenterUI();
                 },
 
@@ -680,150 +996,8 @@ define('WinJS/Controls/Pivot',[
                     Scheduler.schedule(this._applyProperties.bind(this), Scheduler.Priority.high);
                 },
 
-                _renderHeaders: function pivot_renderHeaders(goPrevious) {
-                    if (this._pendingRefresh || !this._items) {
-                        return;
-                    }
-
-                    var restoreFocus = this._headersContainerElement.contains(_Global.document.activeElement);
-                    var template = _ElementUtilities._syncRenderer(pivotDefaultHeaderTemplate);
-
-                    _Dispose._disposeElement(this._headersContainerElement);
-                    _ElementUtilities.empty(this._headersContainerElement);
-                    var cs = _Global.getComputedStyle(this._headersContainerElement);
-                    var marginLeft = parseFloat(cs.marginLeft);
-                    marginLeft = marginLeft > 0 ? 0 : marginLeft;
-                    var marginRight = parseFloat(cs.marginRight);
-                    marginRight = marginRight > 0 ? 0 : marginRight;
-                    var maxHeaderLength = parseFloat(cs.width) + marginLeft + marginRight;
-
-                    var that = this;
-                    function renderHeader(index) {
-                        var item = that._items.getAt(index);
-
-                        var headerContainerEl = _Global.document.createElement("BUTTON");
-                        headerContainerEl.style.maxWidth = (0.8 * maxHeaderLength) + "px";
-                        if (index === that.selectedIndex) {
-                            _ElementUtilities.addClass(headerContainerEl, Pivot._ClassName.pivotHeaderSelected);
-                            headerContainerEl.setAttribute('aria-selected', true);
-                        } else {
-                            headerContainerEl.setAttribute('aria-selected', false);
-                        }
-                        _ElementUtilities.addClass(headerContainerEl, Pivot._ClassName.pivotHeader);
-                        headerContainerEl._item = item;
-                        template(item, headerContainerEl);
-                        headerContainerEl.setAttribute('role', 'tab');
-                        that._headersContainerElement.appendChild(headerContainerEl);
-
-                        function ariaSelectedMutated() {
-                            if (that._disposed) {
-                                return;
-                            }
-
-                            if (that._headersContainerElement.contains(headerContainerEl) &&
-                                index !== that.selectedIndex &&
-                                headerContainerEl.getAttribute('aria-selected') === "true") {
-                                // Ignore aria selected changes on selected item.
-                                // By selecting another tab we change to it.
-                                that.selectedIndex = index;
-                            }
-                        }
-
-                        new _ElementUtilities._MutationObserver(ariaSelectedMutated).observe(headerContainerEl, { attributes: true, attributeFilter: ["aria-selected"] });
-                    }
-
-                    if (this._items.length === 1) {
-                        renderHeader(0);
-                        this._viewportElement.style.overflow = "hidden";
-                        this._headersContainerElement.style.marginLeft = "0px";
-                        this._headersContainerElement.style.marginRight = "0px";
-                    } else if (this._items.length > 1) {
-                        // We always render 1 additional header before the current item.
-                        // When going backwards, we render 2 additional headers, the first one as usual, and the second one for
-                        // fading out the previous last header.
-                        var numberOfHeadersToRender = this._items.length + (goPrevious ? 2 : 1);
-                        var indexToRender = this.selectedIndex - 1;
-
-                        if (this._viewportElement.style.overflow) {
-                            this._viewportElement.style.overflow = "";
-                        }
-
-                        for (var i = 0; i < numberOfHeadersToRender; i++) {
-                            if (indexToRender === -1) {
-                                indexToRender = this._items.length - 1;
-                            } else if (indexToRender === this._items.length) {
-                                indexToRender = 0;
-                            }
-
-                            renderHeader(indexToRender);
-                            indexToRender++;
-                        }
-                        if (!this._skipHeaderSlide) {
-                            var start, end;
-                            if (goPrevious) {
-                                start = "";
-                                end = "0";
-                            } else {
-                                start = "0";
-                                end = "";
-                            }
-
-                            var lastHeader = this._headersContainerElement.children[numberOfHeadersToRender - 1];
-                            lastHeader.style.opacity = start;
-                            var lastHeaderFadeInDuration = 0.167;
-                            lastHeader.style[_BaseUtils._browserStyleEquivalents["transition"].scriptName] = "opacity " + _TransitionAnimation._animationTimeAdjustment(lastHeaderFadeInDuration) + "s";
-                            _Global.getComputedStyle(lastHeader).opacity;
-                            lastHeader.style.opacity = end;
-                        }
-
-                        this._headersContainerElement.children[0].setAttribute("aria-hidden", "true");
-                        this._headersContainerElement.style.marginLeft = "0px";
-                        this._headersContainerElement.style.marginRight = "0px";
-                        var leadingMargin = this._rtl ? "marginRight" : "marginLeft";
-                        var trailingPadding = this._rtl ? "paddingLeft" : "paddingRight";
-                        var firstHeader = this._headersContainerElement.children[0];
-                        var leadingSpace = firstHeader.offsetWidth + parseFloat(_Global.getComputedStyle(firstHeader)[leadingMargin]) - parseFloat(_Global.getComputedStyle(firstHeader)[trailingPadding]);
-                        if (firstHeader !== this._headersContainerElement.children[0]) {
-                            // Calling offsetWidth caused a layout which can trigger a synchronous resize which in turn
-                            // calls renderHeaders. We can ignore this one since its the old headers which are not in the DOM.
-                            return;
-                        }
-                        this._headersContainerElement.style[leadingMargin] = (-1 * leadingSpace) + "px";
-
-                        // Create header track nav button elements
-                        this._prevButton = _Global.document.createElement("button");
-                        _ElementUtilities.addClass(this._prevButton, Pivot._ClassName.pivotNavButton);
-                        _ElementUtilities.addClass(this._prevButton, Pivot._ClassName.pivotNavButtonPrev);
-                        this._prevButton.addEventListener("click", function () {
-                            if (that.locked) {
-                                return;
-                            }
-                            that._rtl ? that._goNext() : that._goPrevious();
-                        });
-                        this._headersContainerElement.appendChild(this._prevButton);
-                        this._prevButton.style.left = this._rtl ? "0px" : leadingSpace + "px";
-
-                        this._nextButton = _Global.document.createElement("button");
-                        _ElementUtilities.addClass(this._nextButton, Pivot._ClassName.pivotNavButton);
-                        _ElementUtilities.addClass(this._nextButton, Pivot._ClassName.pivotNavButtonNext);
-                        this._nextButton.addEventListener("click", function () {
-                            if (that.locked) {
-                                return;
-                            }
-                            that._rtl ? that._goPrevious() : that._goNext();
-                        });
-                        this._headersContainerElement.appendChild(this._nextButton);
-                        this._nextButton.style.right = this._rtl ? leadingSpace + "px" : "0px";
-                    }
-                    var firstHeaderIndex = this._headersContainerElement.children.length > 1 ? 1 : 0;
-                    this._tabContainer.childFocus = this._headersContainerElement.children[firstHeaderIndex];
-                    if (restoreFocus) {
-                        this._headersContainerElement.children[firstHeaderIndex].focus();
-                    }
-                },
-
-                _resizeHandler: function () {
-                    if (this._disposed) {
+                _resizeHandler: function pivot_resizeHandler() {
+                    if (this._disposed || this._pendingRefresh) {
                         return;
                     }
 
@@ -838,8 +1012,7 @@ define('WinJS/Controls/Pivot',[
                         this._slideHeadersAnimation && this._slideHeadersAnimation.cancel();
 
                         this._recenterUI();
-
-                        this._renderHeaders();
+                        this._headersState.handleResize();
                     } else {
                         _Log.log && _Log.log('_resizeHandler worthless resize');
                     }
@@ -854,11 +1027,7 @@ define('WinJS/Controls/Pivot',[
 
                     var index = this._items.indexOf(headerElement._item);
                     if (index !== this.selectedIndex) {
-                        if (!headerElement.previousSibling) {
-                            // prevent clicking the previous header
-                            return;
-                        }
-                        this.selectedIndex = index;
+                        this._headersState.activateHeader(headerElement);
                     } else {
                         // Move focus into content for Narrator.
                         _ElementUtilities._setActiveFirstFocusableElement(this.selectedItem.element);
@@ -900,7 +1069,7 @@ define('WinJS/Controls/Pivot',[
 
                     var oldIndex = this._currentIndexOnScreen;
                     this._currentIndexOnScreen = index;
-                    this._slideHeaders(goPrevious, index, oldIndex);
+                    this._headersState.handleNavigation(goPrevious, index, oldIndex);
 
                     if (index < 0) {
                         return;
@@ -910,7 +1079,6 @@ define('WinJS/Controls/Pivot',[
                     var item = this._items.getAt(index);
                     this._currentItem = item;
 
-
                     if (goPrevious) {
                         this._offsetFromCenter--;
                     } else if (index !== oldIndex) {
@@ -919,8 +1087,8 @@ define('WinJS/Controls/Pivot',[
 
                     var zooming = false;
                     if (supportsSnap && this._currentManipulationState !== MSManipulationEventStates.MS_MANIPULATION_STATE_INERTIA) {
-                        if (this._skipHeaderSlide) {
-                            _Log.log && _Log.log('_skipHeaderSlide index:' + this.selectedIndex + ' offset: ' + this._offsetFromCenter + ' scrollLeft: ' + this._currentScrollTargetLocation, "winjs pivot", "log");
+                        if (this._firstLoad) {
+                            _Log.log && _Log.log('_firstLoad index:' + this.selectedIndex + ' offset: ' + this._offsetFromCenter + ' scrollLeft: ' + this._currentScrollTargetLocation, "winjs pivot", "log");
                             _ElementUtilities.setScrollPosition(this._viewportElement, { scrollLeft: this._currentScrollTargetLocation });
                         } else {
                             _Log.log && _Log.log('zoomTo index:' + this.selectedIndex + ' offset: ' + this._offsetFromCenter + ' scrollLeft: ' + this._currentScrollTargetLocation, "winjs pivot", "log");
@@ -962,6 +1130,7 @@ define('WinJS/Controls/Pivot',[
                                 that._showPivotItem(item.element, goPrevious);
                             }
                         }
+
                         var recenterPromise;
                         if (zooming) {
                             if (!that._stoppedAndRecenteredSignal) {
@@ -969,7 +1138,7 @@ define('WinJS/Controls/Pivot',[
                             }
                             recenterPromise = that._stoppedAndRecenteredSignal.promise;
                         } else {
-                            recenterPromise = Promise.wrap();
+                            recenterPromise = (that._stoppedAndRecenteredSignal && that._stoppedAndRecenteredSignal.promise) || Promise.wrap();
                         }
                         Promise.join([that._slideHeadersAnimation, that._showPivotItemAnimation, that._hidePivotItemAnimation]).then(function () {
                             recenterPromise.then(function () {
@@ -1035,7 +1204,7 @@ define('WinJS/Controls/Pivot',[
                                 this._stoppedAndRecenteredSignal = null;
                             }
                         });
-                    } else if (this._currentManipulationState === MSManipulationEventStates.MS_MANIPULATION_STATE_INERTIA) {
+                    } else if (this._navMode !== Pivot._NavigationModes.api && this._currentManipulationState === MSManipulationEventStates.MS_MANIPULATION_STATE_INERTIA) {
                         var destinationX = ev.inertiaDestinationX;
                         if (+destinationX === destinationX) {
                             _Log.log && _Log.log('MSManipulation: inertiaDestinationX: ' + destinationX);
@@ -1179,75 +1348,6 @@ define('WinJS/Controls/Pivot',[
                     return this._showPivotItemAnimation;
                 },
 
-                _slideHeaders: function pivot_slideHeaders(goPrevious, index, oldIndex) {
-                    if (index < 0 || this._skipHeaderSlide) {
-                        this._renderHeaders(goPrevious);
-                        return;
-                    }
-
-                    var targetHeader;
-
-                    if (goPrevious) {
-                        targetHeader = this._headersContainerElement.children[0];
-                    } else {
-                        if (index < oldIndex) {
-                            index += this._items.length;
-                        }
-                        targetHeader = this._headersContainerElement.children[1 + index - oldIndex];
-                    }
-
-                    if (!targetHeader) {
-                        this._renderHeaders(goPrevious);
-                        return;
-                    }
-
-                    // Update the selected one:
-                    _ElementUtilities.removeClass(this._headersContainerElement.children[1], Pivot._ClassName.pivotHeaderSelected);
-                    _ElementUtilities.addClass(targetHeader, Pivot._ClassName.pivotHeaderSelected);
-
-                    var rtl = this._rtl;
-
-                    function offset(element) {
-                        if (rtl) {
-                            return element.offsetParent.offsetWidth - element.offsetLeft - element.offsetWidth;
-                        } else {
-                            return element.offsetLeft;
-                        }
-                    }
-
-                    var endPosition = offset(this._headersContainerElement.children[1]) - offset(targetHeader);
-                    if (rtl) {
-                        endPosition *= -1;
-                    }
-
-                    var that = this;
-                    function headerCleanup() {
-                        if (that._disposed) {
-                            return;
-                        }
-
-                        that._renderHeaders(goPrevious);
-                        that._slideHeadersAnimation = null;
-                    }
-
-                    var headerAnimation;
-                    if (_TransitionAnimation.isAnimationEnabled()) {
-                        headerAnimation = _TransitionAnimation.executeTransition(
-                        this._headersContainerElement.querySelectorAll("." + Pivot._ClassName.pivotHeader),
-                        {
-                            property: _BaseUtils._browserStyleEquivalents["transform"].cssName,
-                            delay: 0,
-                            duration: Pivot._headerSlideAnimationDuration,
-                            timing: "ease-out",
-                            to: "translateX(" + endPosition + "px)"
-                        });
-                    } else {
-                        headerAnimation = Promise.wrap();
-                    }
-
-                    this._slideHeadersAnimation = headerAnimation.then(headerCleanup, headerCleanup);
-                },
-
 
                 // Input Handlers
                 _elementClickedHandler: function pivot_elementClickedHandler(ev) {
@@ -1299,34 +1399,57 @@ define('WinJS/Controls/Pivot',[
 
                     if (e.keyCode === Keys.leftArrow || e.keyCode === Keys.pageUp) {
                         this._rtl ? this._goNext() : this._goPrevious();
+                        e.preventDefault();
                     } else if (e.keyCode === Keys.rightArrow || e.keyCode === Keys.pageDown) {
                         this._rtl ? this._goPrevious() : this._goNext();
+                        e.preventDefault();
                     }
                 },
 
-                _headersPointerDownHandler: function pivot_headersPointerDownHandler(e) {
-                    // This prevents Chrome's history navigation swipe gestures.
-                    e.preventDefault();
-
-                    this._headersPointerDownPoint = { x: e.clientX, y: e.clientY, type: e.pointerType || "mouse" };
+                _elementPointerDownHandler: function pivot_elementPointerDownHandler(e) {
+                    if (supportsSnap) {
+                        return;
+                    }
+                    this._elementPointerDownPoint = { x: e.clientX, y: e.clientY, type: e.pointerType || "mouse", time: Date.now(), inHeaders: this._headersContainerElement.contains(e.target) };
                 },
 
-                _headersPointerUpHandler: function pivot_headersPointerUpHandler(e) {
-                    if (!this._headersPointerDownPoint || this.locked) {
-                        this._headersPointerDownPoint = null;
+                _elementPointerUpHandler: function pivot_elementPointerUpHandler(e) {
+                    if (!this._elementPointerDownPoint || this.locked) {
+                        this._elementPointerDownPoint = null;
                         return;
                     }
 
-                    var dx = e.clientX - this._headersPointerDownPoint.x;
-                    dx = this._rtl ? -dx : dx;
+                    var filterDistance = 32;
+                    var dyDxThresholdRatio = 0.4;
+
+                    var dy = Math.abs(e.clientY - this._elementPointerDownPoint.y);
+                    var dx = e.clientX - this._elementPointerDownPoint.x;
+                    var thresholdY = Math.abs(dx * dyDxThresholdRatio);
+
+                    var doSwipeDetection =
+                        // Check vertical threshold to prevent accidental swipe detection during vertical pan
+                        dy < thresholdY
+                        // Check horizontal threshold to prevent accidental swipe detection when tapping
+                        && Math.abs(dx) > filterDistance
+                        // Check that input type is Touch, however, if touch detection is not supported then we do detection for any input type
+                        && (!_ElementUtilities._supportsTouchDetection || (this._elementPointerDownPoint.type === e.pointerType && e.pointerType === PT_TOUCH))
+                        // Check if content swipe navigation is disabled, if it is we still run swipe detection if both the up and down points are in the headers container element
+                        && (!this.element.classList.contains(_Constants._ClassName.pivotDisableContentSwipeNavigation) || (this._elementPointerDownPoint.inHeaders && this._headersContainerElement.contains(e.target)));
+
                     this._navigationHandled = false;
-                    if ((!_ElementUtilities._supportsTouchDetection || (this._headersPointerDownPoint.type === e.pointerType && e.pointerType === PT_TOUCH))) {
-                        // Header swipe navigation detection
-                        // If touch detection is not supported then we will detect swipe gestures for any pointer type.
-                        if (dx < -Pivot._headerSwipeTriggerDistance) {
+                    if (doSwipeDetection) {
+                        // Swipe navigation detection
+
+                        // Simulate inertia by multiplying dx by a polynomial function of dt
+                        var dt = Date.now() - this._elementPointerDownPoint.time;
+                        dx *= Math.max(1, Math.pow(350 / dt, 2));
+                        dx = this._rtl ? -dx : dx;
+
+                        var vwDiv4 = this._viewportWidth / 4;
+                        if (dx < -vwDiv4) {
                             this._goNext();
                             this._navigationHandled = true;
-                        } else if (dx > Pivot._headerSwipeTriggerDistance) {
+                        } else if (dx > vwDiv4) {
                             this._goPrevious();
                             this._navigationHandled = true;
                         }
@@ -1342,7 +1465,7 @@ define('WinJS/Controls/Pivot',[
                             this._navigationHandled = true;
                         }
                     }
-                    this._headersPointerDownPoint = null;
+                    this._elementPointerDownPoint = null;
                 },
 
                 _hideNavButtons: function pivot_hideNavButtons(e) {
@@ -1397,7 +1520,8 @@ define('WinJS/Controls/Pivot',[
                         }
                     }
 
-                    this._renderHeaders();
+                    this._headersState.render();
+                    headersStates.common.refreshHeadersState(this, true);
                 },
 
                 _handleItemInserted: function pivot_handleItemInserted(ev) {
@@ -1430,7 +1554,8 @@ define('WinJS/Controls/Pivot',[
                         this.selectedIndex = 0;
                     }
 
-                    this._renderHeaders();
+                    this._headersState.render();
+                    headersStates.common.refreshHeadersState(this, true);
                 },
 
                 _handleItemMoved: function pivot_handleItemMoved(ev) {
@@ -1457,7 +1582,8 @@ define('WinJS/Controls/Pivot',[
                         this.selectedIndex = newIndex;
                     }
 
-                    this._renderHeaders();
+                    this._headersState.render();
+                    headersStates.common.refreshHeadersState(this, true);
                 },
 
                 _handleItemReload: function pivot_handleItemReload() {
@@ -1484,7 +1610,8 @@ define('WinJS/Controls/Pivot',[
                         this.selectedIndex = Math.min(this.items.length - 1, this._currentIndexOnScreen);
                     }
 
-                    this._renderHeaders();
+                    this._headersState.render();
+                    headersStates.common.refreshHeadersState(this, true);
                 },
 
 
@@ -1532,8 +1659,6 @@ define('WinJS/Controls/Pivot',[
 
                 _headerSlideAnimationDuration: 250,
 
-                _headerSwipeTriggerDistance: 50,
-
                 // Names of classes used by the Pivot.
                 _ClassName: _Constants._ClassName,
                 // Names of events fired by the Pivot.
@@ -1566,6 +1691,6 @@ define('WinJS/Controls/Pivot',[
             };
 
             return Pivot;
-        })
+        }),
     });
 });

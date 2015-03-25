@@ -1,0 +1,146 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+.Colors(@theme) {
+    .mixin(dark) {
+        .win-autosuggestbox-flyout-highlighttext {
+            color: rgb(70, 23, 180);
+        }
+
+        .win-autosuggestbox-suggestion-separator {
+            color: rgb(122, 122, 122);
+        }
+
+        .win-autosuggestbox-suggestion-separator hr {
+            border-color: rgb(122, 122, 122);
+        }
+
+        .win-autosuggestbox-suggestion-selected .win-autosuggestbox-flyout-highlighttext {
+            color: rgb(163,139,218);
+        }
+    }
+
+    .mixin(light) {
+        .win-autosuggestbox-flyout-highlighttext {
+            color: rgb(70, 23, 180);
+        }
+
+        .win-autosuggestbox-suggestion-separator {
+            color: rgb(122,122,122);
+        }
+
+        .win-autosuggestbox-suggestion-separator hr {
+            border-color: rgb(122,122,122);
+        }
+
+        .win-autosuggestbox-suggestion-selected .win-autosuggestbox-flyout-highlighttext {
+            color: rgb(163,139,218);
+        }
+    }
+
+    .colorDefinitions(@theme);
+    .mixin(@theme);
+
+    .win-autosuggestbox-flyout {
+        background-color: @chromeMediumMid;
+        color: @baseHigh;
+    }
+
+    .win-autosuggestbox-suggestion-selected {
+        background-color: @listSelectRest;
+    }
+
+    .win-autosuggestbox-suggestion-result:hover:active,
+    .win-autosuggestbox-suggestion-query:hover:active {
+        background-color: @listPress;
+    }
+
+    .win-autosuggestbox-suggestion-selected.win-autosuggestbox-suggestion-selected:hover:active {
+        background-color: @listSelectPress;
+    }
+}
+
+.ColorsHover(@theme) {
+    .colorDefinitions(@theme);
+    .mixin(@theme);
+
+    .win-autosuggestbox-suggestion-result:hover,
+    .win-autosuggestbox-suggestion-query:hover {
+        background-color: @listHover;
+    }
+
+    .win-autosuggestbox-suggestion-selected:hover {
+        background-color: @listSelectHover;
+    }
+}
+
+
+@media (-ms-high-contrast) {
+    .win-autosuggestbox {
+        border-color: ButtonText;
+        background-color: ButtonFace;
+        color: ButtonText;
+    }
+
+    .win-autosuggestbox-disabled {
+        background-color: ButtonFace;
+        border-color: GrayText;
+    }
+
+    .win-autosuggestbox-disabled input[disabled] {
+        background-color: ButtonFace;
+        color: GrayText;
+        border-color: GrayText;
+    }
+
+    .win-autosuggestbox-disabled div {
+        color: GrayText;
+        background-color: ButtonFace;
+    }
+
+    .win-autosuggestbox:-ms-input-placeholder,
+    .win-autosuggestbox::-webkit-input-placeholder,
+    .win-autosuggestbox::-moz-input-placeholder {
+        color: GrayText;
+    }
+
+    .win-autosuggestbox-flyout {
+        border-color: ButtonText;
+        background-color: ButtonFace;
+    }
+
+    .win-autosuggestbox-flyout-highlighttext {
+        color: ButtonText;
+    }
+
+    html.win-hoverable .win-autosuggestbox-suggestion-result:hover,
+    html.win-hoverable .win-autosuggestbox-query:hover {
+        background-color: Highlight;
+        color: HighlightText;
+    }
+
+    html.win-hoverable .win-autosuggestbox-suggestion-result:hover .win-autosuggestbox-flyout-highlighttext,
+    html.win-hoverable .win-autosuggestbox-suggestion-query:hover .win-autosuggestbox-flyout-highlighttext {
+        color: HighlightText;
+    }
+
+    .win-autosuggestbox-suggestion-query,
+    .win-autosuggestbox-suggestion-result {
+        color: ButtonText;
+    }
+
+    .win-autosuggestbox-suggestion-selected {
+        background-color: Highlight;
+        color: HighlightText;
+    }
+
+    .win-autosuggestbox-suggestion-separator {
+        color: ButtonText;
+    }
+
+    .win-autosuggestbox-suggestion-separator hr {
+        border-color: ButtonText;
+    }
+
+    .win-autosuggestbox-suggestion-selected .win-autosuggestbox-flyout-highlighttext {
+        color: HighlightText;
+    }
+}

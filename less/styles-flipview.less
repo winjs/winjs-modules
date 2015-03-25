@@ -1,0 +1,53 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
+@import "base.less";
+@import "mixins.less";
+
+.win-flipview {
+    overflow: hidden;
+    height: 400px;
+
+    .win-surface {
+        -ms-scroll-chaining: none;
+    }
+    .win-navleft {
+        left: 0%;
+        top: 50%;
+        margin-top: -19px;
+    }
+    .win-navright {
+        left: 100%;
+        top: 50%;
+        margin-left: -20px;
+        margin-top: -19px;
+    }
+    .win-navtop {
+        left: 50%;
+        top: 0%;
+        margin-left: -35px;
+    }
+    .win-navbottom {
+        left: 50%;
+        top: 100%;
+        margin-left: -35px;
+        margin-top: -36px;
+    }
+    .win-navbutton {
+        border: none;
+        width: 20px;
+        height: 36px;
+        z-index: 1;
+        position: absolute;
+        font-family: "Segoe MDL2 Assets", "Symbols";
+        font-size: 16px;
+        padding: 0;
+        min-width: 0;
+    }
+    .win-item, .win-item > .win-template {
+        height: 100%;
+        width: 100%;
+        #flex > .display-flex();
+        #flex > .align-items(center);
+        #flex > .justify-content(center);
+    }
+}

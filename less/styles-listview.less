@@ -1,0 +1,679 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
+@import "base.less";
+@import "mixins.less";
+
+.win-listview {
+    overflow: hidden;
+    height: 400px;
+}
+.win-listview .win-surface {
+    overflow: visible;
+}
+.win-listview > .win-viewport.win-horizontal .win-surface {
+    height: 100%;
+}
+.win-listview > .win-viewport.win-vertical .win-surface {
+    width: 100%;
+}
+.win-listview > .win-viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+}
+.win-listview > .win-viewport.win-horizontal {
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+.win-listview > .win-viewport.win-vertical {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+.win-listview .win-itemscontainer {
+    overflow:hidden;
+}
+.win-listview .win-itemscontainer-padder {
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+}
+.win-listview > .win-horizontal .win-container {
+    margin: 10px 5px 0px 5px;
+}
+.win-listview > .win-vertical .win-container {
+    margin: 10px 24px 0px 7px;
+}
+.win-listview.win-rtl > .win-vertical .win-container {
+    margin: 10px 7px 0px 24px;
+}
+.win-listview .win-container, .win-listview .win-itembox,
+.win-itemcontainer.win-container, .win-itemcontainer .win-itembox {
+    cursor: default;
+    z-index: 0;
+}
+.win-listview .win-container  {
+    touch-action:pan-x pan-y pinch-zoom;
+}
+.win-semanticzoom  .win-listview > .win-viewport * {
+    touch-action: auto;
+}
+.win-semanticzoom .win-listview > .win-viewport.win-zooming-x {
+    overflow-x: visible;
+}
+.win-semanticzoom .win-listview > .win-viewport.win-zooming-y {
+    overflow-y: visible;
+}
+.win-listview .win-itembox,
+.win-itemcontainer .win-itembox {
+    width:100%;
+    height:100%;
+}
+.win-listview .win-item,
+.win-itemcontainer .win-item {
+    // Used to place above .win-selectionbackground in ListView
+    z-index: 1;
+}
+.win-listview .win-item,
+.win-itemcontainer .win-item {
+    overflow: hidden;
+    position: relative;
+}
+.win-listview > .win-vertical .win-item
+{
+    // Allow flex box to fill win-item in list layout
+    width: 100%;
+}
+.win-listview .win-item:focus,
+.win-itemcontainer .win-item:focus {
+    outline-style: none;
+}
+.win-listview .win-focusedoutline,
+.win-itemcontainer .win-focusedoutline {
+    width: ~"calc(100% - 4px)";
+    height: ~"calc(100% - 4px)";
+    left: 2px;
+    top: 2px;
+    position: absolute;
+    z-index: 5;
+    pointer-events: none;
+}
+.win-container.win-selected .win-selectionborder {
+    border-width: 2px;
+    border-style: solid;
+}
+html.win-hoverable .win-container.win-selected:hover .win-selectionborder {
+    border-width: 2px;
+    border-style: solid;
+}
+html.win-hoverable .win-listview .win-itembox:hover::before,
+html.win-hoverable .win-itemcontainer .win-itembox:hover::before  {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    content: "";
+    width: ~"calc(100% - 4px)";
+    height: ~"calc(100% - 4px)";
+    pointer-events: none;
+    border-style: solid;
+    border-width: 2px;
+    z-index: 3;
+}
+html.win-hoverable .win-listview.win-selectionstylefilled .win-itembox:hover::before,
+html.win-hoverable .win-itemcontainer.win-selectionstylefilled .win-itembox:hover::before,
+html.win-hoverable .win-listview  .win-itembox.win-selected:hover::before,
+html.win-hoverable .win-itemcontainer.win-itembox.win-selected:hover::before,
+html.win-hoverable .win-itemcontainer.win-itembox.win-selected:hover::before
+{
+    display: none;
+}
+.win-listview .win-groupheader {
+    padding: 10px 10px 10px 2px;
+    overflow: hidden;
+    outline-width: 0.01px;
+    outline-style: none;
+    // Causes the focus outline to tightly wrap the header content
+    float: left;
+    .win-type-subheader();
+}
+.win-listview .win-groupheadercontainer {
+    z-index: 1;
+    touch-action:pan-x pan-y pinch-zoom;
+    overflow: hidden;
+}
+.win-listview .win-horizontal .win-headercontainer,
+.win-listview .win-horizontal .win-footercontainer {
+    height: 100%;
+    display: inline-block;
+    overflow: hidden;
+    white-space: normal;
+}
+.win-listview .win-vertical .win-headercontainer,
+.win-listview .win-vertical .win-footercontainer {
+    width: 100%;
+    display: block;
+    overflow: hidden;
+    white-space: normal;
+}
+.win-listview .win-groupheader.win-focused {
+    outline-style: dotted;
+}
+.win-listview.win-rtl .win-groupheader {
+    padding-left: 10px;
+    padding-right: 2px;
+    float: right;
+}
+.win-listview.win-groups .win-horizontal .win-groupleader {
+    margin-left: 70px;
+}
+.win-listview.win-groups.win-rtl .win-horizontal .win-groupleader {
+    margin-left: 0;
+    margin-right: 70px;
+}
+.win-listview.win-groups .win-vertical .win-listlayout .win-groupleader,
+.win-listview.win-groups .win-vertical .win-gridlayout .win-groupleader {
+    margin-top: 70px;
+}
+.win-listview.win-groups > .win-vertical .win-surface.win-listlayout,
+.win-listview.win-groups > .win-vertical .win-surface.win-gridlayout {
+    margin-top: -65px;
+}
+.win-listview.win-groups > .win-horizontal .win-surface {
+    margin-left: -70px;
+}
+.win-listview.win-groups.win-rtl > .win-horizontal .win-surface {
+    margin-left: 0;
+    margin-right: -70px;
+}
+.win-listview .win-surface {
+    // WebKit: Prevent margin collapsing between first group header and surface
+    -webkit-margin-collapse: separate;
+    white-space: normal;
+}
+.win-surface ._win-proxy {
+    // IE/Firefox: Position relative + overflow hidden are applied to this element
+    // to stop margin collapsing of a margin-top on a header + the margin-top on the
+    // surface in list layout
+    position: relative;
+    overflow: hidden;
+    width: 0;
+    height: 0;
+    touch-action: none;
+}
+.win-selectionborder {
+    position: absolute;
+    opacity: inherit;
+    z-index: 2;
+    pointer-events: none;
+}
+.win-container.win-selected .win-selectionborder {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+.win-selectionbackground {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    // Used to place behind .win-item in the ListView/ItemContainer
+    z-index: 0;
+}
+.win-selectioncheckmarkbackground {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 14px;
+    height: 11px;
+    margin: 0;
+    padding: 0;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 4px;
+    border-bottom-width: 3px;
+    border-style: solid;
+    z-index: 3;
+    display: none;
+}
+.win-listview.win-rtl .win-selectioncheckmarkbackground,
+.win-itemcontainer.win-rtl .win-selectioncheckmarkbackground {
+    left: 2px;
+    right: auto;
+}
+.win-selectionmode.win-itemcontainer .win-selectioncheckmarkbackground,
+.win-selectionmode.win-itemcontainer.win-selectionmode .win-selectioncheckmark,
+.win-selectionmode .win-itemcontainer .win-selectioncheckmarkbackground,
+.win-selectionmode .win-itemcontainer.win-selectionmode .win-selectioncheckmark,
+.win-listview .win-selectionmode .win-selectioncheckmarkbackground,
+.win-listview .win-selectionmode .win-selectioncheckmark {
+    display: block;
+}
+.win-selectioncheckmark {
+    position: absolute;
+    margin: 0;
+    padding: 2px;
+    right: 1px;
+    top: 1px;
+    font-family: "Segoe MDL2 Assets", "Symbols";
+    font-size: 14px;
+    z-index: 4;
+    line-height: 1;
+    display: none;
+}
+.win-rtl .win-selectioncheckmark {
+    right: auto;
+    left: 0px;
+}
+.win-selectionstylefilled.win-container,
+.win-selectionstylefilled .win-container {
+    overflow: hidden;
+}
+.win-selectionmode .win-itemcontainer.win-container .win-itembox::after,
+.win-selectionmode.win-itemcontainer.win-container .win-itembox::after,
+.win-listview .win-surface.win-selectionmode .win-itembox::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    right: 2px;
+    top: 2px;
+    z-index: 3;
+}
+.win-rtl .win-selectionmode .win-itemcontainer.win-container .win-itembox::after,
+.win-itemcontainer.win-rtl.win-selectionmode.win-container .win-itembox::after,
+.win-listview.win-rtl .win-surface.win-selectionmode .win-itembox::after {
+    right: auto;
+    left: 2px;
+}
+.win-listview.win-selectionstylefilled .win-surface.win-selectionmode .win-item {
+    transition: transform 250ms cubic-bezier(0.17, 0.79, 0.215, 1.0025);
+    -webkit-transition: -webkit-transform 250ms cubic-bezier(0.17, 0.79, 0.215, 1.0025);
+    transform: translate(40px, 0px);
+    -webkit-transform: translate(40px, 0px);
+}
+.win-listview.win-rtl.win-selectionstylefilled .win-surface.win-selectionmode .win-item {
+    transition: transform 250ms cubic-bezier(0.17, 0.79, 0.215, 1.0025);
+    -webkit-transition: -webkit-transform 250ms cubic-bezier(0.17, 0.79, 0.215, 1.0025);
+    transform: translate(-40px, 0px);
+    -webkit-transform: translate(-40px, 0px);
+}
+.win-listview.win-selectionstylefilled .win-surface.win-hidingselectionmode .win-item {
+    transition: transform 250ms cubic-bezier(0.17, 0.79, 0.215, 1.0025);
+    -webkit-transition: -webkit-transform 250ms cubic-bezier(0.17, 0.79, 0.215, 1.0025);
+    transform: none;
+    -webkit-transform: none;
+}
+.win-listview.win-rtl.win-selectionstylefilled .win-surface.win-hideselectionmode .win-item {
+    transition: transform 250ms cubic-bezier(0.17, 0.79, 0.215, 1.0025);
+    -webkit-transition: -webkit-transform 250ms cubic-bezier(0.17, 0.79, 0.215, 1.0025);
+    transform: none;
+    -webkit-transform: none;
+}
+.win-listview.win-selectionstylefilled .win-surface.win-selectionmode .win-itembox::after {
+    left: 12px;
+    right: auto;
+    top: 50%;
+    margin-top: -9px;
+    display: block;
+    border: 2px solid;
+    width: 16px;
+    height: 16px;
+}
+.win-listview.win-selectionstylefilled.win-rtl .win-surface.win-selectionmode .win-itembox::after {
+    left: auto;
+    right: 12px;
+}
+.win-listview.win-selectionstylefilled .win-surface.win-selectionmode .win-selectioncheckmarkbackground {
+    left: 12px;
+    top: 50%;
+    margin-top: -9px;
+    display: block;
+    border: 2px solid;
+    width: 16px;
+    height: 16px;
+}
+.win-listview.win-selectionstylefilled.win-rtl .win-surface.win-selectionmode  .win-selectioncheckmarkbackground {
+    left: auto;
+    right: 12px;
+}
+.win-listview.win-selectionstylefilled .win-surface.win-selectionmode .win-selectioncheckmark {
+    left: 13px;
+    top: 50%;
+    margin-top: -8px;
+    display: block;
+    width: 14px;
+    height: 14px;
+}
+.win-listview.win-selectionstylefilled.win-rtl .win-surface.win-selectionmode .win-selectioncheckmark {
+    left: 0;
+    right: 10px;
+}
+.win-selectionmode .win-itemcontainer.win-selectionstylefilled.win-container .win-itembox.win-selected::after,
+.win-itemcontainer.win-selectionmode.win-selectionstylefilled.win-container .win-itembox.win-selected::after,
+.win-listview.win-selectionstylefilled .win-surface.win-selectionmode .win-itembox.win-nonselectable::after,
+.win-listview .win-surface.win-selectionmode .win-itembox.win-selected::after {
+    display: none;
+}
+.win-listview .win-progress {
+    left: 50%;
+    top: 50%;
+    width: 60px;
+    height: 60px;
+    margin-left: -30px;
+    margin-top: -30px;
+    z-index: 1;
+    position: absolute;
+}
+.win-listview .win-progress::-ms-fill {
+    animation-name: -ms-ring;
+}
+
+.win-listview .win-itemsblock {
+    overflow: hidden;
+}
+//
+// Layouts when there is no CSS grid available
+//
+
+// Use flexbox to lay out header and item containers in all grid layouts, all horizontal list layouts, and grouped vertical lists with headers to the side.
+// Ungrouped vertical lists and vertical lists with headers above use flow layout.
+.win-listview .win-surface.win-nocssgrid.win-gridlayout,
+.win-listview .win-horizontal .win-nocssgrid.win-listlayout,
+.win-listview .win-vertical .win-nocssgrid.win-listlayout.win-headerpositionleft {
+    #flex > .display-inline-flex();
+    vertical-align: top;
+}
+.win-listview .win-horizontal .win-surface.win-nocssgrid {
+    #flex > .flex-flow(column; wrap);
+    #flex > .align-content(flex-start);
+}
+.win-listview .win-vertical .win-surface.win-nocssgrid {
+    #flex > .flex-flow(row; wrap);
+    #flex > .align-content(flex-start);
+}
+
+//
+// All uniform layouts using structural nodes (Grid/List), once we've detected any bugs in the enviornment for nested flexboxes.
+// ListView will put all containers in one itemsblock, so the padder is never used.
+//
+.win-listview .win-vertical,
+.win-listview .win-horizontal {
+    .win-structuralnodes.win-single-itemsblock.win-listlayout .win-itemscontainer.win-laidout,
+    .win-structuralnodes.win-single-itemsblock.win-gridlayout .win-uniformgridlayout.win-itemscontainer.win-laidout {
+        // Itemsblocks will already be styled as flexboxes elsewhere in the file.
+        // Display the itemscontainer "block" since it will only contain one giant itemsblock.
+        display: block;
+
+        // Padder must not be display:none so that it prevents the win-container's top margin from
+        // collapsing thru the win-itemscontainer during animations.
+        .win-itemscontainer-padder {
+            height: 0;
+            width: 0;
+        }
+    }
+}
+
+
+//
+// ListLayout
+//
+.win-listview.win-groups .win-vertical .win-listlayout.win-headerpositionleft .win-itemscontainer,
+.win-listview.win-groups .win-vertical .win-listlayout.win-headerpositionleft .win-groupheadercontainer,
+.win-listview.win-groups .win-horizontal .win-listlayout .win-itemscontainer,
+.win-listview.win-groups .win-horizontal .win-listlayout .win-groupheadercontainer {
+    display: none;
+}
+.win-listview.win-groups .win-vertical .win-listlayout.win-headerpositionleft .win-itemscontainer.win-laidout,
+.win-listview.win-groups .win-vertical .win-listlayout.win-headerpositionleft .win-groupheadercontainer.win-laidout,
+.win-listview.win-groups .win-horizontal .win-listlayout .win-groupheadercontainer.win-laidout {
+    display: block;
+}
+.win-listview .win-listlayout .win-itemscontainer {
+    overflow: visible;
+}
+.win-listview .win-listlayout .win-itemsblock {
+    // Avoid clipping of the focus and hover visuals
+    padding-bottom: 4px;
+    margin-bottom: -4px;
+}
+//
+// ListLayout - Vertical
+//
+// Vertical grouped list layout needs to remove float from group headers when headers are above so that static positioning gets applied properly
+.win-listview > .win-vertical .win-listlayout.win-headerpositiontop .win-groupheader {
+    float: none;
+}
+.win-listview > .win-vertical .win-surface.win-listlayout {
+    margin-bottom: 5px;
+}
+
+.win-listview .win-vertical .win-listlayout.win-headerpositionleft.win-surface {
+    display: -ms-inline-grid;
+    -ms-grid-columns: auto 1fr;
+    -ms-grid-rows: auto;
+}
+.win-listview .win-vertical .win-listlayout.win-headerpositionleft .win-groupheadercontainer {
+    -ms-grid-column: 1;
+}
+.win-listview .win-vertical .win-listlayout.win-headerpositionleft .win-itemscontainer {
+    -ms-grid-column: 2;
+}
+//
+// ListLayout - Horizontal
+//
+.win-listview > .win-horizontal .win-surface.win-listlayout {
+    display: -ms-inline-grid;
+    -ms-grid-columns: auto;
+    -ms-grid-rows: auto;
+    // Use vertical-align:top when using display:-ms-inline-grid to avoid extra spacing around itself
+    vertical-align:top;
+}
+.win-listview .win-horizontal .win-listlayout .win-itemsblock {
+    height: 100%;
+}
+.win-listview .win-horizontal .win-listlayout .win-itemscontainer {
+    // leave room for the scrollbar
+    margin-bottom: 24px;
+}
+.win-listview .win-horizontal .win-listlayout .win-container {
+    height: ~"calc(100% - 10px)";
+}
+// Headers above
+.win-listview > .win-horizontal .win-surface.win-listlayout.win-headerpositiontop {
+    -ms-grid-rows: auto 1fr;
+}
+.win-listview .win-horizontal .win-listlayout.win-headerpositiontop .win-groupheadercontainer {
+    -ms-grid-row: 1;
+}
+.win-listview .win-horizontal .win-listlayout.win-headerpositiontop .win-itemscontainer {
+    -ms-grid-row: 2;
+}
+
+//
+// GridLayout
+//
+.win-listview .win-gridlayout.win-surface {
+    // Use a grid even in non-grouped layouts so that there is consistent margin
+    // collapsing behavior between the surface and itemsContainer in all grid layouts
+    display: -ms-inline-grid;
+    // Use vertical-align:top when using display:-ms-inline-grid to avoid extra spacing around itself
+    vertical-align:top;
+}
+.win-listview .win-gridlayout .win-container {
+    margin: 5px;
+}
+// Headers
+.win-listview .win-vertical .win-gridlayout.win-headerpositionleft .win-groupheadercontainer,
+.win-listview .win-vertical .win-gridlayout.win-headerpositiontop .win-groupheadercontainer {
+    -ms-grid-column: 1;
+}
+.win-listview.win-groups .win-gridlayout .win-itemscontainer,
+.win-listview.win-groups .win-gridlayout .win-groupheadercontainer {
+    display: none;
+}
+.win-listview.win-groups .win-gridlayout .win-groupheadercontainer.win-laidout {
+    display: block;
+}
+// Horizontal - Headers above
+.win-listview .win-horizontal .win-gridlayout.win-headerpositiontop.win-surface {
+    -ms-grid-columns: auto;
+    -ms-grid-rows: auto 1fr;
+}
+.win-listview .win-horizontal .win-gridlayout.win-headerpositiontop .win-groupheadercontainer {
+    -ms-grid-row: 1;
+}
+.win-listview .win-horizontal .win-gridlayout.win-headerpositiontop .win-itemscontainer {
+    -ms-grid-row: 2;
+}
+// Horizontal - Headers on the left
+.win-listview .win-horizontal .win-gridlayout.win-headerpositionleft.win-surface {
+    -ms-grid-columns: auto;
+    -ms-grid-rows: auto;
+}
+.win-listview .win-horizontal .win-gridlayout.win-headerpositionleft .win-groupheadercontainer {
+    -ms-grid-row: 1;
+}
+.win-listview .win-horizontal .win-gridlayout.win-headerpositionleft .win-itemscontainer {
+    -ms-grid-row: 1;
+}
+// Vertical - headers above
+.win-listview .win-vertical .win-gridlayout.win-headerpositiontop.win-surface {
+    -ms-grid-columns: auto;
+    -ms-grid-rows: auto;
+}
+.win-listview .win-vertical .win-gridlayout.win-headerpositiontop .win-itemscontainer {
+    -ms-grid-column: 1;
+}
+// Vertical - headers on the left
+.win-listview .win-vertical .win-gridlayout.win-headerpositionleft.win-surface {
+    -ms-grid-columns: auto 1fr;
+    -ms-grid-rows: auto;
+}
+.win-listview .win-vertical .win-gridlayout.win-headerpositionleft .win-itemscontainer {
+    -ms-grid-column: 2;
+}
+// Uniform and cell spanning groups
+.win-listview .win-gridlayout.win-structuralnodes .win-uniformgridlayout.win-itemscontainer.win-laidout {
+    #flex > .display-flex();
+    #flex > .flex-direction(row);
+}
+.win-listview .win-horizontal .win-listlayout .win-itemscontainer,
+.win-listview.win-groups .win-horizontal .win-listlayout .win-itemscontainer.win-laidout,
+.win-listview .win-horizontal .win-listlayout .win-itemsblock,
+.win-listview .win-horizontal .win-gridlayout .win-uniformgridlayout.win-itemscontainer.win-laidout,
+.win-listview .win-horizontal .win-gridlayout .win-uniformgridlayout .win-itemsblock {
+    #flex > .display-flex();
+    #flex > .flex-flow(column; wrap);
+    #flex > .align-content(flex-start);
+}
+.win-listview .win-horizontal .win-itemscontainer-padder {
+    height: 100%;
+}
+.win-listview .win-horizontal .win-gridlayout .win-uniformgridlayout .win-itemsblock {
+    height: 100%;
+}
+.win-listview .win-horizontal .win-gridlayout .win-cellspanninggridlayout.win-itemscontainer.win-laidout {
+    display: -ms-grid;
+}
+// Vertical - uniform group
+.win-listview .win-vertical .win-gridlayout.win-structuralnodes .win-uniformgridlayout.win-itemscontainer.win-laidout {
+    #flex > .display-flex();
+    #flex > .flex-direction(column);
+}
+.win-listview .win-vertical .win-gridlayout .win-uniformgridlayout.win-itemscontainer.win-laidout,
+.win-listview .win-vertical .win-gridlayout .win-uniformgridlayout .win-itemsblock {
+    #flex > .display-flex();
+    #flex > .flex-flow(row; wrap);
+    #flex > .align-content(flex-start);
+}
+.win-listview .win-vertical .win-gridlayout .win-uniformgridlayout .win-itemsblock {
+    width: 100%;
+}
+// Cell spanning
+.win-listview .win-cellspanninggridlayout .win-container.win-laidout {
+    display: block;
+}
+.win-listview .win-cellspanninggridlayout .win-container {
+    display: none;
+}
+.win-listview .win-itembox {
+    position: relative;
+}
+.win-listview.win-dragover .win-itembox {
+    transform: scale(0.86);
+    -webkit-transform: scale(0.86);
+}
+.win-listview .win-itembox.win-dragsource,
+.win-itemcontainer .win-itembox.win-dragsource {
+    opacity: 0.5;
+    transition: opacity cubic-bezier(0.1, 0.9, 0.2, 1) 167ms, transform cubic-bezier(0.1, 0.9, 0.2, 1) 220ms;
+    -webkit-transition: opacity cubic-bezier(0.1, 0.9, 0.2, 1) 167ms, transform cubic-bezier(0.1, 0.9, 0.2, 1) 220ms;
+}
+.win-listview.win-dragover .win-itembox.win-dragsource {
+    opacity: 0;
+    transition: none;
+    -webkit-transition: none;
+}
+html.win-hoverable .win-listview.win-dragover .win-container:hover {
+    outline: none;
+}
+
+.win-listview .win-itembox {
+    transition: transform cubic-bezier(0.1, 0.9, 0.2, 1) 220ms;
+    -webkit-transition: -webkit-transform cubic-bezier(0.1, 0.9, 0.2, 1) 220ms;
+}
+
+//
+// ListLayout - Vertical
+//
+
+// Headers on the left
+.win-listview.win-groups > .win-vertical .win-surface.win-listlayout.win-headerpositionleft {
+    margin-left: 70px;
+}
+.win-listview.win-groups.win-rtl > .win-vertical .win-surface.win-listlayout.win-headerpositionleft {
+    margin-left: 0px;
+    margin-right: 70px;
+}
+
+//
+// ListLayout - Horizontal
+//
+.win-listview > .win-horizontal .win-surface.win-listlayout {
+    margin-left: 70px;
+}
+.win-listview.win-rtl > .win-horizontal .win-surface.win-listlayout {
+    margin-left: 0px;
+    margin-right: 70px;
+}
+
+//
+// GridLayout -  Vertical
+//
+.win-listview .win-vertical .win-gridlayout.win-surface {
+    margin-left: 20px;
+}
+.win-listview.win-rtl .win-vertical .win-gridlayout.win-surface {
+    margin-left: 0px;
+    margin-right: 20px;
+}
+
+//
+// Item container
+//
+.win-itemcontainer .win-itembox,
+.win-itemcontainer.win-container {
+    position:relative;
+}
+.win-itemcontainer {
+    touch-action:pan-x pan-y pinch-zoom;
+}

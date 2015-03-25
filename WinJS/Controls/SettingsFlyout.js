@@ -1,10 +1,6 @@
-
-define('require-style!less/desktop/controls',[],function(){});
-
-define('require-style!less/phone/controls',[],function(){});
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
 /// <dictionary>appbar,Flyout,Flyouts,registeredforsettings,SettingsFlyout,Statics,Syriac</dictionary>
-define('WinJS/Controls/SettingsFlyout',[
+define([
     '../Core/_Global',
     '../Core/_WinRT',
     '../Core/_Base',
@@ -20,9 +16,7 @@ define('WinJS/Controls/SettingsFlyout',[
     '../Utilities/_ElementListUtilities',
     '../Utilities/_Hoverable',
     './AppBar/_Constants',
-    './Flyout/_Overlay',
-    'require-style!less/desktop/controls',
-    'require-style!less/phone/controls'
+    './Flyout/_Overlay'
     ], function settingsFlyoutInit(_Global,_WinRT, _Base, _BaseUtils, _ErrorFromName, _Resources, _WriteProfilerMark, Animations, Pages, Promise, _Dispose, _ElementUtilities, _ElementListUtilities, _Hoverable, _Constants, _Overlay) {
     "use strict";
 
@@ -48,9 +42,8 @@ define('WinJS/Controls/SettingsFlyout',[
         /// <event name="beforehide" locid="WinJS.UI.SettingsFlyout_e:beforehide">Raised just before hiding a SettingsFlyout.</event>
         /// <event name="afterhide" locid="WinJS.UI.SettingsFlyout_e:afterhide">Raised immediately after a SettingsFlyout is fully hidden.</event>
         /// <part name="settings" class="win-settingsflyout" locid="WinJS.UI.SettingsFlyout_part:settings">The SettingsFlyout control itself.</part>
-        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
-        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
         SettingsFlyout: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -147,8 +140,12 @@ define('WinJS/Controls/SettingsFlyout',[
                     this._element.setAttribute("aria-label", strings.ariaLabel);
                 }
 
-                // Make sure _Overlay event handlers are hooked up
-                this._addOverlayEventHandlers(true);
+                // Need to hide ourselves if we lose focus
+                var that = this;
+                _ElementUtilities._addEventListener(this._element, "focusout", function (e) { _Overlay._Overlay._hideIfLostFocus(that, e); }, false);
+
+                // Make sure additional _Overlay event handlers are hooked up.
+                this._handleOverlayEventsForFlyoutOrSettingsFlyout();
 
                 // Make sure animations are hooked up
                 this._currentAnimateIn = this._animateSlideIn;
@@ -631,4 +628,3 @@ define('WinJS/Controls/SettingsFlyout',[
 
 
 });
-

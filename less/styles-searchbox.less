@@ -1,0 +1,43 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
+@import "base.less";
+@import "mixins.less";
+
+/*
+Hide clear button in search box control.
+*/
+.win-searchbox input[type=search]::-ms-clear {
+    display: none;
+}
+
+.win-searchbox input[type=search]::-webkit-search-cancel-button {
+    display: none;
+}
+
+
+.win-searchbox-button {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 32px;
+    font-family: "Segoe MDL2 Assets", "Symbols";
+    font-size: 15px;
+    border-style: none;
+    height: 100%;
+    text-align:center;
+}
+
+.win-searchbox-button {
+    .RTL({
+        right: auto;
+        left: 0;
+    });
+}
+
+.win-searchbox-button.win-searchbox-button:before {
+    content: "\E094";
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    line-height: 100%;
+}

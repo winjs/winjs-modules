@@ -1,0 +1,64 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+.Colors(@theme) {
+    .colorDefinitions(@theme);
+
+    .win-searchbox-button {
+        color: @baseMediumMid;
+    }
+
+    .win-searchbox-button-input-focus {
+        color: @blackMediumMid;
+    }
+
+    .win-searchbox-button.win-searchbox-button:not(.win-searchbox-button-disabled):hover {
+        color: @accentColor;
+    }
+
+    .win-searchbox-button.win-searchbox-button:not(.win-searchbox-button-disabled):hover:active {
+        background-color: @accentColor;
+        color: @baseWhite;
+    }
+}
+
+.ColorsHover(@theme) {
+    .colorDefinitions(@theme);
+
+    .win-searchbox-button:not(.win-searchbox-button-disabled):hover {
+        color: @accentColor;
+    }
+
+    .win-searchbox-button:not(.win-searchbox-button-disabled):hover:active {
+        background-color: @accentColor;
+        color: @baseWhite;
+    }
+}
+
+
+@media (-ms-high-contrast) {
+    .win-searchbox-button {
+        background-color: ButtonFace;
+        color: ButtonText;
+    }
+
+    html.win-hoverable .win-searchbox-button[disabled=false]:hover {
+        border-color: ButtonText;
+        background-color: HighLight;
+        color: HighLightText;
+    }
+
+    .win-searchbox-button-input-focus {
+        background-color: ButtonText;
+        color: ButtonFace;
+    }
+
+    html.win-hoverable .win-searchbox-button-input-focus:hover {
+        border-color: ButtonText;
+        background-color: HighLight;
+        color: HighLightText;
+    }
+
+    .win-searchbox-button:active {
+        background-color: ButtonText;
+        color: ButtonFace;
+    }
+}

@@ -1,0 +1,31 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+.Colors(@theme) {
+    .colorDefinitions(@theme);
+
+    .win-pivot .win-pivot-navbutton {
+        background-color: @baseMediumMid;
+        color: @altMediumHigh;
+    }
+
+    .win-pivot .win-pivot-navbutton.win-pivot-navbutton:hover:active {
+        color: @baseMediumHigh;
+    }
+
+    .win-pivot button.win-pivot-header,
+    .win-pivot button.win-pivot-header:focus,
+    .win-pivot button.win-pivot-header.win-pivot-header:hover:active {
+        color: @baseHigh;
+    }
+}
+
+.ColorsHover(@theme) {
+    .colorDefinitions(@theme);
+
+    .win-pivot .win-pivot-navbutton:hover {
+        color: @baseMid;
+    }
+
+    .win-pivot button.win-pivot-header:hover {
+        color: @baseHigh;
+    }
+}

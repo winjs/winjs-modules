@@ -1,10 +1,6 @@
-
-define('require-style!less/desktop/controls',[],function(){});
-
-define('require-style!less/phone/controls',[],function(){});
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
 // Semantic Zoom control
-define('WinJS/Controls/SemanticZoom',[
+define([
     '../Core/_Global',
     '../Core/_Base',
     '../Core/_BaseUtils',
@@ -21,8 +17,8 @@ define('WinJS/Controls/SemanticZoom',[
     '../Utilities/_ElementUtilities',
     '../Utilities/_ElementListUtilities',
     '../Utilities/_Hoverable',
-    'require-style!less/desktop/controls',
-    'require-style!less/phone/controls'
+    'require-style!less/styles-semanticzoom',
+    'require-style!less/colors-semanticzoom'
     ], function semanticZoomInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, ControlProcessor, Promise, _Control, _Dispose, _ElementUtilities, _ElementListUtilities, _Hoverable) {
     "use strict";
 
@@ -37,9 +33,8 @@ define('WinJS/Controls/SemanticZoom',[
         /// <icon src="ui_winjs.ui.semanticzoom.16x16.png" width="16" height="16" />
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.SemanticZoom"><div class="zoomedInContainer" data-win-control="WinJS.UI.ListView"></div><div class="zoomedOutContainer" data-win-control="WinJS.UI.ListView"></div></div>]]></htmlSnippet>
         /// <part name="semanticZoom" class="win-semanticzoom" locid="WinJS.UI.SemanticZoom_part:semanticZoom">The entire SemanticZoom control.</part>
-        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
-        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
         SemanticZoom: _Base.Namespace._lazy(function () {
             var browserStyleEquivalents = _BaseUtils._browserStyleEquivalents;
 
@@ -226,6 +221,16 @@ define('WinJS/Controls/SemanticZoom',[
 
                 // Register event handlers
 
+                var initiallyParented = _Global.document.body.contains(this._element);
+                _ElementUtilities._addInsertedNotifier(this._element);
+                this._element.addEventListener("WinJSNodeInserted", function (event) {
+                    // WinJSNodeInserted fires even if the element is already in the DOM
+                    if (initiallyParented) {
+                        initiallyParented = false;
+                        return;
+                    }
+                    onSemanticZoomResize(event);
+                }, false);
                 this._element.addEventListener("mselementresize", onSemanticZoomResize);
                 _ElementUtilities._resizeNotifier.subscribe(this._element, onSemanticZoomResize);
                 new _ElementUtilities._MutationObserver(onSemanticZoomPropertyChanged).observe(this._element, { attributes: true, attributeFilter: ["aria-checked"] });
@@ -1413,7 +1418,6 @@ define('WinJS/Controls/SemanticZoom',[
                 _setVisibility: function () {
                     function setVisibility(element, isVisible) {
                         element.style.visibility = (isVisible ? "visible" : "hidden");
-                        element.style.zIndex = (isVisible ? "1" : "0");
                     }
                     setVisibility(this._opticalViewportIn, !this._zoomedOut || _BaseUtils.isPhone);
                     setVisibility(this._opticalViewportOut, this._zoomedOut);
@@ -1537,4 +1541,3 @@ define('WinJS/Controls/SemanticZoom',[
     });
 
 });
-

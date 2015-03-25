@@ -1,9 +1,5 @@
-
-define('require-style!less/desktop/controls',[],function(){});
-
-define('require-style!less/phone/controls',[],function(){});
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-define('WinJS/Controls/Tooltip',[
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+define([
     'exports',
     '../Core/_Global',
     '../Core/_WinRT',
@@ -16,8 +12,8 @@ define('WinJS/Controls/Tooltip',[
     '../Utilities/_Dispose',
     '../Utilities/_ElementUtilities',
     '../Utilities/_Hoverable',
-    'require-style!less/desktop/controls',
-    'require-style!less/phone/controls'
+    'require-style!less/styles-tooltip',
+    'require-style!less/colors-tooltip'
     ], function tooltipInit(exports, _Global, _WinRT, _Base, _BaseUtils, _Events, Animations, _TransitionAnimation, _Control, _Dispose, _ElementUtilities, _Hoverable) {
     "use strict";
 
@@ -37,9 +33,8 @@ define('WinJS/Controls/Tooltip',[
         /// <event name="beforeclose" bubbles="false" locid="WinJS.UI.Tooltip_e:beforeclose">Raised when the tooltip is about to become hidden.</event>
         /// <event name="closed" bubbles="false" locid="WinJS.UI.Tooltip_e:close">Raised when the tooltip is hidden.</event>
         /// <part name="tooltip" class="win-tooltip" locid="WinJS.UI.Tooltip_e:tooltip">The entire Tooltip control.</part>
-        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
-        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
         Tooltip: _Base.Namespace._lazy(function () {
             var lastCloseTime = 0;
             var Key = _ElementUtilities.Key;

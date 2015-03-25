@@ -1,0 +1,66 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+.Colors(@theme) {
+    .win-semanticzoom-button {
+        background-color: rgba(216, 216, 216, 0.33);
+        border-color: transparent;
+    }
+
+    button.win-semanticzoom-button.win-semanticzoom-button:active,
+    button.win-semanticzoom-button.win-semanticzoom-button:hover:active {
+        .mixin(dark) {
+            background-color: rgb(255, 255, 255);
+        }
+        .mixin(light) {
+            background-color: rgb(0, 0, 0);
+        }
+        .mixin(@theme);
+    }
+
+    // TODO PHONE
+    // .platform(phone) {
+    //     .mixin(dark) {
+    //         .win-semanticzoom .win-semanticzoom-zoomedoutview {
+    //             background-color: rgba(0, 0, 0, 0.67);
+    //         }
+    //     }
+    //     .mixin(light) {
+    //         .win-semanticzoom .win-semanticzoom-zoomedoutview {
+    //             background-color: rgba(255, 255, 255, 0.67);
+    //         }
+    //     }
+    //     .mixin(@theme);
+    // }
+}
+.ColorsHover(@theme) {
+    button:hover.win-semanticzoom-button {
+        background-color: rgba(216, 216, 216, 1.0);
+    }
+}
+
+@media (-ms-high-contrast) {
+    .win-semanticzoom-button {
+        background-color: ButtonFace;
+        border-color: ButtonText;
+        color: ButtonText;
+    }
+
+    .win-semanticzoom-button.win-semanticzoom-button:hover:active {
+        background-clip: border-box;
+        background-color: ButtonText;
+        border-color: transparent;
+        color: ButtonFace;
+    }
+
+    .win-semanticzoom-button:-ms-keyboard-active {
+        background-clip: border-box;
+        background-color: ButtonText;
+        border-color: transparent;
+        color: ButtonFace;
+    }
+
+    html.win-hoverable win-semanticzoom-button:hover {
+        background-color: Highlight;
+        border-color: ButtonText;
+        color: HighlightText;
+    }
+}

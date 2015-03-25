@@ -1,1692 +1,22 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-/// <dictionary>animatable,appbar,appbars,divs,Flyout,Flyouts,iframe,Statics,unfocus,unselectable</dictionary>
-define('WinJS/Controls/Flyout/_Overlay',[
-    'exports',
-    '../../Core/_Global',
-    '../../Core/_WinRT',
-    '../../Core/_Base',
-    '../../Core/_BaseUtils',
-    '../../Core/_ErrorFromName',
-    '../../Core/_Events',
-    '../../Core/_Resources',
-    '../../Core/_WriteProfilerMark',
-    '../../Animations',
-    '../../ControlProcessor',
-    '../../Promise',
-    '../../Scheduler',
-    '../../Utilities/_Control',
-    '../../Utilities/_ElementUtilities',
-    '../AppBar/_Constants'
-], function overlayInit(exports, _Global, _WinRT, _Base, _BaseUtils, _ErrorFromName, _Events, _Resources, _WriteProfilerMark, Animations, ControlProcessor, Promise, Scheduler, _Control, _ElementUtilities, _Constants) {
-    "use strict";
-
-    _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
-        _Overlay: _Base.Namespace._lazy(function () {
-            var createEvent = _Events._createEventProperty;
-
-            // Event Names
-            var BEFORESHOW = "beforeshow";
-            var AFTERSHOW = "aftershow";
-            var BEFOREHIDE = "beforehide";
-            var AFTERHIDE = "afterhide";
-
-            // Helper to get DOM elements from input single object or array or IDs/toolkit/dom elements
-            function _resolveElements(elements) {
-                // No input is just an empty array
-                if (!elements) {
-                    return [];
-                }
-
-                // Make sure it's in array form.
-                if (typeof elements === "string" || !elements || !elements.length) {
-                    elements = [elements];
-                }
-
-                // Make sure we have a DOM element for each one, (could be string id name or toolkit object)
-                var i,
-                    realElements = [];
-                for (i = 0; i < elements.length; i++) {
-                    if (elements[i]) {
-                        if (typeof elements[i] === "string") {
-                            var element = _Global.document.getElementById(elements[i]);
-                            if (element) {
-                                realElements.push(element);
-                            }
-                        } else if (elements[i].element) {
-                            realElements.push(elements[i].element);
-                        } else {
-                            realElements.push(elements[i]);
-                        }
-                    }
-                }
-
-                return realElements;
-            }
-
-            // Helpers for keyboard showing related events
-            function _allOverlaysCallback(event, command) {
-                var elements = _Global.document.querySelectorAll("." + _Constants.overlayClass);
-                if (elements) {
-                    var len = elements.length;
-                    for (var i = 0; i < len; i++) {
-                        var element = elements[i];
-                        var control = element.winControl;
-                        if (!control._disposed) {
-                            if (control) {
-                                control[command](event);
-                            }
-                        }
-                    }
-                }
-            }
-
-            function _edgyMayHideFlyouts() {
-                // Flyouts and SettingsFlyouts should not light dismiss when they are the target of a right click.
-                if (!_Overlay._rightMouseMightEdgy) {
-                    _Overlay._hideAllFlyouts();
-                }
-            }
-
-            var strings = {
-                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
-                get mustContainCommands() { return "Invalid HTML: AppBars/Menus must contain only AppBarCommands/MenuCommands"; },
-                get closeOverlay() { return _Resources._getWinJSString("ui/closeOverlay").value; },
-            };
-
-            var _Overlay = _Base.Class.define(function _Overlay_ctor(element, options) {
-                /// <signature helpKeyword="WinJS.UI._Overlay">
-                /// <summary locid="WinJS.UI._Overlay">
-                /// Constructs the Overlay control and associates it with the underlying DOM element.
-                /// </summary>
-                /// <param name="element" type="HTMLElement" domElement="true" locid="WinJS.UI._Overlay_p:element">
-                /// The DOM element to be associated with the Overlay control.
-                /// </param>
-                /// <param name="options" type="Object" domElement="false" locid="WinJS.UI._Overlay_p:options">
-                /// The set of options to be applied initially to the Overlay control.
-                /// </param>
-                /// <returns type="WinJS.UI._Overlay" locid="WinJS.UI._Overlay_returnValue">A fully constructed Overlay control.</returns>
-                /// </signature>
-                this._baseOverlayConstructor(element, options);
-            }, {
-                // Functions/properties
-                _baseOverlayConstructor: function _Overlay_baseOverlayConstructor(element, options) {
-                    this._disposed = false;
-
-                    // Make sure there's an input element
-                    if (!element) {
-                        element = _Global.document.createElement("div");
-                    }
-
-                    // Check to make sure we weren't duplicated
-                    var overlay = element.winControl;
-                    if (overlay) {
-                        throw new _ErrorFromName("WinJS.UI._Overlay.DuplicateConstruction", strings.duplicateConstruction);
-                    }
-
-                    if (!this._element) {
-                        this._element = element;
-                    }
-                    this._sticky = false;
-                    this._doNext = "";
-
-                    this._element.style.visibility = "hidden";
-                    this._element.style.opacity = 0;
-
-                    // Remember ourselves
-                    element.winControl = this;
-
-                    // Attach our css class
-                    _ElementUtilities.addClass(this._element, _Constants.overlayClass);
-                    _ElementUtilities.addClass(this._element, "win-disposable");
-
-                    // We don't want to be selectable, set UNSELECTABLE
-                    var unselectable = this._element.getAttribute("unselectable");
-                    if (unselectable === null || unselectable === undefined) {
-                        this._element.setAttribute("unselectable", "on");
-                    }
-
-                    // Base animation is popIn/popOut
-                    this._currentAnimateIn = this._baseAnimateIn;
-                    this._currentAnimateOut = this._baseAnimateOut;
-                    this._animationPromise = Promise.as();
-
-                    // Command Animations to Queue
-                    this._queuedToShow = [];
-                    this._queuedToHide = [];
-                    this._queuedCommandAnimation = false;
-
-                    if (options) {
-                        _Control.setOptions(this, options);
-                    }
-                },
-
-                /// <field type="HTMLElement" domElement="true" readonly="true" hidden="true" locid="WinJS.UI._Overlay.element" helpKeyword="WinJS.UI._Overlay.element">The DOM element the Overlay is attached to</field>
-                element: {
-                    get: function () {
-                        return this._element;
-                    }
-                },
-
-                /// <field type="Boolean" locid="WinJS.UI._Overlay.disabled" helpKeyword="WinJS.UI._Overlay.disabled">Disable an Overlay, setting or getting the HTML disabled attribute.  When disabled the Overlay will no longer display with show(), and will hide if currently visible.</field>
-                disabled: {
-                    get: function () {
-                        // Ensure it's a boolean because we're using the DOM element to keep in-sync
-                        return !!this._element.disabled;
-                    },
-                    set: function (value) {
-                        // Force this check into a boolean because our current state could be a bit confused since we tie to the DOM element
-                        value = !!value;
-                        var oldValue = !!this._element.disabled;
-                        if (oldValue !== value) {
-                            this._element.disabled = value;
-                            if (!this.hidden && this._element.disabled) {
-                                this._hideOrDismiss();
-                            }
-                        }
-                    }
-                },
-
-                /// <field type="Function" locid="WinJS.UI._Overlay.onbeforeshow" helpKeyword="WinJS.UI._Overlay.onbeforeshow">
-                /// Occurs immediately before the control is shown.
-                /// </field>
-                onbeforeshow: createEvent(BEFORESHOW),
-
-                /// <field type="Function" locid="WinJS.UI._Overlay.onaftershow" helpKeyword="WinJS.UI._Overlay.onaftershow">
-                /// Occurs immediately after the control is shown.
-                /// </field>
-                onaftershow: createEvent(AFTERSHOW),
-
-                /// <field type="Function" locid="WinJS.UI._Overlay.onbeforehide" helpKeyword="WinJS.UI._Overlay.onbeforehide">
-                /// Occurs immediately before the control is hidden.
-                /// </field>
-                onbeforehide: createEvent(BEFOREHIDE),
-
-                /// <field type="Function" locid="WinJS.UI._Overlay.onafterhide" helpKeyword="WinJS.UI._Overlay.onafterhide">
-                /// Occurs immediately after the control is hidden.
-                /// </field>
-                onafterhide: createEvent(AFTERHIDE),
-
-                dispose: function () {
-                    /// <signature helpKeyword="WinJS.UI.Overlay.dispose">
-                    /// <summary locid="WinJS.UI.Overlay.dispose">
-                    /// Disposes this Overlay.
-                    /// </summary>
-                    /// </signature>
-                    if (this._disposed) {
-                        return;
-                    }
-
-                    this._disposed = true;
-                    this._dispose();
-                },
-
-                _dispose: function _Overlay_dispose() {
-                    // To be overridden by subclasses
-                },
-
-                show: function () {
-                    /// <signature helpKeyword="WinJS.UI._Overlay.show">
-                    /// <summary locid="WinJS.UI._Overlay.show">
-                    /// Shows the Overlay, if hidden, regardless of other state
-                    /// </summary>
-                    /// </signature>
-                    // call private show to distinguish it from public version
-                    this._show();
-                },
-
-                _show: function _Overlay_show() {
-                    // We call our base _baseShow because AppBar may need to override show
-                    this._baseShow();
-                },
-
-                hide: function () {
-                    /// <signature helpKeyword="WinJS.UI._Overlay.hide">
-                    /// <summary locid="WinJS.UI._Overlay.hide">
-                    /// Hides the Overlay, if visible, regardless of other state
-                    /// </summary>
-                    /// </signature>
-                    // call private hide to distinguish it from public version
-                    this._hide();
-                },
-
-                _hide: function _Overlay_hide() {
-                    // We call our base _baseHide because AppBar may need to override hide
-                    this._baseHide();
-                },
-
-                // Is the overlay "hidden"?
-                /// <field type="Boolean" hidden="true" locid="WinJS.UI._Overlay.hidden" helpKeyword="WinJS.UI._Overlay.hidden">Read only, true if an overlay is currently not visible.</field>
-                hidden: {
-                    get: function () {
-                        return (this._element.style.visibility === "hidden" ||
-                                this._element.winAnimating === "hiding" ||
-                                this._doNext === "hide");
-                    }
-                },
-
-                addEventListener: function (type, listener, useCapture) {
-                    /// <signature helpKeyword="WinJS.UI._Overlay.addEventListener">
-                    /// <summary locid="WinJS.UI._Overlay.addEventListener">
-                    /// Add an event listener to the DOM element for this Overlay
-                    /// </summary>
-                    /// <param name="type" type="String" locid="WinJS.UI._Overlay.addEventListener_p:type">Required. Event type to add, "beforehide", "afterhide", "beforeshow", or "aftershow"</param>
-                    /// <param name="listener" type="Function" locid="WinJS.UI._Overlay.addEventListener_p:listener">Required. The event handler function to associate with this event.</param>
-                    /// <param name="useCapture" type="Boolean" locid="WinJS.UI._Overlay.addEventListener_p:useCapture">Optional. True, register for the event capturing phase.  False for the event bubbling phase.</param>
-                    /// </signature>
-                    return this._element.addEventListener(type, listener, useCapture);
-                },
-
-                removeEventListener: function (type, listener, useCapture) {
-                    /// <signature helpKeyword="WinJS.UI._Overlay.removeEventListener">
-                    /// <summary locid="WinJS.UI._Overlay.removeEventListener">
-                    /// Remove an event listener to the DOM element for this Overlay
-                    /// </summary>
-                    /// <param name="type" type="String" locid="WinJS.UI._Overlay.removeEventListener_p:type">Required. Event type to remove, "beforehide", "afterhide", "beforeshow", or "aftershow"</param>
-                    /// <param name="listener" type="Function" locid="WinJS.UI._Overlay.removeEventListener_p:listener">Required. The event handler function to associate with this event.</param>
-                    /// <param name="useCapture" type="Boolean" locid="WinJS.UI._Overlay.removeEventListener_p:useCapture">Optional. True, register for the event capturing phase.  False for the event bubbling phase.</param>
-                    /// </signature>
-                    return this._element.removeEventListener(type, listener, useCapture);
-                },
-
-                _baseShow: function _Overlay_baseShow() {
-                    // If we are already animating, just remember this for later
-                    if (this._animating || this._needToHandleShowingKeyboard || this._needToHandleHidingKeyboard) {
-                        this._doNext = "show";
-                        return false;
-                    }
-
-                    // Each overlay tracks the size of the <HTML> element for triggering light-dismiss in the window resize handler.
-                    this._cachedDocumentSize = this._cachedDocumentSize || _Overlay._sizeOfDocument();
-
-                    // "hiding" would need to cancel.
-                    if (this._element.style.visibility !== "visible") {
-                        // Let us know we're showing.
-                        this._element.winAnimating = "showing";
-
-                        // Hiding, but not none
-                        this._element.style.display = "";
-                        this._element.style.visibility = "hidden";
-
-                        // In case their event is going to manipulate commands, see if there are
-                        // any queued command animations we can handle while we're still hidden.
-                        if (this._queuedCommandAnimation) {
-                            this._showAndHideFast(this._queuedToShow, this._queuedToHide);
-                            this._queuedToShow = [];
-                            this._queuedToHide = [];
-                        }
-
-                        // Send our "beforeShow" event
-                        this._sendEvent(_Overlay.beforeShow);
-
-                        // Need to measure
-                        this._findPosition();
-
-                        // Make sure it's visible, and fully opaque.
-                        // Do the popup thing, sending event afterward.
-                        var that = this;
-                        this._animationPromise = this._currentAnimateIn().
-                        then(function () {
-                            that._baseEndShow();
-                        }, function () {
-                            that._baseEndShow();
-                        });
-                        return true;
-                    }
-                    return false;
-                },
-
-                // Flyout in particular will need to measure our positioning.
-                _findPosition: function _Overlay_findPosition() {
-                },
-
-                _baseEndShow: function _Overlay_baseEndShow() {
-                    if (this._disposed) {
-                        return;
-                    }
-
-                    // Make sure it's visible after showing
-                    this._element.setAttribute("aria-hidden", "false");
-
-                    this._element.winAnimating = "";
-
-                    // Do our derived classes show stuff
-                    this._endShow();
-
-                    // We're shown now
-                    if (this._doNext === "show") {
-                        this._doNext = "";
-                    }
-
-                    // After showing, send the after showing event
-                    this._sendEvent(_Overlay.afterShow);
-                    this._writeProfilerMark("show,StopTM"); // Overlay writes the stop profiler mark for all of its derived classes.
-
-                    // If we had something queued, do that
-                    Scheduler.schedule(this._checkDoNext, Scheduler.Priority.normal, this, "WinJS.UI._Overlay._checkDoNext");
-
-                },
-
-                _endShow: function _Overlay_endShow() {
-                    // Nothing by default
-                },
-
-                _baseHide: function _Overlay_baseHide() {
-                    // If we are already animating, just remember this for later
-                    if (this._animating || this._needToHandleShowingKeyboard) {
-                        this._doNext = "hide";
-                        return false;
-                    }
-
-                    // In the unlikely event we're between the hiding keyboard and the resize events, just snap it away:
-                    if (this._needToHandleHidingKeyboard) {
-                        // use the "uninitialized" flag
-                        this._element.style.visibility = "";
-                    }
-
-                    // "showing" would need to queue up.
-                    if (this._element.style.visibility !== "hidden") {
-                        // Let us know we're hiding, accessibility as well.
-                        this._element.winAnimating = "hiding";
-                        this._element.setAttribute("aria-hidden", "true");
-
-                        // Send our "beforeHide" event
-                        this._sendEvent(_Overlay.beforeHide);
-
-                        // If our visibility is empty, then this is the first time, just hide it
-                        if (this._element.style.visibility === "") {
-                            // Initial hiding, just hide it
-                            this._element.style.opacity = 0;
-                            this._baseEndHide();
-                        } else {
-                            // Make sure it's hidden, and fully transparent.
-                            var that = this;
-                            this._animationPromise = this._currentAnimateOut().
-                            then(function () {
-                                that._baseEndHide();
-                            }, function () {
-                                that._baseEndHide();
-                            });
-                        }
-                        return true;
-                    }
-
-                    return false;
-                },
-
-                _baseEndHide: function _Overlay_baseEndHide() {
-                    if (this._disposed) {
-                        return;
-                    }
-
-                    // Make sure animation is finished.
-                    this._element.style.visibility = "hidden";
-                    this._element.style.display = "none";
-                    this._element.winAnimating = "";
-
-                    // In case their event is going to manipulate commands, see if there
-                    // are any queued command animations we can handle now we're hidden.
-                    if (this._queuedCommandAnimation) {
-                        this._showAndHideFast(this._queuedToShow, this._queuedToHide);
-                        this._queuedToShow = [];
-                        this._queuedToHide = [];
-                    }
-
-                    // We're hidden now
-                    if (this._doNext === "hide") {
-                        this._doNext = "";
-                    }
-
-                    // After hiding, send our "afterHide" event
-                    this._sendEvent(_Overlay.afterHide);
-                    this._writeProfilerMark("hide,StopTM"); // Overlay writes the stop profiler mark for all of its derived classes.
-
-
-                    // If we had something queued, do that.  This has to be after
-                    // the afterHide event in case it triggers a show() and they
-                    // have something to do in beforeShow that requires afterHide first.
-                    Scheduler.schedule(this._checkDoNext, Scheduler.Priority.normal, this, "WinJS.UI._Overlay._checkDoNext");
-                },
-
-                _checkDoNext: function _Overlay_checkDoNext() {
-                    // Do nothing if we're still animating
-                    if (this._animating || this._needToHandleShowingKeyboard || this._needToHandleHidingKeyboard || this._disposed) {
-                        return;
-                    }
-
-                    if (this._doNext === "hide") {
-                        // Do hide first because animating commands would be easier
-                        this._hide();
-                        this._doNext = "";
-                    } else if (this._queuedCommandAnimation) {
-                        // Do queued commands before showing if possible
-                        this._showAndHideQueue();
-                    } else if (this._doNext === "show") {
-                        // Show last so that we don't unnecessarily animate commands
-                        this._show();
-                        this._doNext = "";
-                    }
-                },
-
-                // Default animations
-                _baseAnimateIn: function _Overlay_baseAnimateIn() {
-                    this._element.style.opacity = 0;
-                    this._element.style.visibility = "visible";
-                    // touch opacity so that IE fades from the 0 we just set to 1
-                    _Global.getComputedStyle(this._element, null).opacity;
-                    return Animations.fadeIn(this._element);
-                },
-
-                _baseAnimateOut: function _Overlay_baseAnimateOut() {
-                    this._element.style.opacity = 1;
-                    // touch opacity so that IE fades from the 1 we just set to 0
-                    _Global.getComputedStyle(this._element, null).opacity;
-                    return Animations.fadeOut(this._element);
-                },
-
-                _animating: {
-                    get: function _Overlay_animating_get() {
-                        // Ensure it's a boolean because we're using the DOM element to keep in-sync
-                        return !!this._element.winAnimating;
-                    }
-                },
-
-                // Send one of our events
-                _sendEvent: function _Overlay_sendEvent(eventName, detail) {
-                    if (this._disposed) {
-                        return;
-                    }
-                    var event = _Global.document.createEvent("CustomEvent");
-                    event.initEvent(eventName, true, true, (detail || {}));
-                    this._element.dispatchEvent(event);
-                },
-
-                // Show commands
-                _showCommands: function _Overlay_showCommands(commands, immediate) {
-                    var showHide = this._resolveCommands(commands);
-                    this._showAndHideCommands(showHide.commands, [], immediate);
-                },
-
-                // Hide commands
-                _hideCommands: function _Overlay_hideCommands(commands, immediate) {
-                    var showHide = this._resolveCommands(commands);
-                    this._showAndHideCommands([], showHide.commands, immediate);
-                },
-
-                // Hide commands
-                _showOnlyCommands: function _Overlay_showOnlyCommands(commands, immediate) {
-                    var showHide = this._resolveCommands(commands);
-                    this._showAndHideCommands(showHide.commands, showHide.others, immediate);
-                },
-
-                _showAndHideCommands: function _Overlay_showAndHideCommands(showCommands, hideCommands, immediate) {
-                    // Immediate is "easy"
-                    if (immediate || (this.hidden && !this._animating)) {
-                        // Immediate mode (not animated)
-                        this._showAndHideFast(showCommands, hideCommands);
-                        // Need to remove them from queues, but others could be queued
-                        this._removeFromQueue(showCommands, this._queuedToShow);
-                        this._removeFromQueue(hideCommands, this._queuedToHide);
-                    } else {
-
-                        // Queue Commands
-                        this._updateAnimateQueue(showCommands, this._queuedToShow, this._queuedToHide);
-                        this._updateAnimateQueue(hideCommands, this._queuedToHide, this._queuedToShow);
-                    }
-                },
-
-                _removeFromQueue: function _Overlay_removeFromQueue(commands, queue) {
-                    // remove commands from queue.
-                    var count;
-                    for (count = 0; count < commands.length; count++) {
-                        // Remove if it was in queue
-                        var countQ;
-                        for (countQ = 0; countQ < queue.length; countQ++) {
-                            if (queue[countQ] === commands[count]) {
-                                queue.splice(countQ, 1);
-                                break;
-                            }
-                        }
-                    }
-                },
-
-                _updateAnimateQueue: function _Overlay_updateAnimateQueue(addCommands, toQueue, fromQueue) {
-                    if (this._disposed) {
-                        return;
-                    }
-
-                    // Add addCommands to toQueue and remove addCommands from fromQueue.
-                    var count;
-                    for (count = 0; count < addCommands.length; count++) {
-                        // See if it's already in toQueue
-                        var countQ;
-                        for (countQ = 0; countQ < toQueue.length; countQ++) {
-                            if (toQueue[countQ] === addCommands[count]) {
-                                break;
-                            }
-                        }
-                        if (countQ === toQueue.length) {
-                            // Not found, add it
-                            toQueue[countQ] = addCommands[count];
-                        }
-                        // Remove if it was in fromQueue
-                        for (countQ = 0; countQ < fromQueue.length; countQ++) {
-                            if (fromQueue[countQ] === addCommands[count]) {
-                                fromQueue.splice(countQ, 1);
-                                break;
-                            }
-                        }
-                    }
-                    // If we haven't queued the actual animation
-                    if (!this._queuedCommandAnimation) {
-                        // If not already animating, we'll need to call _checkDoNext
-                        if (!this._animating) {
-                            Scheduler.schedule(this._checkDoNext, Scheduler.Priority.normal, this, "WinJS.UI._Overlay._checkDoNext");
-                        }
-                        this._queuedCommandAnimation = true;
-                    }
-                },
-
-                // show/hide commands without doing any animation.
-                _showAndHideFast: function _Overlay_showAndHideFast(showCommands, hideCommands) {
-                    var count;
-                    var command;
-                    for (count = 0; count < showCommands.length; count++) {
-                        command = showCommands[count];
-                        if (command && command.style) {
-                            command.style.visibility = "";
-                            command.style.display = "";
-                        }
-                    }
-                    for (count = 0; count < hideCommands.length; count++) {
-                        command = hideCommands[count];
-                        if (command && command.style) {
-                            command.style.visibility = "hidden";
-                            command.style.display = "none";
-                        }
-                    }
-
-                    this._commandsUpdated();
-
-                },
-
-                // show and hide the queued commands, perhaps animating if overlay isn't hidden.
-                _showAndHideQueue: function _Overlay_showAndHideQueue() {
-                    // Only called if not currently animating.
-                    // We'll be done with the queued stuff when we return.
-                    this._queuedCommandAnimation = false;
-
-                    // Shortcut if hidden
-                    if (this.hidden) {
-                        this._showAndHideFast(this._queuedToShow, this._queuedToHide);
-                        // Might be something else to do
-                        Scheduler.schedule(this._checkDoNext, Scheduler.Priority.normal, this, "WinJS.UI._Overlay._checkDoNext");
-                    } else {
-                        // Animation has 3 parts:  "hiding", "showing", and "moving"
-                        // PVL has "addToList" and "deleteFromList", both of which allow moving parts.
-                        // So we'll set up "add" for showing, and use "delete" for "hiding" + moving,
-                        // then trigger both at the same time.
-                        var showCommands = this._queuedToShow;
-                        var hideCommands = this._queuedToHide;
-                        var siblings = this._findSiblings(showCommands.concat(hideCommands));
-
-                        // Filter out the commands queued for animation that don't need to be animated.
-                        var count;
-                        for (count = 0; count < showCommands.length; count++) {
-                            // If this one's not real or not attached, skip it
-                            if (!showCommands[count] ||
-                                !showCommands[count].style ||
-                                !_Global.document.body.contains(showCommands[count])) {
-                                // Not real, skip it
-                                showCommands.splice(count, 1);
-                                count--;
-                            } else if (showCommands[count].style.visibility !== "hidden" && showCommands[count].style.opacity !== "0") {
-                                // Don't need to animate showing this one, already visible, so now it's a sibling
-                                siblings.push(showCommands[count]);
-                                showCommands.splice(count, 1);
-                                count--;
-                            }
-                        }
-                        for (count = 0; count < hideCommands.length; count++) {
-                            // If this one's not real or not attached, skip it
-                            if (!hideCommands[count] ||
-                                !hideCommands[count].style ||
-                                !_Global.document.body.contains(hideCommands[count]) ||
-                                hideCommands[count].style.visibility === "hidden" ||
-                                hideCommands[count].style.opacity === "0") {
-                                // Don't need to animate hiding this one, not real, or it's hidden,
-                                // so don't even need it as a sibling.
-                                hideCommands.splice(count, 1);
-                                count--;
-                            }
-                        }
-
-                        // Start command animations.
-                        var commandsAnimationPromise = this._baseBeginAnimateCommands(showCommands, hideCommands, siblings);
-
-                        // Hook end animations
-                        var that = this;
-                        if (commandsAnimationPromise) {
-                            // Needed to animate
-                            commandsAnimationPromise.done(
-                                function () { that._baseEndAnimateCommands(hideCommands); },
-                                function () { that._baseEndAnimateCommands(hideCommands); }
-                                );
-                        } else {
-                            // Already positioned correctly
-                            Scheduler.schedule(function Overlay_async_baseEndAnimationCommands() { that._baseEndAnimateCommands([]); },
-                                Scheduler.Priority.normal, null,
-                                "WinJS.UI._Overlay._endAnimateCommandsWithoutAnimation");
-                        }
-                    }
-
-                    // Done, clear queues
-                    this._queuedToShow = [];
-                    this._queuedToHide = [];
-                },
-
-                _baseBeginAnimateCommands: function _Overlay_baseBeginAnimateCommands(showCommands, hideCommands, siblings) {
-                    // The parameters are 3 mutually exclusive arrays of win-command elements contained in this Overlay.
-                    // 1) showCommands[]: All of the HIDDEN win-command elements that ARE scheduled to show.
-                    // 2) hideCommands[]: All of the VISIBLE win-command elements that ARE shceduled to hide.
-                    // 3) siblings[]: i. All VISIBLE win-command elements that ARE NOT scheduled to hide.
-                    //               ii. All HIDDEN win-command elements that ARE NOT scheduled to hide OR show.
-                    this._beginAnimateCommands(showCommands, hideCommands, this._getVisibleCommands(siblings));
-
-                    var showAnimated = null,
-                        hideAnimated = null;
-
-                    // Hide commands first, with siblings if necessary,
-                    // so that the showing commands don't disrupt the hiding commands position.
-                    if (hideCommands.length > 0) {
-                        hideAnimated = Animations.createDeleteFromListAnimation(hideCommands, showCommands.length === 0 ? siblings : undefined);
-                    }
-                    if (showCommands.length > 0) {
-                        showAnimated = Animations.createAddToListAnimation(showCommands, siblings);
-                    }
-
-                    // Update hiding commands
-                    for (var count = 0, len = hideCommands.length; count < len; count++) {
-                        // Need to fix our position
-                        var rectangle = hideCommands[count].getBoundingClientRect(),
-                            style = _Global.getComputedStyle(hideCommands[count]);
-
-                        // Use the bounding box, adjusting for margins
-                        hideCommands[count].style.top = (rectangle.top - parseFloat(style.marginTop)) + "px";
-                        hideCommands[count].style.left = (rectangle.left - parseFloat(style.marginLeft)) + "px";
-                        hideCommands[count].style.opacity = 0;
-                        hideCommands[count].style.position = "fixed";
-                    }
-
-                    // Mark as animating
-                    this._element.winAnimating = "rearranging";
-
-                    // Start hiding animations
-                    // Hide needs extra cleanup when done
-                    var promise = null;
-                    if (hideAnimated) {
-                        promise = hideAnimated.execute();
-                    }
-
-                    // Update showing commands,
-                    // After hiding commands so that the hiding ones fade in the right place.
-                    for (count = 0; count < showCommands.length; count++) {
-                        showCommands[count].style.visibility = "";
-                        showCommands[count].style.display = "";
-                        showCommands[count].style.opacity = 1;
-                    }
-
-                    // Start showing animations
-                    if (showAnimated) {
-                        var newPromise = showAnimated.execute();
-                        if (promise) {
-                            promise = Promise.join([promise, newPromise]);
-                        } else {
-                            promise = newPromise;
-                        }
-                    }
-
-                    return promise;
-                },
-
-                _beginAnimateCommands: function _Overlay_beginAnimateCommands() {
-                    // Nothing by default
-                },
-
-                _getVisibleCommands: function _Overlay_getVisibleCommands(commandSubSet) {
-                    var command,
-                        commands = commandSubSet,
-                        visibleCommands = [];
-
-                    if (!commands) {
-                        // Crawl the inner HTML for the commands.
-                        commands = this.element.querySelectorAll(".win-command");
-                    }
-
-                    for (var i = 0, len = commands.length; i < len; i++) {
-                        command = commands[i].winControl || commands[i];
-                        if (!command.hidden) {
-                            visibleCommands.push(command);
-                        }
-                    }
-
-                    return visibleCommands;
-                },
-
-                // Once animation is complete, ensure that the commands are display:none
-                // and check if there's another animation to start.
-                _baseEndAnimateCommands: function _Overlay_baseEndAnimateCommands(hideCommands) {
-                    if (this._disposed) {
-                        return;
-                    }
-
-                    // Update us
-                    var count;
-                    for (count = 0; count < hideCommands.length; count++) {
-                        // Force us back into our appbar so that we can show again correctly
-                        hideCommands[count].style.position = "";
-                        hideCommands[count].getBoundingClientRect();
-                        // Now make us really hidden
-                        hideCommands[count].style.visibility = "hidden";
-                        hideCommands[count].style.display = "none";
-                        hideCommands[count].style.opacity = 1;
-                    }
-                    // Done animating
-                    this._element.winAnimating = "";
-
-                    this._endAnimateCommands();
-
-                    // Might be something else to do
-                    this._checkDoNext();
-                },
-
-                _endAnimateCommands: function _Overlay_endAnimateCommands() {
-                    // Nothing by default
-                },
-
-                // Resolves our commands
-                _resolveCommands: function _Overlay_resolveCommands(commands) {
-                    // First make sure they're all DOM elements.
-                    commands = _resolveElements(commands);
-
-                    // Now make sure they're all in this container
-                    var result = {};
-                    result.commands = [];
-                    result.others = [];
-                    var allCommands = this.element.querySelectorAll(".win-command");
-                    var countAll, countIn;
-                    for (countAll = 0; countAll < allCommands.length; countAll++) {
-                        var found = false;
-                        for (countIn = 0; countIn < commands.length; countIn++) {
-                            if (commands[countIn] === allCommands[countAll]) {
-                                result.commands.push(allCommands[countAll]);
-                                commands.splice(countIn, 1);
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            result.others.push(allCommands[countAll]);
-                        }
-                    }
-                    return result;
-                },
-
-                // Find siblings, all DOM elements now.
-                // Returns all .win-commands in this Overlay that are NOT in the passed in 'commands' array.
-                _findSiblings: function _Overlay_findSiblings(commands) {
-                    // Now make sure they're all in this container
-                    var siblings = [];
-                    var allCommands = this.element.querySelectorAll(".win-command");
-                    var countAll, countIn;
-                    for (countAll = 0; countAll < allCommands.length; countAll++) {
-                        var found = false;
-                        for (countIn = 0; countIn < commands.length; countIn++) {
-                            if (commands[countIn] === allCommands[countAll]) {
-                                commands.splice(countIn, 1);
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            siblings.push(allCommands[countAll]);
-                        }
-                    }
-                    return siblings;
-                },
-
-                _baseResize: function _Overlay_baseResize(event) {
-                    // Avoid the cost of a resize if the Overlay is hidden.
-                    if (this._cachedDocumentSize) {
-                        if (this.hidden) {
-                            this._cachedDocumentSize = null;
-                        } else {
-                            // Overlays will light dismiss on <HTML> resize.
-                            var newDocSize = _Overlay._sizeOfDocument();
-                            if (this._cachedDocumentSize.width !== newDocSize.width || this._cachedDocumentSize.height !== newDocSize.height) {
-                                this._cachedDocumentSize = newDocSize;
-                                if (!this._sticky) {
-                                    this._hideOrDismiss();
-                                }
-                            }
-                        }
-                    }
-
-                    // Call specific resize
-                    this._resize(event);
-                },
-
-                _hideOrDismiss: function _Overlay_hideOrDismiss() {
-                    var element = this._element;
-                    if (element && _ElementUtilities.hasClass(element, _Constants.settingsFlyoutClass)) {
-                        this._dismiss();
-                    } else {
-                        this.hide();
-                    }
-                },
-
-                _resize: function _Overlay_resize() {
-                    // Nothing by default
-                },
-
-                _commandsUpdated: function _Overlay_commandsUpdated() {
-                    // Nothing by default
-                },
-
-                _checkScrollPosition: function _Overlay_checkScrollPosition() {
-                    // Nothing by default
-                },
-
-                _showingKeyboard: function _Overlay_showingKeyboard() {
-                    // Nothing by default
-                },
-
-                _hidingKeyboard: function _Overlay_hidingKeyboard() {
-                    // Nothing by default
-                },
-
-                // Verify that this HTML AppBar only has AppBar/MenuCommands.
-                _verifyCommandsOnly: function _Overlay_verifyCommandsOnly(element, type) {
-                    var children = element.children;
-                    var commands = new Array(children.length);
-                    for (var i = 0; i < children.length; i++) {
-                        // If constructed they have win-command class, otherwise they have data-win-control
-                        if (!_ElementUtilities.hasClass(children[i], "win-command") &&
-                        children[i].getAttribute("data-win-control") !== type) {
-                            // Wasn't tagged with class or AppBar/MenuCommand, not an AppBar/MenuCommand
-                            throw new _ErrorFromName("WinJS.UI._Overlay.MustContainCommands", strings.mustContainCommands);
-                        } else {
-                            // Instantiate the commands.
-                            ControlProcessor.processAll(children[i]);
-                            commands[i] = children[i].winControl;
-                        }
-                    }
-                    return commands;
-                },
-
-                // Sets focus on what we think is the last tab stop. If nothing is focusable will
-                // try to set focus on itself.
-                _focusOnLastFocusableElementOrThis: function _Overlay_focusOnLastFocusableElementOrThis() {
-                    if (!this._focusOnLastFocusableElement()) {
-                        // Nothing is focusable.  Set focus to this.
-                        _Overlay._trySetActive(this._element);
-                    }
-                },
-
-                // Sets focus to what we think is the last tab stop. This element must have
-                // a firstDiv with tabIndex equal to the lowest tabIndex in the element
-                // and a finalDiv with tabIndex equal to the highest tabIndex in the element.
-                // Also the firstDiv must be its first child and finalDiv be its last child.
-                // Returns true if successful, false otherwise.
-                _focusOnLastFocusableElement: function _Overlay_focusOnLastFocusableElement() {
-                    if (this._element.firstElementChild) {
-                        var oldFirstTabIndex = this._element.firstElementChild.tabIndex;
-                        var oldLastTabIndex = this._element.lastElementChild.tabIndex;
-                        this._element.firstElementChild.tabIndex = -1;
-                        this._element.lastElementChild.tabIndex = -1;
-
-                        var tabResult = _ElementUtilities._focusLastFocusableElement(this._element);
-
-                        if (tabResult) {
-                            _Overlay._trySelect(_Global.document.activeElement);
-                        }
-
-                        this._element.firstElementChild.tabIndex = oldFirstTabIndex;
-                        this._element.lastElementChild.tabIndex = oldLastTabIndex;
-
-                        return tabResult;
-                    } else {
-                        return false;
-                    }
-                },
-
-
-                // Sets focus on what we think is the first tab stop. If nothing is focusable will
-                // try to set focus on itself.
-                _focusOnFirstFocusableElementOrThis: function _Overlay_focusOnFirstFocusableElementOrThis() {
-                    if (!this._focusOnFirstFocusableElement()) {
-                        // Nothing is focusable.  Set focus to this.
-                        _Overlay._trySetActive(this._element);
-                    }
-                },
-
-                // Sets focus to what we think is the first tab stop. This element must have
-                // a firstDiv with tabIndex equal to the lowest tabIndex in the element
-                // and a finalDiv with tabIndex equal to the highest tabIndex in the element.
-                // Also the firstDiv must be its first child and finalDiv be its last child.
-                // Returns true if successful, false otherwise.
-                _focusOnFirstFocusableElement: function _Overlay__focusOnFirstFocusableElement() {
-                    if (this._element.firstElementChild) {
-                        var oldFirstTabIndex = this._element.firstElementChild.tabIndex;
-                        var oldLastTabIndex = this._element.lastElementChild.tabIndex;
-                        this._element.firstElementChild.tabIndex = -1;
-                        this._element.lastElementChild.tabIndex = -1;
-
-                        var tabResult = _ElementUtilities._focusFirstFocusableElement(this._element);
-
-                        if (tabResult) {
-                            _Overlay._trySelect(_Global.document.activeElement);
-                        }
-
-                        this._element.firstElementChild.tabIndex = oldFirstTabIndex;
-                        this._element.lastElementChild.tabIndex = oldLastTabIndex;
-
-                        return tabResult;
-                    } else {
-                        return false;
-                    }
-                },
-
-                _addOverlayEventHandlers: function _Overlay_addOverlayEventHandlers(isFlyoutOrSettingsFlyout) {
-                    // Set up global event handlers for all overlays
-                    if (!_Overlay._flyoutEdgeLightDismissEvent) {
-                        // Dismiss on blur & resize
-                        // Focus handlers generally use WinJS.Utilities._addEventListener with focusout/focusin. This
-                        // uses the browser's blur event directly beacuse _addEventListener doesn't support focusout/focusin
-                        // on window.
-                        _Global.addEventListener("blur", _Overlay._checkBlur, false);
-
-                        var that = this;
-
-                        // Be careful so it behaves in designer as well.
-                        if (_WinRT.Windows.UI.Input.EdgeGesture) {
-                            // Catch edgy events too
-                            var commandUI = _WinRT.Windows.UI.Input.EdgeGesture.getForCurrentView();
-                            commandUI.addEventListener("starting", _Overlay._hideAllFlyouts);
-                            commandUI.addEventListener("completed", _edgyMayHideFlyouts);
-                        }
-
-                        if (_WinRT.Windows.UI.ViewManagement.InputPane) {
-                            // React to Soft Keyboard events
-                            var inputPane = _WinRT.Windows.UI.ViewManagement.InputPane.getForCurrentView();
-                            inputPane.addEventListener("showing", function (event) {
-                                that._writeProfilerMark("_showingKeyboard,StartTM");
-                                _allOverlaysCallback(event, "_showingKeyboard");
-                                that._writeProfilerMark("_showingKeyboard,StopTM");
-                            });
-                            inputPane.addEventListener("hiding", function (event) {
-                                that._writeProfilerMark("_hidingKeyboard,StartTM");
-                                _allOverlaysCallback(event, "_hidingKeyboard");
-                                that._writeProfilerMark("_hidingKeyboard,StopTM");
-                            });
-                            // Document scroll event
-                            _Global.document.addEventListener("scroll", function (event) {
-                                that._writeProfilerMark("_checkScrollPosition,StartTM");
-                                _allOverlaysCallback(event, "_checkScrollPosition");
-                                that._writeProfilerMark("_checkScrollPosition,StopTM");
-                            });
-                        }
-
-                        // Window resize event
-                        _Global.addEventListener("resize", function (event) {
-                            that._writeProfilerMark("_baseResize,StartTM");
-                            _allOverlaysCallback(event, "_baseResize");
-                            that._writeProfilerMark("_baseResize,StopTM");
-                        });
-
-                        _Overlay._flyoutEdgeLightDismissEvent = true;
-                    }
-
-                    // Individual handlers for Flyouts only
-                    if (isFlyoutOrSettingsFlyout) {
-                        this._handleEventsForFlyoutOrSettingsFlyout();
-                    }
-                },
-
-                _handleEventsForFlyoutOrSettingsFlyout: function _Overlay_handleEventsForFlyoutOrSettingsFlyout() {
-                    var that = this;
-                    // Need to hide ourselves if we lose focus
-                    _ElementUtilities._addEventListener(this._element, "focusout", function (e) { _Overlay._hideIfLostFocus(that, e); }, false);
-
-                    // Attempt to flag right clicks that may turn into edgy
-                    _ElementUtilities._addEventListener(this._element, "pointerdown", _Overlay._checkRightClickDown, true);
-                    _ElementUtilities._addEventListener(this._element, "pointerup", _Overlay._checkRightClickUp, true);
-                },
-
-                _writeProfilerMark: function _Overlay_writeProfilerMark(text) {
-                    _WriteProfilerMark("WinJS.UI._Overlay:" + this._id + ":" + text);
-                }
-            },
-            {
-                // Statics
-                _clickEatingAppBarDiv: false,
-                _clickEatingFlyoutDiv: false,
-                _flyoutEdgeLightDismissEvent: false,
-
-                _hideFlyouts: function (testElement, notSticky) {
-                    var elements = testElement.querySelectorAll("." + _Constants.flyoutClass);
-                    var len = elements.length;
-                    for (var i = 0; i < len; i++) {
-                        var element = elements[i];
-                        if (element.style.visibility !== "hidden") {
-                            var flyout = element.winControl;
-                            if (flyout && (!notSticky || !flyout._sticky)) {
-                                flyout._hideOrDismiss();
-                            }
-                        }
-                    }
-                },
-
-                _hideSettingsFlyouts: function (testElement, notSticky) {
-                    var elements = testElement.querySelectorAll("." + _Constants.settingsFlyoutClass);
-                    var len = elements.length;
-                    for (var i = 0; i < len; i++) {
-                        var element = elements[i];
-                        if (element.style.visibility !== "hidden") {
-                            var settingsFlyout = element.winControl;
-                            if (settingsFlyout && (!notSticky || !settingsFlyout._sticky)) {
-                                settingsFlyout._hideOrDismiss();
-                            }
-                        }
-                    }
-                },
-
-                _hideAllFlyouts: function () {
-                    _Overlay._hideFlyouts(_Global.document, true);
-                    _Overlay._hideSettingsFlyouts(_Global.document, true);
-                },
-
-                _createClickEatingDivTemplate: function (divClass, hideClickEatingDivFunction) {
-                    var clickEatingDiv = _Global.document.createElement("section");
-                    clickEatingDiv._winHideClickEater = hideClickEatingDivFunction;
-                    _ElementUtilities.addClass(clickEatingDiv, divClass);
-                    _ElementUtilities._addEventListener(clickEatingDiv, "pointerup", function (event) { _Overlay._checkSameClickEatingPointerUp(event, true); }, true);
-                    _ElementUtilities._addEventListener(clickEatingDiv, "pointerdown", function (event) { _Overlay._checkClickEatingPointerDown(event, true); }, true);
-                    clickEatingDiv.addEventListener("click", function (event) { clickEatingDiv._winHideClickEater(event); }, true);
-                    // Tell Aria that it's clickable
-                    clickEatingDiv.setAttribute("role", "menuitem");
-                    clickEatingDiv.setAttribute("aria-label", strings.closeOverlay);
-                    // Prevent CED from removing any current selection
-                    clickEatingDiv.setAttribute("unselectable", "on");
-                    _Global.document.body.appendChild(clickEatingDiv);
-                    return clickEatingDiv;
-                },
-
-                // Used by AppBar, and Settings Pane
-                _createClickEatingDivAppBar: function () {
-                    if (!_Overlay._clickEatingAppBarDiv) {
-                        _Overlay._clickEatingAppBarDiv = _Overlay._createClickEatingDivTemplate(_Constants._clickEatingAppBarClass, _Overlay._handleAppBarClickEatingClick);
-                    }
-                },
-
-                // Used by Flyout and Menu
-                _createClickEatingDivFlyout: function () {
-                    if (!_Overlay._clickEatingFlyoutDiv) {
-                        _Overlay._clickEatingFlyoutDiv = _Overlay._createClickEatingDivTemplate(_Constants._clickEatingFlyoutClass, _Overlay._handleFlyoutClickEatingClick);
-                    }
-                },
-
-                // All click-eaters eat "down" clicks so that we can still eat
-                // the "up" click that'll come later.
-                _checkClickEatingPointerDown: function (event, stopPropagation) {
-                    var target = event.currentTarget;
-                    if (target) {
-                        try {
-                            // Remember pointer id and remember right mouse
-                            target._winPointerId = event.pointerId;
-                            // Cache right mouse if that was what happened
-                            target._winRightMouse = (event.button === 2);
-                        } catch (e) { }
-                    }
-
-                    if (stopPropagation && !target._winRightMouse) {
-                        event.stopPropagation();
-                        event.preventDefault();
-                    }
-                },
-
-                // Make sure that if we have an up we had an earlier down of the same kind
-                _checkSameClickEatingPointerUp: function (event, stopPropagation) {
-                    var result = false,
-                        rightMouse = false,
-                        target = event.currentTarget;
-
-                    // Same pointer we were watching?
-                    try {
-                        if (target && target._winPointerId === event.pointerId) {
-                            // Same pointer
-                            result = true;
-                            rightMouse = target._winRightMouse;
-                            // For click-eaters, don't count right click the same because edgy will dismiss
-                            if (rightMouse && stopPropagation) {
-                                result = false;
-                            }
-                        }
-                    } catch (e) { }
-
-                    if (stopPropagation && !rightMouse) {
-                        event.stopPropagation();
-                        event.preventDefault();
-                        target._winHideClickEater(event);
-                    }
-
-                    return result;
-                },
-
-                // If they click on a click eating div, even with a right click,
-                // touch or anything, then we want to light dismiss that layer.
-                _handleAppBarClickEatingClick: function (event) {
-                    event.stopPropagation();
-                    event.preventDefault();
-
-                    _Overlay._hideLightDismissAppBars(null, false);
-                    _Overlay._hideClickEatingDivAppBar();
-                    _Overlay._hideAllFlyouts();
-                },
-
-                // If they click on a click eating div, even with a right click,
-                // touch or anything, then we want to light dismiss that layer.
-                _handleFlyoutClickEatingClick: function (event) {
-                    event.stopPropagation();
-                    event.preventDefault();
-
-                    // Don't light dismiss AppBars because edgy will do that as needed,
-                    // so flyouts only.
-                    _Overlay._hideClickEatingDivFlyout();
-                    _Overlay._hideFlyouts(_Global.document, true);
-                },
-
-                _checkRightClickDown: function (event) {
-                    _Overlay._checkClickEatingPointerDown(event, false);
-                },
-
-                _checkRightClickUp: function (event) {
-                    if (_Overlay._checkSameClickEatingPointerUp(event, false)) {
-                        // It was a right click we may want to eat.
-                        _Overlay._rightMouseMightEdgy = true;
-                        _BaseUtils._yieldForEvents(function () { _Overlay._rightMouseMightEdgy = false; });
-                    }
-                },
-
-                _showClickEatingDivAppBar: function () {
-                    Scheduler.schedule(function Overlay_async_showClickEatingDivAppBar() {
-                        if (_Overlay._clickEatingAppBarDiv) {
-                            _Overlay._clickEatingAppBarDiv.style.display = "block";
-                        }
-                    }, Scheduler.Priority.high, null, "WinJS.UI._Overlay._showClickEatingDivAppBar");
-                },
-
-                _hideClickEatingDivAppBar: function () {
-                    Scheduler.schedule(function Overlay_async_hideClickEatingDivAppBar() {
-                        if (_Overlay._clickEatingAppBarDiv) {
-                            _Overlay._clickEatingAppBarDiv.style.display = "none";
-                        }
-                    }, Scheduler.Priority.high, null, "WinJS.UI._Overlay._hideClickEatingDivAppBar");
-                },
-
-                _showClickEatingDivFlyout: function () {
-                    Scheduler.schedule(function Overlay_async_showClickEatingDivFlyout() {
-                        if (_Overlay._clickEatingFlyoutDiv) {
-                            _Overlay._clickEatingFlyoutDiv.style.display = "block";
-                        }
-                    }, Scheduler.Priority.high, null, "WinJS.UI._Overlay._showClickEatingDivFlyout");
-                },
-
-                _hideClickEatingDivFlyout: function () {
-                    Scheduler.schedule(function Overlay_async_hideClickEatingDivFlyout() {
-                        if (_Overlay._clickEatingFlyoutDiv) {
-                            _Overlay._clickEatingFlyoutDiv.style.display = "none";
-                        }
-                    }, Scheduler.Priority.high, null, "WinJS.UI._Overlay._hideClickEatingDivFlyout");
-                },
-
-                _isFlyoutVisible: function () {
-                    if (!_Overlay._clickEatingFlyoutDiv) {
-                        return false;
-                    }
-                    return (_Overlay._clickEatingFlyoutDiv.style.display === "block");
-                },
-
-                _hideIfLostFocus: function (overlay) {
-                    // If we're still showing we haven't really lost focus
-                    if (overlay.hidden || overlay.element.winAnimating === "showing" || overlay._sticky) {
-                        return;
-                    }
-                    // If the active thing is within our element, we haven't lost focus
-                    var active = _Global.document.activeElement;
-                    if (overlay._element && overlay._element.contains(active)) {
-                        return;
-                    }
-                    // SettingFlyouts don't dismiss if they spawned a flyout
-                    if (_ElementUtilities.hasClass(overlay._element, _Constants.settingsFlyoutClass)) {
-                        var settingsFlyout = overlay;
-                        var flyoutControl = _Overlay._getParentControlUsingClassName(active, "win-flyout");
-                        if (flyoutControl && flyoutControl._previousFocus && settingsFlyout.element.contains(flyoutControl._previousFocus)) {
-                            _ElementUtilities._addEventListener(flyoutControl.element, 'focusout', function focusOut(event) {
-                                // When the Flyout closes, hide the SetingsFlyout if it didn't regain focus.
-                                _Overlay._hideIfLostFocus(settingsFlyout, event);
-                                _ElementUtilities._removeEventListener(flyoutControl.element, 'focusout', focusOut, false);
-                            }, false);
-                            return;
-                        }
-                    }
-                    // Do not hide focus if focus moved to a CED. Let the click handler on the CED take care of hiding us.
-                    if (active &&
-                            (_ElementUtilities.hasClass(active, _Constants._clickEatingFlyoutClass) ||
-                             _ElementUtilities.hasClass(active, _Constants._clickEatingAppBarClass))) {
-                        return;
-                    }
-
-                    overlay._hideOrDismiss();
-                },
-
-                // Want to hide flyouts on blur.
-                // We get blur if we click off the window, including to an iframe within our window.
-                // Both blurs call this function, but fortunately document.hasFocus is true if either
-                // the document window or our iframe window has focus.
-                _checkBlur: function () {
-                    if (!_Global.document.hasFocus()) {
-                        // The document doesn't have focus, so they clicked off the app, so light dismiss.
-                        _Overlay._hideAllFlyouts();
-                        _Overlay._hideLightDismissAppBars(null, false);
-                    } else {
-                        if ((_Overlay._clickEatingFlyoutDiv &&
-                             _Overlay._clickEatingFlyoutDiv.style.display === "block") ||
-                            (_Overlay._clickEatingAppBarDiv &&
-                             _Overlay._clickEatingAppBarDiv.style.display === "block")) {
-                            // We were trying to unfocus the window, but document still has focus,
-                            // so make sure the iframe that took the focus will check for blur next time.
-                            // We don't have to do this if the click eating div is hidden because then
-                            // there would be no flyout or appbar needing light dismiss.
-                            var active = _Global.document.activeElement;
-                            if (active && active.tagName === "IFRAME" && !active.msLightDismissBlur) {
-                                // - This will go away when the IFRAME goes away, and we only create one.
-                                // - This only works in IE because other browsers don't fire focus events on iframe elements.
-                                // - Can't use WinJS.Utilities._addEventListener's focusout because it doesn't fire when an
-                                //   iframe loses focus due to changing windows.
-                                active.addEventListener("blur", _Overlay._checkBlur, false);
-                                active.msLightDismissBlur = true;
-                            }
-                        }
-                    }
-                },
-
-                // Try to set us as active
-                _trySetActive: function (element) {
-                    if (!element || !_Global.document.body || !_Global.document.body.contains(element)) {
-                        return false;
-                    }
-                    if (!_ElementUtilities._setActive(element)) {
-                        return false;
-                    }
-                    return (element === _Global.document.activeElement);
-                },
-
-                // Try to select the text so keyboard can be used.
-                _trySelect: function (element) {
-                    try {
-                        if (element && element.select) {
-                            element.select();
-                        }
-                    } catch (e) { }
-                },
-
-                // Prevent the document.activeElement from showing focus
-                _addHideFocusClass: function (element) {
-                    if (element) {
-                        _ElementUtilities.addClass(element, _Constants.hideFocusClass);
-                        _ElementUtilities._addEventListener(element, "focusout", _Overlay._removeHideFocusClass, false);
-                    }
-                },
-
-                // Allow the event.target (element that is losing focus) to show focus next time it gains focus
-                _removeHideFocusClass: function (event) {
-                    // Make sure we really lost focus and was not just an App switch
-                    var target = event.target;
-                    if (target && target !== _Global.document.activeElement) {
-                        _ElementUtilities.removeClass(target, _Constants.hideFocusClass);
-                        _ElementUtilities._removeEventListener(event.target, "focusout", _Overlay._removeHideFocusClass, false);
-                    }
-                },
-
-                _sizeOfDocument: function () {
-                    return {
-                        width: _Global.document.documentElement.offsetWidth,
-                        height: _Global.document.documentElement.offsetHeight,
-                    };
-                },
-
-                _getParentControlUsingClassName: function (element, className) {
-                    while (element && element !== _Global.document.body) {
-                        if (_ElementUtilities.hasClass(element, className)) {
-                            return element.winControl;
-                        }
-                        element = element.parentNode;
-                    }
-                    return null;
-                },
-
-                // Hide all light dismiss AppBars if what has focus is not part of a AppBar or flyout.
-                _hideIfAllAppBarsLostFocus: function _hideIfAllAppBarsLostFocus() {
-                    if (!_Overlay._isAppBarOrChild(_Global.document.activeElement)) {
-                        _Overlay._hideLightDismissAppBars(null, false);
-                        // Ensure that sticky appbars clear cached focus after light dismiss are dismissed, which moved focus.
-                        _Overlay._ElementWithFocusPreviousToAppBar = null;
-                    }
-                },
-
-                _hideLightDismissAppBars: function (event, keyboardInvoked) {
-                    var elements = _Global.document.querySelectorAll("." + _Constants.appBarClass);
-                    var len = elements.length;
-                    var AppBars = [];
-                    for (var i = 0; i < len; i++) {
-                        var AppBar = elements[i].winControl;
-                        if (AppBar && !AppBar.sticky && !AppBar.hidden) {
-                            AppBars.push(AppBar);
-                        }
-                    }
-
-                    _Overlay._hideAllBars(AppBars, keyboardInvoked);
-                },
-
-                // Show/Hide all bars
-                _hideAllBars: function _Overlay_hideAllBars(bars, keyboardInvoked) {
-                    var allBarsAnimationPromises = bars.map(function (bar) {
-                        bar._keyboardInvoked = keyboardInvoked;
-                        bar.hide();
-                        return bar._animationPromise;
-                    });
-                    return Promise.join(allBarsAnimationPromises);
-                },
-
-                _showAllBars: function _Overlay_showAllBars(bars, keyboardInvoked) {
-                    var allBarsAnimationPromises = bars.map(function (bar) {
-                        bar._keyboardInvoked = keyboardInvoked;
-                        bar._doNotFocus = false;
-                        bar._show();
-                        return bar._animationPromise;
-                    });
-                    return Promise.join(allBarsAnimationPromises);
-                },
-
-                // Returns appbar element (or CED/sentinal) if the element or what had focus before the element (if a Flyout) is either:
-                //   1) an AppBar,
-                //   2) OR in the subtree of an AppBar,
-                //   3) OR an AppBar click eating div.
-                // Returns null otherwise.
-                _isAppBarOrChild: function (element) {
-                    // If it's null, we can't do this
-                    if (!element) {
-                        return null;
-                    }
-
-                    // Intrinsic components of the AppBar count as the AppBar
-                    if (_ElementUtilities.hasClass(element, _Constants._clickEatingAppBarClass) ||
-                        _ElementUtilities.hasClass(element, _Constants._clickEatingFlyoutClass) ||
-                        _ElementUtilities.hasClass(element, _Constants.firstDivClass) ||
-                        _ElementUtilities.hasClass(element, _Constants.finalDivClass) ||
-                        _ElementUtilities.hasClass(element, _Constants.invokeButtonClass)) {
-                        return element;
-                    }
-
-                    while (element && element !== _Global.document) {
-                        if (_ElementUtilities.hasClass(element, _Constants.appBarClass)) {
-                            return element;
-                        }
-                        if (_ElementUtilities.hasClass(element, "win-flyout")
-                         && element !== element.winControl._previousFocus) {
-                            var flyoutControl = element.winControl;
-                            // If _previousFocus was in a light dismissable AppBar, then this Flyout is considered of an extension of it and that AppBar should not hide.
-                            // Hook up a 'focusout' listener to this Flyout element to make sure that light dismiss AppBars hide if focus moves anywhere other than back to an AppBar.
-                            var appBarElement = _Overlay._isAppBarOrChild(flyoutControl._previousFocus);
-                            if (appBarElement) {
-                                _ElementUtilities._addEventListener(flyoutControl.element, 'focusout', function focusOut() {
-                                    // Hides any shown AppBars if the new activeElement is not in an AppBar.
-                                    _Overlay._hideIfAllAppBarsLostFocus();
-                                    _ElementUtilities._removeEventListener(flyoutControl.element, 'focusout', focusOut, false);
-                                }, false);
-                            }
-                            return appBarElement;
-                        }
-
-                        element = element.parentNode;
-                    }
-
-                    return null;
-                },
-
-                // WWA Soft Keyboard offsets
-                _keyboardInfo: {
-                    // Determine if the keyboard is visible or not.
-                    get _visible() {
-
-                        try {
-                            return (
-                                _WinRT.Windows.UI.ViewManagement.InputPane &&
-                                _WinRT.Windows.UI.ViewManagement.InputPane.getForCurrentView().occludedRect.height > 0
-                            );
-                        } catch (e) {
-                            return false;
-                        }
-
-                    },
-
-                    // See if we have to reserve extra space for the IHM
-                    get _extraOccluded() {
-                        var occluded;
-                        if (_WinRT.Windows.UI.ViewManagement.InputPane) {
-                            try {
-                                occluded = _WinRT.Windows.UI.ViewManagement.InputPane.getForCurrentView().occludedRect.height;
-                            } catch (e) {
-                            }
-                        }
-
-                        // Nothing occluded if not visible.
-                        if (occluded && !_Overlay._keyboardInfo._isResized) {
-                            // View hasn't been resized, need to return occluded height.
-                            return occluded;
-                        }
-
-                        // View already has space for keyboard or there's no keyboard
-                        return 0;
-
-                    },
-
-                    // See if the view has been resized to fit a keyboard
-                    get _isResized() {
-                        // Compare ratios.  Very different includes IHM space.
-                        var heightRatio = _Global.document.documentElement.clientHeight / _Global.innerHeight,
-                            widthRatio = _Global.document.documentElement.clientWidth / _Global.innerWidth;
-
-                        // If they're nearly identical, then the view hasn't been resized for the IHM
-                        // Only check one bound because we know the IHM will make it shorter, not skinnier.
-                        return (widthRatio / heightRatio < 0.99);
-
-                    },
-
-                    // Get the bottom of our visible area.
-                    get _visibleDocBottom() {
-                        return _Overlay._keyboardInfo._visibleDocTop + _Overlay._keyboardInfo._visibleDocHeight;
-
-                    },
-
-                    // Get the height of the visible document, e.g. the height of the visual viewport minus any IHM occlusion.
-                    get _visibleDocHeight() {
-                        return _Overlay._keyboardInfo._visualViewportHeight - _Overlay._keyboardInfo._extraOccluded;
-
-                    },
-
-                    // Get total length of the IHM showPanel animation
-                    get _animationShowLength() {
-                        if (_WinRT.Windows.UI.Core.AnimationMetrics) {
-                            var a = _WinRT.Windows.UI.Core.AnimationMetrics,
-                            animationDescription = new a.AnimationDescription(a.AnimationEffect.showPanel, a.AnimationEffectTarget.primary);
-                            var animations = animationDescription.animations;
-                            var max = 0;
-                            for (var i = 0; i < animations.size; i++) {
-                                var animation = animations[i];
-                                max = Math.max(max, animation.delay + animation.duration);
-                            }
-                            return max;
-                        } else {
-                            return 0;
-                        }
-                    },
-                },
-
-                _ElementWithFocusPreviousToAppBar: null,
-
-                // for tests
-                _clickEatingAppBarClass: _Constants._clickEatingAppBarClass,
-                _clickEatingFlyoutClass: _Constants._clickEatingFlyoutClass,
-
-                // Padding for IHM timer to allow for first scroll event
-                _scrollTimeout: 150,
-
-                // Events
-                beforeShow: BEFORESHOW,
-                beforeHide: BEFOREHIDE,
-                afterShow: AFTERSHOW,
-                afterHide: AFTERHIDE,
-
-                commonstrings: {
-                    get cannotChangeCommandsWhenVisible() { return "Invalid argument: You must call hide() before changing {0} commands"; },
-                    get cannotChangeHiddenProperty() { return "Unable to set hidden property while parent {0} is visible."; }
-                }
-            });
-
-            // Mixin for WWA's Soft Keyboard offsets when -ms-device-fixed CSS positioning is supported, or for general _Overlay positioning whenever we are in a web browser outside of WWA.
-            // If we are in an instance of WWA, all _Overlay elements will use -ms-device-fixed positioning which fixes them to the visual viewport directly.
-            var _keyboardInfo_Mixin = {
-
-                // Get the top offset of our visible area, aka the top of the visual viewport.
-                // This is always 0 when _Overlay elements use -ms-device-fixed positioning.
-                _visibleDocTop: function _visibleDocTop() {
-                    return 0;
-                },
-
-                // Get the bottom offset of the visual viewport, plus any IHM occlusion.
-                _visibleDocBottomOffset: function _visibleDocBottomOffset() {
-                    // For -ms-device-fixed positioned elements, the bottom is just 0 when there's no IHM.
-                    // When the IHM appears, the text input that invoked it may be in a position on the page that is occluded by the IHM.
-                    // In that instance, the default browser behavior is to resize the visual viewport and scroll the input back into view.
-                    // However, if the viewport resize is prevented by an IHM event listener, the keyboard will still occlude
-                    // -ms-device-fixed elements, so we adjust the bottom offset of the appbar by the height of the occluded rect of the IHM.
-                    return (_Overlay._keyboardInfo._isResized) ? 0 : _Overlay._keyboardInfo._extraOccluded;
-                },
-
-                // Get the visual viewport height. window.innerHeight doesn't return floating point values which are present with high DPI.
-                _visualViewportHeight: function _visualViewportHeight() {
-                    var boundingRect = _Overlay._keyboardInfo._visualViewportSpace;
-                    return boundingRect.bottom - boundingRect.top;
-                },
-
-                // Get the visual viewport width. window.innerWidth doesn't return floating point values which are present with high DPI.
-                _visualViewportWidth: function _visualViewportWidth() {
-                    var boundingRect = _Overlay._keyboardInfo._visualViewportSpace;
-                    return boundingRect.right - boundingRect.left;
-                },
-
-                _visualViewportSpace: function _visualViewportSpace() {
-                    var visualViewportSpace = _Global.document.body.querySelector("." + _Constants._visualViewportClass);
-                    if (!visualViewportSpace) {
-                        visualViewportSpace = _Global.document.createElement("DIV");
-                        visualViewportSpace.className = _Constants._visualViewportClass;
-                        _Global.document.body.appendChild(visualViewportSpace);
-                    }
-                    return visualViewportSpace.getBoundingClientRect();
-                },
-            };
-
-            // Mixin for WWA's Soft Keyboard offsets in IE10 mode, where -ms-device-fixed positioning is not available.
-            // In that instance, all _Overlay elements fall back to using CSS fixed positioning.
-            // This is for backwards compatibility with Apache Cordova Apps targeting WWA since they target IE10.
-            // This is essentially the original logic for WWA _Overlay / Soft Keyboard interactions we used when windows 8 first launched.
-            var _keyboardInfo_Windows8WWA_Mixin = {
-                // Get the top of our visible area in terms of its absolute distance from the top of document.documentElement.
-                // Normalizes any offsets which have have occured between the visual viewport and the layout viewport due to resizing the viewport to fit the IHM and/or optical zoom.
-                _visibleDocTop: function _visibleDocTop_Windows8WWA() {
-                    return _Global.window.pageYOffset - _Global.document.documentElement.scrollTop;
-                },
-
-                // Get the bottom offset of the visual viewport from the bottom of the layout viewport, plus any IHM occlusion.
-                _visibleDocBottomOffset: function _visibleDocBottomOffset_Windows8WWA() {
-                    return _Global.document.documentElement.clientHeight - _Overlay._keyboardInfo._visibleDocBottom;
-                },
-
-                _visualViewportHeight: function _visualViewportHeight_Windows8WWA() {
-                    return _Global.window.innerHeight;
-                },
-
-                _visualViewportWidth: function _visualViewportWidth_Windows8WWA() {
-                    return _Global.window.innerWidth;
-                },
-            };
-
-            _Base.Class.mix(_Overlay, _Control.DOMEventMixin);
-
-            // Feature detect for -ms-device-fixed positioning and fill out the
-            // remainder of our WWA Soft KeyBoard handling logic with mixins.
-            var visualViewportSpace = _Global.document.createElement("DIV");
-            visualViewportSpace.className = _Constants._visualViewportClass;
-            _Global.document.body.appendChild(visualViewportSpace);
-
-            var propertiesMixin,
-                hasDeviceFixed = _Global.getComputedStyle(visualViewportSpace).position === "-ms-device-fixed";
-            if (!hasDeviceFixed && _WinRT.Windows.UI.ViewManagement.InputPane) {
-                // If we are in WWA with IE 10 mode, use special keyboard handling knowledge for IE10 IHM.
-                propertiesMixin = _keyboardInfo_Windows8WWA_Mixin;
-                _Global.document.body.removeChild(visualViewportSpace);
-            } else {
-                // If we are in WWA on IE 11 or outside of WWA on any web browser use general positioning logic.
-                propertiesMixin = _keyboardInfo_Mixin;
-            }
-
-            for (var propertyName in propertiesMixin) {
-                Object.defineProperty(_Overlay._keyboardInfo, propertyName, {
-                    get: propertiesMixin[propertyName],
-                });
-            }
-
-            return _Overlay;
-        })
-    });
-
-});
-
-
-
-define('require-style!less/desktop/controls',[],function(){});
-
-define('require-style!less/phone/controls',[],function(){});
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
 /// <dictionary>appbar,Flyout,Flyouts,Statics</dictionary>
-define('WinJS/Controls/Flyout',[
+define([
     'exports',
     '../Core/_Global',
     '../Core/_Base',
     '../Core/_BaseUtils',
     '../Core/_ErrorFromName',
+    '../Core/_Log',
     '../Core/_Resources',
     '../Core/_WriteProfilerMark',
     '../Animations',
+    '../_Signal',
     '../Utilities/_Dispose',
     '../Utilities/_ElementUtilities',
     '../Utilities/_Hoverable',
     './AppBar/_Constants',
-    './Flyout/_Overlay',
-    'require-style!less/desktop/controls',
-    'require-style!less/phone/controls'
-    ], function flyoutInit(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Resources, _WriteProfilerMark, Animations, _Dispose, _ElementUtilities, _Hoverable, _Constants, _Overlay) {
+    './Flyout/_Overlay'
+], function flyoutInit(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Log, _Resources, _WriteProfilerMark, Animations, _Signal, _Dispose, _ElementUtilities, _Hoverable, _Constants, _Overlay) {
     "use strict";
 
     _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
@@ -1706,9 +36,8 @@ define('WinJS/Controls/Flyout',[
         /// <event name="beforehide" locid="WinJS.UI.Flyout_e:beforehide">Raised just before hiding a flyout.</event>
         /// <event name="afterhide" locid="WinJS.UI.Flyout_e:afterhide">Raised immediately after a flyout is fully hidden.</event>
         /// <part name="flyout" class="win-flyout" locid="WinJS.UI.Flyout_part:flyout">The Flyout control itself.</part>
-        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
-        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
         Flyout: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -1718,10 +47,128 @@ define('WinJS/Controls/Flyout',[
 
             var strings = {
                 get ariaLabel() { return _Resources._getWinJSString("ui/flyoutAriaLabel").value; },
-                get noAnchor() { return "Invalid argument: Showing flyout requires a DOM element as its parameter."; },
-                get badPlacement() { return "Invalid argument: Flyout placement should be 'top' (default), 'bottom', 'left', 'right', or 'auto'."; },
+                get noAnchor() { return "Invalid argument: Flyout anchor element not found in DOM."; },
+                get badPlacement() { return "Invalid argument: Flyout placement should be 'top' (default), 'bottom', 'left', 'right', 'auto', 'autohorizontal', or 'autovertical'."; },
                 get badAlignment() { return "Invalid argument: Flyout alignment should be 'center' (default), 'left', or 'right'."; }
             };
+
+
+            // Singleton class for managing cascading flyouts
+            var _CascadeManager = _Base.Class.define(function _CascadeManager_ctor() {
+                this._cascadingStack = [];
+                this._handleKeyDownInCascade_bound = this._handleKeyDownInCascade.bind(this);
+            },
+            {
+                appendFlyout: function _CascadeManager_appendFlyout(flyoutToAdd) {
+                    // PRECONDITION: flyoutToAdd must not already be in the cascade.
+                    _Log.log && this.indexOf(flyoutToAdd) >= 0 && _Log.log('_CascadeManager is attempting to append a Flyout that is already in the cascade.', "winjs _CascadeManager", "error");
+                    // PRECONDITION: this.reentrancyLock must be false. appendFlyout should only be called from baseFlyoutShow() which is the function responsible for preventing reentrancy.
+                    _Log.log && this.reentrancyLock && _Log.log('_CascadeManager is attempting to append a Flyout through reentrancy.', "winjs _CascadeManager", "error");
+
+                    // IF the anchor element for flyoutToAdd is contained within another flyout,
+                    // && that flyout is currently in the cascadingStack, consider that flyout to be the parent of flyoutToAdd:
+                    //  Remove from the cascadingStack, any subflyout descendants of the parent flyout.
+                    // ELSE flyoutToAdd isn't anchored to any of the Flyouts in the existing cascade
+                    //  Collapse the entire cascadingStack to start a new cascade.
+                    // FINALLY:
+                    //  add flyoutToAdd to the end of the cascading stack. Monitor it for events.
+                    var indexOfParentFlyout = this.indexOfElement(flyoutToAdd._currentAnchor);
+                    if (indexOfParentFlyout >= 0) {
+                        this.collapseFlyout(this.getAt(indexOfParentFlyout + 1));
+                    } else {
+                        this.collapseAll();
+                    }
+
+                    flyoutToAdd.element.addEventListener("keydown", this._handleKeyDownInCascade_bound, false);
+                    this._cascadingStack.push(flyoutToAdd);
+                },
+                collapseFlyout: function _CascadeManager_collapseFlyout(flyout) {
+                    // Removes flyout param and its subflyout descendants from the _cascadingStack.
+                    if (!this.reentrancyLock && flyout && this.indexOf(flyout) >= 0) {
+                        this.reentrancyLock = true;
+                        var signal = new _Signal();
+                        this.unlocked = signal.promise;
+
+                        var subFlyout;
+                        while (this.length && flyout !== subFlyout) {
+                            subFlyout = this._cascadingStack.pop();
+                            subFlyout.element.removeEventListener("keydown", this._handleKeyDownInCascade_bound, false);
+                            subFlyout._hide(); // We use the reentrancyLock to prevent reentrancy here.
+                        }
+
+                        this.reentrancyLock = false;
+                        this.unlocked = null;
+                        signal.complete();
+                    }
+                },
+                collapseAll: function _CascadeManager_collapseAll(keyboardInvoked) {
+                    // Empties the _cascadingStack and hides all flyouts.
+                    var headFlyout = this.getAt(0);
+                    if (headFlyout) {
+                        headFlyout._keyboardInvoked = keyboardInvoked;
+                        this.collapseFlyout(headFlyout);
+                    }
+                },
+                indexOf: function _CascadeManager_indexOf(flyout) {
+                    return this._cascadingStack.indexOf(flyout);
+                },
+                indexOfElement: function _CascadeManager_indexOfElement(el) {
+                    // Returns an index cooresponding to the Flyout in the cascade whose element contains the element in question.
+                    // Returns -1 if the element is not contained by any Flyouts in the cascade.
+                    var indexOfAssociatedFlyout = -1;
+                    for (var i = 0, len = this.length; i < len; i++) {
+                        var currentFlyout = this.getAt(i);
+                        if (currentFlyout.element.contains(el)) {
+                            indexOfAssociatedFlyout = i;
+                            break;
+                        }
+                    }
+                    return indexOfAssociatedFlyout;
+                },
+                length: {
+                    get: function _CascadeManager_getLength() {
+                        return this._cascadingStack.length;
+                    }
+                },
+                getAt: function _CascadeManager_getAt(index) {
+                    return this._cascadingStack[index];
+                },
+                handleFocusIntoFlyout: function _CascadeManager_handleFocusIntoFlyout(event) {
+                    // When a flyout in the cascade recieves focus, we close all subflyouts beneath it.
+                    var index = this.indexOfElement(event.target);
+                    if (index >= 0) {
+                        var subFlyout = this.getAt(index + 1);
+                        this.collapseFlyout(subFlyout);
+                    }
+                },
+                handleFocusOutOfCascade: function _CascadeManager_handleFocusOutOfCascade(event) {
+                    // Hide the entire cascade if focus has moved somewhere outside of it
+                    if (this.indexOfElement(event.relatedTarget) < 0) {
+                        this.collapseAll();
+                    }
+                },
+                _handleKeyDownInCascade: function _CascadeManager_handleKeyDownInCascade(event) {
+                    var rtl = _Global.getComputedStyle(event.target).direction === "rtl",
+                        leftKey = rtl ? Key.rightArrow : Key.leftArrow,
+                        target = event.target;
+
+                    if (event.keyCode === leftKey) {
+                        // Left key press in a SubFlyout will close that subFlyout and any subFlyouts cascading from it.
+                        var index = this.indexOfElement(target);
+                        if (index >= 1) {
+                            var subFlyout = this.getAt(index);
+                            // Show a focus rect where focus is restored.
+                            subFlyout._keyboardInvoked = true;
+                            this.collapseFlyout(subFlyout);
+                            // Prevent document scrolling
+                            event.preventDefault();
+                        }
+                    } else if (event.keyCode === Key.alt || event.keyCode === Key.F10) {
+                        // Show a focus rect where focus is restored.
+                        this.collapseAll(true);
+                    }
+                },
+            });
 
             var Flyout = _Base.Class.derive(_Overlay._Overlay, function Flyout_ctor(element, options) {
                 /// <signature helpKeyword="WinJS.UI.Flyout.Flyout">
@@ -1781,7 +228,6 @@ define('WinJS/Controls/Flyout',[
 
                     // Attach our css class
                     _ElementUtilities.addClass(this._element, _Constants.flyoutClass);
-                    _ElementUtilities.addClass(this._element, _Constants.flyoutLightClass);
 
                     // Make sure we have an ARIA role
                     var role = this._element.getAttribute("role");
@@ -1801,8 +247,11 @@ define('WinJS/Controls/Flyout',[
                     this._currentAnimateIn = this._flyoutAnimateIn;
                     this._currentAnimateOut = this._flyoutAnimateOut;
 
-                    // Make sure _Overlay event handlers are hooked up
-                    this._addOverlayEventHandlers(true);
+                    _ElementUtilities._addEventListener(this.element, "focusin", this._handleFocusIn.bind(this), false);
+                    _ElementUtilities._addEventListener(this.element, "focusout", this._handleFocusOut.bind(this), false);
+
+                    // Make sure additional _Overlay event handlers are hooked up
+                    this._handleOverlayEventsForFlyoutOrSettingsFlyout();
                 },
 
                 /// <field type="String" locid="WinJS.UI.Flyout.anchor" helpKeyword="WinJS.UI.Flyout.anchor">
@@ -1828,7 +277,7 @@ define('WinJS/Controls/Flyout',[
                         return this._placement;
                     },
                     set: function (value) {
-                        if (value !== "top" && value !== "bottom" && value !== "left" && value !== "right" && value !== "auto") {
+                        if (value !== "top" && value !== "bottom" && value !== "left" && value !== "right" && value !== "auto" && value !== "autohorizontal" && value !== "autovertical") {
                             // Not a legal placement value
                             throw new _ErrorFromName("WinJS.UI.Flyout.BadPlacement", strings.badPlacement);
                         }
@@ -1899,6 +348,11 @@ define('WinJS/Controls/Flyout',[
                 },
 
                 _hide: function Flyout_hide() {
+
+                    // First close all subflyout descendants in the cascade.
+                    // Any calls to collapseFlyout through reentrancy should nop.
+                    Flyout._cascadeManager.collapseFlyout(this);
+
                     if (this._baseHide()) {
                         // Return focus if this or the flyout CED has focus
                         var active = _Global.document.activeElement;
@@ -1938,11 +392,6 @@ define('WinJS/Controls/Flyout',[
                                     }
                                 }
                             }
-
-                            // If the anchor gained focus we want to hide the focus in the non-keyboarding scenario
-                            if (!this._keyboardInvoked && (this._previousFocus === active) && appBar && active) {
-                                _Overlay._Overlay._addHideFocusClass(active);
-                            }
                         }
 
                         this._previousFocus = null;
@@ -1959,6 +408,7 @@ define('WinJS/Controls/Flyout',[
                     if (this.disabled) {
                         return;
                     }
+
                     // Pick up defaults
                     if (!anchor) {
                         anchor = this._anchor;
@@ -1980,11 +430,11 @@ define('WinJS/Controls/Flyout',[
                     // We expect an anchor
                     if (!anchor) {
                         // If we have _nextLeft, etc., then we were continuing an old animation, so that's OK
-                        if (!this._retryLast) {
+                        if (!this._reuseCurrent) {
                             throw new _ErrorFromName("WinJS.UI.Flyout.NoAnchor", strings.noAnchor);
                         }
-                        // Last call was incomplete, so use the previous _current values.
-                        this._retryLast = null;
+                        // Last call was incomplete, so reuse the previous _current values.
+                        this._reuseCurrent = null;
                     } else {
                         // Remember the anchor so that if we lose focus we can go back
                         this._currentAnchor = anchor;
@@ -1998,69 +448,83 @@ define('WinJS/Controls/Flyout',[
                         _Overlay._Overlay._showClickEatingDivFlyout();
                     }
 
-                    // If we're animating (eg baseShow is going to fail), then don't mess up our current state.
-                    // Queue us up to wait for current animation to finish first.
+                    // If we're animating (eg baseShow is going to fail), or the cascadeManager is in the middle of a updating the cascade,
+                    // then don't mess up our current state.
                     if (this._element.winAnimating) {
+                        this._reuseCurrent = true;
+                        // Queue us up to wait for the current animation to finish.
+                        // _checkDoNext() is always scheduled after the current animation completes.
                         this._doNext = "show";
-                        this._retryLast = true;
-                        return;
-                    }
+                    } else if (Flyout._cascadeManager.reentrancyLock) {
+                        this._reuseCurrent = true;
+                        // Queue us up to wait for the current animation to finish.
+                        // Schedule a call to _checkDoNext() for when the cascadeManager unlocks.
+                        this._doNext = "show";
+                        var that = this;
+                        Flyout._cascadeManager.unlocked.then(function () { that._checkDoNext(); });
+                    } else {
+                        // We call our base _baseShow to handle the actual animation
+                        if (this._baseShow()) {
+                            // (_baseShow shouldn't ever fail because we tested winAnimating above).
+                            if (!_ElementUtilities.hasClass(this.element, "win-menu")) {
+                                // Verify that the firstDiv is in the correct location.
+                                // Move it to the correct location or add it if not.
+                                var _elms = this._element.getElementsByTagName("*");
+                                var firstDiv = this.element.querySelectorAll(".win-first");
+                                if (this.element.children.length && !_ElementUtilities.hasClass(this.element.children[0], _Constants.firstDivClass)) {
+                                    if (firstDiv && firstDiv.length > 0) {
+                                        firstDiv.item(0).parentNode.removeChild(firstDiv.item(0));
+                                    }
 
-                    // We call our base _baseShow to handle the actual animation
-                    if (this._baseShow()) {
-                        // (_baseShow shouldn't ever fail because we tested winAnimating above).
-                        if (!_ElementUtilities.hasClass(this.element, "win-menu")) {
-                            // Verify that the firstDiv is in the correct location.
-                            // Move it to the correct location or add it if not.
-                            var _elms = this._element.getElementsByTagName("*");
-                            var firstDiv = this.element.querySelectorAll(".win-first");
-                            if (this.element.children.length && !_ElementUtilities.hasClass(this.element.children[0], _Constants.firstDivClass)) {
-                                if (firstDiv && firstDiv.length > 0) {
-                                    firstDiv.item(0).parentNode.removeChild(firstDiv.item(0));
+                                    firstDiv = this._addFirstDiv();
                                 }
+                                firstDiv.tabIndex = _ElementUtilities._getLowestTabIndexInList(_elms);
 
-                                firstDiv = this._addFirstDiv();
-                            }
-                            firstDiv.tabIndex = _ElementUtilities._getLowestTabIndexInList(_elms);
+                                // Verify that the finalDiv is in the correct location.
+                                // Move it to the correct location or add it if not.
+                                var finalDiv = this.element.querySelectorAll(".win-final");
+                                if (!_ElementUtilities.hasClass(this.element.children[this.element.children.length - 1], _Constants.finalDivClass)) {
+                                    if (finalDiv && finalDiv.length > 0) {
+                                        finalDiv.item(0).parentNode.removeChild(finalDiv.item(0));
+                                    }
 
-                            // Verify that the finalDiv is in the correct location.
-                            // Move it to the correct location or add it if not.
-                            var finalDiv = this.element.querySelectorAll(".win-final");
-                            if (!_ElementUtilities.hasClass(this.element.children[this.element.children.length - 1], _Constants.finalDivClass)) {
-                                if (finalDiv && finalDiv.length > 0) {
-                                    finalDiv.item(0).parentNode.removeChild(finalDiv.item(0));
+                                    finalDiv = this._addFinalDiv();
                                 }
-
-                                finalDiv = this._addFinalDiv();
+                                finalDiv.tabIndex = _ElementUtilities._getHighestTabIndexInList(_elms);
                             }
-                            finalDiv.tabIndex = _ElementUtilities._getHighestTabIndexInList(_elms);
+
+                            Flyout._cascadeManager.appendFlyout(this);
+
+                            // Store what had focus before showing the Flyout. This must happen after we've appended this
+                            // Flyout to the cascade and subsequently triggered other branches of cascading flyouts to
+                            // collapse. Ensures that focus has already been restored to the correct element by the
+                            // previous branch before we try to record it here.
+                            this._previousFocus = _Global.document.activeElement;
+
+                            if (!_ElementUtilities.hasClass(this.element, _Constants.menuClass)) {
+                                // Put focus on the first child in the Flyout
+                                this._focusOnFirstFocusableElementOrThis();
+                            } else {
+                                // Make sure the menu has focus, but don't show a focus rect
+                                _Overlay._Overlay._trySetActive(this._element);
+                            }
                         }
-
-                        // Hide all other flyouts
-                        this._hideAllOtherFlyouts(this);
-
-                        // Store what had focus before showing the Flyout.
-                        // This must happen after we hide all other flyouts so that we store the correct element.
-                        this._previousFocus = _Global.document.activeElement;
                     }
                 },
 
                 _endShow: function Flyout_endShow() {
                     // Remember if the IHM was up since we may need to hide it when the flyout hides.
-                    // This check needs to happen after the IHM has a chance to hide itself after we force hide
-                    // all other visible Flyouts.
+                    // This check needs to happen after we've hidden any other visible flyouts from
+                    // the cascasde as a result of showing this flyout.
                     this._keyboardWasUp = _Overlay._Overlay._keyboardInfo._visible;
+                },
 
-                    if (!_ElementUtilities.hasClass(this.element, _Constants.menuClass)) {
-                        // Put focus on the first child in the Flyout
-                        this._focusOnFirstFocusableElementOrThis();
+                _isLightDismissible: function Flyout_isLightDismissible() {
+                    return (!this.hidden);
+                },
 
-                        // Prevent what is gaining focus from showing that it has focus
-                        _Overlay._Overlay._addHideFocusClass(_Global.document.activeElement);
-                    } else {
-                        // Make sure the menu has focus, but don't show a focus rect
-                        _Overlay._Overlay._trySetActive(this._element);
-                    }
+                _lightDismiss: function Flyout_lightDismiss() {
+                    Flyout._cascadeManager.collapseAll();
                 },
 
                 // Find our new flyout position.
@@ -2070,9 +534,9 @@ define('WinJS/Controls/Flyout',[
                     this._hasScrolls = false;
                     this._keyboardSquishedUs = 0;
 
-                    // Make sure menu toggles behave
-                    if (this._checkToggle) {
-                        this._checkToggle();
+                    // Make sure menu commands display correctly
+                    if (this._checkMenuCommands) {
+                        this._checkMenuCommands();
                     }
 
                     // Update margins for this alignment and remove old scrolling
@@ -2123,25 +587,35 @@ define('WinJS/Controls/Flyout',[
                     }
                 },
 
-                // This determines our positioning.  We have 5 modes, the 1st four are explicit, the last is automatic:
+                // This determines our positioning.  We have 7 modes, the 1st four are explicit, the last three are automatic:
                 // * top - position explicitly on the top of the anchor, shrinking and adding scrollbar as needed.
                 // * bottom - position explicitly below the anchor, shrinking and adding scrollbar as needed.
                 // * left - position left of the anchor, shrinking and adding a vertical scrollbar as needed.
                 // * right - position right of the anchor, shrinking and adding a vertical scroolbar as needed.
                 // * auto - Automatic placement.
+                // * autohorizontal - Automatic placement (only left or right).
+                // * autovertical - Automatic placement (only top or bottom).
                 // Auto tests the height of the anchor and the flyout.  For consistency in orientation, we imagine
                 // that the anchor is placed in the vertical center of the display.  If the flyout would fit above
                 // that centered anchor, then we will place the flyout vertically in relation to the anchor, otherwise
                 // placement will be horizontal.
-                // Vertical auto placement will be positioned on top of the anchor if room, otherwise below the anchor.
+                // Vertical auto or autovertical placement will be positioned on top of the anchor if room, otherwise below the anchor.
                 //   - this is because touch users would be more likely to obscure flyouts below the anchor.
-                // Horizontal auto placement will be positioned to the left of the anchor if room, otherwise to the right.
+                // Horizontal auto or autohorizontal placement will be positioned to the left of the anchor if room, otherwise to the right.
                 //   - this is because right handed users would be more likely to obscure a flyout on the right of the anchor.
-                // Auto placement will add a vertical scrollbar if necessary.
+                // All three auto placements will add a vertical scrollbar if necessary.
                 _getTopLeft: function Flyout_getTopLeft() {
-                    var anchorRawRectangle = this._currentAnchor.getBoundingClientRect(),
+
+                    var anchorRawRectangle,
                         flyout = {},
                         anchor = {};
+
+                    try {
+                        anchorRawRectangle = this._currentAnchor.getBoundingClientRect();
+                    }
+                    catch (e) {
+                        throw new _ErrorFromName("WinJS.UI.Flyout.NoAnchor", strings.noAnchor);
+                    }
 
                     // Adjust for the anchor's margins.
                     anchor.top = anchorRawRectangle.top;
@@ -2195,6 +669,26 @@ define('WinJS/Controls/Flyout',[
                             }
                             this._centerVertically(anchor, flyout);
                             break;
+                        case "autovertical":
+                            if (!this._fitTop(anchor, flyout)) {
+                                // Didn't fit above (preferred), so go below.
+                                if (!this._fitBottom(anchor, flyout)) {
+                                    // Didn't fit, needs scrollbar
+                                    this._configureVerticalWithScroll(anchor);
+                                }
+                            }
+                            this._centerHorizontally(anchor, flyout, this._currentAlignment);
+                            break;
+                        case "autohorizontal":
+                            if (!this._fitLeft(anchor, flyout)) {
+                                // Didn't fit left (preferred), so go right.
+                                if (!this._fitRight(anchor, flyout)) {
+                                    // Didn't fit,just shove it to edge
+                                    this._nextLeft = -1;
+                                }
+                            }
+                            this._centerVertically(anchor, flyout);
+                            break;
                         case "auto":
                             // Auto, if the anchor was in the vertical center of the display would we fit above it?
                             if (this._sometimesFitsAbove(anchor, flyout)) {
@@ -2208,16 +702,8 @@ define('WinJS/Controls/Flyout',[
                                 // Won't fit above or below, try a side
                                 if (!this._fitLeft(anchor, flyout) &&
                                     !this._fitRight(anchor, flyout)) {
-                                    // Didn't fit left or right either, is top or bottom bigger?
-                                    if (this._topHasMoreRoom(anchor)) {
-                                        // Top, won't fit, needs scrollbar
-                                        this._nextTop = _Overlay._Overlay._keyboardInfo._visibleDocTop;
-                                        this._nextHeight = anchor.top - _Overlay._Overlay._keyboardInfo._visibleDocTop - this._nextMarginPadding;
-                                    } else {
-                                        // Bottom, won't fit, needs scrollbar
-                                        this._nextTop = -1;
-                                        this._nextHeight = _Overlay._Overlay._keyboardInfo._visibleDocHeight - (anchor.bottom - _Overlay._Overlay._keyboardInfo._visibleDocTop) - this._nextMarginPadding;
-                                    }
+                                    // Didn't fit left or right either
+                                    this._configureVerticalWithScroll(anchor);
                                     this._centerHorizontally(anchor, flyout, this._currentAlignment);
                                 } else {
                                     this._centerVertically(anchor, flyout);
@@ -2231,6 +717,18 @@ define('WinJS/Controls/Flyout',[
 
                     // Remember "bottom" in case we need to consider keyboard later, only tested for top-pinned bars
                     this._nextBottom = this._nextTop + flyout.height;
+                },
+
+                _configureVerticalWithScroll: function (anchor) {
+                    if (this._topHasMoreRoom(anchor)) {
+                        // Top, won't fit, needs scrollbar
+                        this._nextTop = _Overlay._Overlay._keyboardInfo._visibleDocTop;
+                        this._nextHeight = anchor.top - _Overlay._Overlay._keyboardInfo._visibleDocTop - this._nextMarginPadding;
+                    } else {
+                        // Bottom, won't fit, needs scrollbar
+                        this._nextTop = -1;
+                        this._nextHeight = _Overlay._Overlay._keyboardInfo._visibleDocHeight - (anchor.bottom - _Overlay._Overlay._keyboardInfo._visibleDocTop) - this._nextMarginPadding;
+                    }
                 },
 
                 // If the anchor is centered vertically, would the flyout fit above it?
@@ -2347,18 +845,21 @@ define('WinJS/Controls/Flyout',[
 
                 _resize: function Flyout_resize() {
                     // If hidden and not busy animating, then nothing to do
-                    if (this.hidden && !this._animating) {
-                        return;
-                    }
+                    if (!this.hidden || this._animating) {
 
-                    // This should only happen if the IHM is dismissing,
-                    // the only other way is for viewstate changes, which
-                    // would dismiss any flyout.
-                    if (this._needToHandleHidingKeyboard) {
-                        // Hiding keyboard, update our position, giving the anchor a chance to update first.
-                        var that = this;
-                        _BaseUtils._setImmediate(function () { that._findPosition(); });
-                        this._needToHandleHidingKeyboard = false;
+                        // This should only happen if the IHM is dismissing,
+                        // the only other way is for viewstate changes, which
+                        // would dismiss any flyout.
+                        if (this._needToHandleHidingKeyboard) {
+                            // Hiding keyboard, update our position, giving the anchor a chance to update first.
+                            var that = this;
+                            _BaseUtils._setImmediate(function () {
+                                if (!that.hidden || that._animating) {
+                                    that._findPosition();
+                                }
+                            });
+                            this._needToHandleHidingKeyboard = false;
+                        }
                     }
                 },
 
@@ -2405,19 +906,22 @@ define('WinJS/Controls/Flyout',[
                 _hidingKeyboard: function Flyout_hidingKeyboard() {
                     // If we aren't visible and not animating, or haven't been repositioned, then nothing to do
                     // We don't know if the keyboard moved the anchor, so _keyboardMovedUs doesn't help here
-                    if (this.hidden && !this._animating) {
-                        return;
-                    }
+                    if (!this.hidden || this._animating) {
 
-                    // Snap to the final position
-                    // We'll either just reveal the current space or resize the window
-                    if (_Overlay._Overlay._keyboardInfo._isResized) {
-                        // Flag resize that we'll need an updated position
-                        this._needToHandleHidingKeyboard = true;
-                    } else {
-                        // Not resized, update our final position, giving the anchor a chance to update first.
-                        var that = this;
-                        _BaseUtils._setImmediate(function () { that._findPosition(); });
+                        // Snap to the final position
+                        // We'll either just reveal the current space or resize the window
+                        if (_Overlay._Overlay._keyboardInfo._isResized) {
+                            // Flag resize that we'll need an updated position
+                            this._needToHandleHidingKeyboard = true;
+                        } else {
+                            // Not resized, update our final position, giving the anchor a chance to update first.
+                            var that = this;
+                            _BaseUtils._setImmediate(function () {
+                                if (!that.hidden || that._animating) {
+                                    that._findPosition();
+                                }
+                            });
+                        }
                     }
                 },
 
@@ -2433,7 +937,7 @@ define('WinJS/Controls/Flyout',[
                         this._element.style.top = "auto";
                     } else {
                         // Normal, attach to top
-                        this._element.style.top =  _Overlay._Overlay._keyboardInfo._visibleDocTop + "px";
+                        this._element.style.top = _Overlay._Overlay._keyboardInfo._visibleDocTop + "px";
                         this._element.style.bottom = "auto";
                     }
                 },
@@ -2496,6 +1000,7 @@ define('WinJS/Controls/Flyout',[
                          && (this === _Global.document.activeElement)) {
                         event.preventDefault();
                         event.stopPropagation();
+                        this.winControl._keyboardInvoked = true;
                         this.winControl.hide();
                     } else if (event.shiftKey && event.keyCode === Key.tab
                           && this === _Global.document.activeElement
@@ -2505,6 +1010,22 @@ define('WinJS/Controls/Flyout',[
                         this.winControl._focusOnLastFocusableElementOrThis();
                     }
                 },
+
+                _handleFocusIn: function Flyout_handleFocusIn(event) {
+                    if (!this.element.contains(event.relatedTarget)) {
+                        Flyout._cascadeManager.handleFocusIntoFlyout(event);
+                    }
+                    // Else focus is only moving between elements in the flyout.
+                    // Doesn't need to be handled by cascadeManager.
+                },
+                _handleFocusOut: function Flyout_handleFocusOut(event) {
+                    if (!this.element.contains(event.relatedTarget)) {
+                        Flyout._cascadeManager.handleFocusOutOfCascade(event);
+                    }
+                    // Else focus is only moving between elements in the flyout.
+                    // Doesn't need to be handled by cascadeManager.
+                },
+
 
                 // Create and add a new first div as the first child
                 _addFirstDiv: function Flyout_addFirstDiv() {
@@ -2545,6 +1066,9 @@ define('WinJS/Controls/Flyout',[
                 _writeProfilerMark: function Flyout_writeProfilerMark(text) {
                     _WriteProfilerMark("WinJS.UI.Flyout:" + this._id + ":" + text);
                 }
+            },
+            {
+                _cascadeManager: new _CascadeManager(),
             });
             return Flyout;
         })

@@ -1,0 +1,808 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+/*
+AppBar/Flyout z-index values:
+    1000 - AppBar/settings click-eating div
+    1002 - AppBar
+    1004 - Settings Flyout
+    1006 - Flyout click-eating div
+    1008 - Flyout
+*/
+
+@import "base.less";
+@import "mixins.less";
+
+.win-appbarclickeater {
+    z-index: 1000;
+    background-color: transparent;
+    display: none;
+    width: 110%;
+    height: 110%;
+    left: -5%;
+    top: -5%;
+    position: fixed;
+    touch-action: none;
+    outline: 1px solid Purple; /*Necessary to block passthrough over webviews*/
+    -ms-high-contrast-adjust: none;
+}
+
+.win-flyoutmenuclickeater {
+    z-index: 1006;
+    background-color: transparent;
+    display: none;
+    width: 110%;
+    height: 110%;
+    left: -5%;
+    top: -5%;
+    position: fixed;
+    touch-action: none;
+    outline: 1px solid Lime; /*Necessary to block passthrough over webviews*/
+    -ms-high-contrast-adjust: none;
+}
+
+/*
+Command buttons.
+*/
+button.win-command {
+    background: none;
+    background-clip: border-box;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    border: 1px dotted; /* reserve focus rect */
+    min-width: 40px;
+    min-height: 48px;
+    text-align: center;
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: normal;
+    overflow: visible;
+    /* Commands are lrtb */
+    writing-mode: lr-tb;
+    position: relative;
+    z-index:0;
+}
+
+button {
+    .RTL({
+        writing-mode: rl-tb;
+    });
+}
+
+button.win-command:focus {
+    outline: none;
+}
+
+
+/*
+Command button icons.
+*/
+.win-commandicon {
+    display: block;
+    margin: 11px 21px; /* left/right margin: 22px = 1px focus rect + 21px. Affects margin-top of  button.win-command .win-label */
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    /* Normal sizing */
+    width: 24px;
+    height: 24px;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    cursor: default;
+    position: relative;
+    outline:none;
+}
+
+.win-commandimage {
+    /* Default font for glyphs. */
+    font-family: "Segoe UI Command", "Symbols";
+    letter-spacing: 0;
+    /* Applications provide their own content, like &#xE0D5;. */
+    vertical-align: middle;
+    font-size: 20px;
+    margin: 0;
+    line-height: 24px; /* line-height must match the content box height */
+    background-position: 0 0;
+    background-origin: border-box;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-size: 96px 48px;
+    outline: none;
+}
+
+.win-commandimage.win-commandglyph {
+    position: absolute;
+    left: 0;
+}
+
+/*
+Offsets for sprite versions.
+*/
+html.win-hoverable button:enabled:hover .win-commandimage, button:active .win-commandimage {
+    background-position: -24px 0;
+}
+
+button:enabled:hover:active .win-commandimage.win-commandimage {
+    background-position: -48px 0;
+}
+
+// The "-ms-keyboard-active" pseudo is not always supported. When it is not supported
+//   it will be treated as a CSS parse error and will throw out all rules in the current
+//   CSS rule group. For this reason, never group it with other rules.
+button:-ms-keyboard-active .win-commandimage {
+    background-position: -48px 0;
+}
+
+button:disabled .win-commandimage,
+button:disabled:active .win-commandimage {
+    background-position: -72px 0;
+}
+
+/*
+Offsets for sprite versions in selected state.
+*/
+button[aria-checked=true] .win-commandimage {
+    background-position: 0 -24px;
+}
+
+html.win-hoverable button[aria-checked=true]:enabled:hover .win-commandimage,
+button[aria-checked=true]:active .win-commandimage {
+    background-position: -24px -24px;
+}
+
+button[aria-checked=true]:enabled:hover:active .win-commandimage.win-commandimage {
+    background-position: -48px -24px;
+}
+
+button[aria-checked=true]:-ms-keyboard-active .win-commandimage {
+    background-position: -48px -24px;
+}
+
+button[aria-checked=true]:disabled .win-commandimage,
+button[aria-checked=true]:disabled:active .win-commandimage {
+    background-position: -72px -24px;
+}
+
+/*
+Command button labels.
+*/
+button.win-command .win-label {
+    position: relative;
+    line-height: 16px;
+    display: block;
+    max-width: 66px; /* 68px button, but allow for 2*1px for focus border on each side */
+    margin-top: -10px; /* 2px = 12px margin-bottom of .win-commandicon  - 10px*/
+    margin-bottom: 6px;
+    padding:0;
+    overflow: hidden;
+    word-wrap: break-word;
+    word-break: keep-all;
+    outline: none;
+}
+
+/*
+AppBarCommand separator types.
+*/
+hr.win-command {
+    display: inline-block;
+    padding: 0;
+    margin: 12px 16px;
+    width: 2px;
+    height: 24px;
+    border: 0;
+    vertical-align: top;
+}
+
+/*
+AppBarCommand content types.
+*/
+div.win-command {
+    display: inline-block;
+    min-width: 0;
+    min-height: 0;
+    padding: 0px 31px;
+    border: 1px dotted; /* reserve focus rect */
+    text-align: center;
+    font-size: 9px;
+    line-height: 16px;
+    font-weight: normal;
+    vertical-align: top;
+    /* Content Commands are lrtb */
+    writing-mode: lr-tb;
+    position: relative;
+}
+
+div.win-command {
+    .RTL({
+        writing-mode: rl-tb;
+    });
+}
+
+div.win-command:focus {
+    outline: none;
+}
+
+/*
+AppBar
+*/
+.win-appbar {
+    z-index: 1002;
+    border-width: 0;
+    width: 100%;
+    height: auto;
+    left: 0;
+    position: fixed;
+    position: -ms-device-fixed;
+    min-height: 48px;
+
+    &.win-appbar-minimal {
+        min-height: 25px;
+
+        &.win-appbar-hidden .win-appbar-invokebutton .win-appbar-ellipsis {
+            top: 5px;
+        }
+    }
+
+    &.win-appbar-hiding.win-appbar-minimal > :not(.win-appbar-invokebutton) {
+        opacity: 0;
+    }
+
+    &.win-menulayout.win-appbar-hiding .win-appbar-menu {
+        opacity: 1;
+    }
+
+    &.win-appbar-hidden.win-appbar-minimal > :not(.win-appbar-invokebutton) {
+        display: none !important;
+    }
+
+    &.win-appbar-hiding.win-appbar-minimal .win-appbar-invokebutton,
+    &.win-appbar-hidden.win-appbar-minimal .win-appbar-invokebutton {
+        width: 100%;
+    }
+
+    &.win-menulayout.win-appbar-showing,
+    &.win-menulayout.win-appbar-shown,
+    &.win-menulayout.win-appbar-hiding  {
+        .win-appbar-invokebutton {
+            visibility: hidden;
+        }
+        .win-toolbar.win-toolbar-showndisplayfull .win-toolbar-overflowbutton {
+            visibility: visible;
+        }
+    }
+
+    .win-appbar-invokebutton {
+        width: 32px;
+        height: 100%;
+        min-height: 25px;
+        position: absolute;
+        right: 0px;
+        margin: 0px;
+        padding: 0px;
+        border: dotted 1px;
+        min-width: 0px;
+        background-clip:border-box;
+        display: none;
+        // Setting explicit z-index here works around draw ordering issue that occurs in IE when other positioned elements are present in a custom AppBar.
+        z-index: 1;
+
+        .win-appbar-ellipsis {
+            width: 32px;
+            height: 100%;
+            right: 0px;
+            top:15px;
+            position: absolute;
+            display: inline-block;
+            font-size: 14px;
+            text-align: center;
+            font-family: "Segoe MDL2 Assets", "Symbols";
+
+            &::before {
+                content: "\E10C";
+                position: relative;
+            }
+        }
+    }
+
+    .RTL({
+        .win-appbar-invokebutton,
+        .win-appbar-invokebutton .win-appbar-ellipsis {
+            right: auto;
+            left: 0px;
+        }
+    });
+
+    &.win-appbar-minimal .win-appbar-invokebutton,
+    &.win-appbar-compact .win-appbar-invokebutton {
+        display: block;
+    }
+}
+
+/*
+AppBar commands layout
+*/
+.win-commandlayout {
+    #flex > .display-flex();
+    #flex > .flex-direction(row);
+    #flex > .flex-wrap(nowrap);
+    #flex > .justify-content(center);
+    #flex > .align-items(flex-start);
+
+    .win-primarygroup {
+        #flex > .order(2);
+        #flex > .display-inline-flex();
+        #flex > .flex(1; 1; auto);
+        #flex > .flex-direction(row);
+        #flex > .flex-wrap(wrap);
+        #flex > .justify-content(flex-end);
+        #flex > .align-items(flex-start);
+    }
+
+    .win-secondarygroup {
+        #flex > .order(1);
+        #flex > .display-inline-flex();
+        #flex > .flex(1; 1; auto);
+        #flex > .flex-direction(row);
+        #flex > .flex-wrap(wrap);
+        #flex > .justify-content(flex-start);
+        #flex > .align-items(flex-start);
+    }
+
+    .win-command {
+        #flex > .flex(0; 0; auto);
+    }
+
+    &.win-appbar-showing,
+    &.win-appbar-shown,
+    &.win-appbar-hiding {
+        min-height: 62px;
+    }
+
+    &.win-appbar-showing.win-appbar-compact,
+    &.win-appbar-shown.win-appbar-compact,
+    &.win-appbar-hiding.win-appbar-compact {
+        min-height: 48px;
+    }
+
+    &.win-appbar-minimal,
+    &.win-appbar-compact {
+        // Minimal and compact AppBar with commands layout makes room for the invokeButton.
+        padding-right: 32px;
+        width: ~"calc(100% - 32px)";
+    }
+
+    &.win-appbar-compact {
+        button.win-command .win-label {
+            display: none;
+        }
+    }
+
+    &.win-appbar-compact.win-appbar-hiding {
+        button.win-command .win-label {
+            display: block;
+            visibility: hidden;
+        }
+    }
+
+    &.win-appbar-compact.win-appbar-shown,
+    &.win-appbar-compact.win-appbar-showing {
+        button.win-command .win-label {
+            display: block;
+            visibility: visible;;
+        }
+    }
+}
+
+/* CommandsLayout RTL */
+.win-commandlayout {
+    .RTL({
+        &.win-appbar-minimal,
+        &.win-appbar-compact {
+            padding-right: 0px;
+            padding-left: 32px;
+        }
+    });
+}
+
+/*
+AppBar menu layout
+*/
+.win-menulayout {
+    .win-appbar-menu {
+        position:absolute;
+        right:0;
+        top:0;
+
+        .RTL({
+            left: 0;
+            right: auto;
+        });
+
+        overflow: hidden;
+    }
+
+    &.win-bottom .win-appbar-menu {
+        overflow: visible;
+    }
+
+    .win-toolbar {
+        max-width: 100vw;
+    }
+
+    &.win-appbar-compact {
+        button.win-command .win-label {
+            display: none;
+            visibility: hidden;
+        }
+    }
+
+    &.win-appbar-compact.win-appbar-hiding,
+    &.win-appbar-compact.win-appbar-showing {
+        button.win-command .win-label {
+            display: block;
+            visibility: visible;
+        }
+    }
+
+    &.win-appbar-compact.win-appbar-shown  {
+        button.win-command .win-label {
+            display: block;
+            visibility: visible;
+        }
+    }
+
+    &.win-appbar-compact.win-appbar-hidden {
+        overflow: hidden;
+
+        .win-toolbar-overflowarea {
+            visibility: hidden;
+        }
+    }
+}
+
+/*
+High contrast AppBar needs a border
+*/
+@media (-ms-high-contrast) {
+    /*
+    AppBar Borders
+    */
+    .win-appbar {
+        border: solid 2px;
+    }
+
+    .win-appbar.win-top {
+        border-top: none;
+        border-left: none;
+        border-right: none;
+    }
+
+    .win-appbar.win-bottom {
+        border-bottom: none;
+        border-left: none;
+        border-right: none;
+    }
+
+    .win-appbar.win-top button.win-command,
+    .win-appbar.win-top div.win-command {
+        padding-bottom: 7px; /* 7px - 2px smaller to account for the high-constrast appbar border */
+    }
+
+    .win-appbar.win-bottom button.win-command,
+    .win-appbar.win-bottom div.win-command {
+        padding-top: 7px; /* 7px - 2px smaller to account for the high-constrast appbar border */
+    }
+
+    .win-appbar.win-top hr.win-command {
+        margin-bottom: 28px;
+    }
+
+    .win-appbar.win-bottom hr.win-command {
+        margin-top: 8px;
+    }
+
+    .win-commandlayout {
+        &.win-appbar-showing,
+        &.win-appbar-shown,
+        &.win-appbar-hiding {
+            min-height: 62px;
+        }
+    }
+}
+
+/*
+Flyout control.
+*/
+.win-flyout {
+    z-index: 1008;
+    position: fixed;
+    position: -ms-device-fixed;
+    padding: 12px;
+    border-style: solid;
+    border-width: 1px;
+    margin: 5px;
+    min-width: 68px; /* 96px - padding - border */
+    max-width: 428px; /* 456px - padding - border */
+    min-height: 16px; /* 44px - padding - border */
+    max-height: 730px; /* 758px - padding - border */
+    width: auto;
+    height: auto;
+    word-wrap: break-word;
+    overflow: auto;
+    .win-type-body();
+}
+
+.win-flyout.win-leftalign {
+    margin-left: 0;
+}
+
+.win-flyout.win-rightalign {
+    margin-right: 0;
+}
+
+.win-flyout.win-scrolls {
+    overflow: auto;
+}
+
+/*
+Menu control.
+*/
+.win-menu {
+    padding: 0;
+    line-height: 33px;
+    text-align: left; /* Set explicitly in case our parent has different alignment, like appbar overflow. */
+    min-height: 46px; /* 44px -  2px in border = 46px */
+    max-height: ~"calc(100% - 26px)";
+    min-width: 136px;
+    max-width: 456px;
+}
+
+/*
+Menu commands.
+*/
+.win-menu button.win-command {
+    display: block;
+    padding-top: 11px;
+    padding-bottom: 13px;
+    min-height: 44px;
+    margin-left: 0;
+    margin-right: 0;
+    text-align: left;
+    width: 100%;
+    .win-type-body();
+
+    &:focus {
+        outline: none;
+    }
+
+    .win-menucommand-liner {
+        #flex > .display-flex();
+        #flex > .flex-direction(row);
+        #flex > .flex-wrap(nowrap);
+        #flex > .align-items(center);
+        width:100%;
+        position: relative;
+
+        .win-toggleicon, .win-flyouticon {
+            #flex > .flex(0; 0; auto);
+            display: none;
+            visibility: hidden;
+            font-size: 16px;
+            font-family: "Segoe MDL2 Assets", "Symbols";
+        }
+        .win-toggleicon {
+            margin-left: 12px;
+            &::before {
+                content: "\E0E7";
+            }
+        }
+        .win-flyouticon {
+            margin-left: 12px;
+            margin-right: 16px;
+            &::before {
+                content: "\E26B";
+            }
+        }
+        .win-label {
+            #flex > .flex(1; 1; auto);
+            font-size: 15px;
+            line-height: inherit;
+            min-width: 112px;
+            max-width: none;
+            white-space: nowrap;
+            text-overflow: clip;
+            margin: 0px;
+            padding: 0px 12px;
+        }
+
+        .RTL({
+            text-align: right;
+
+            .win-toggleicon {
+                margin-left: 0px;
+                margin-right: 12px;
+            }
+            .win-flyouticon {
+                margin-left: 16px;
+                margin-right: 12px;
+                &::before {
+                    content: "\E26C";
+                }
+            }
+        });
+     }
+}
+
+.win-menu hr.win-command {
+    display: block;
+    height: 1px;
+    width: auto;
+    border: 0;
+    padding: 0;
+    margin: 9px 20px 10px 20px;
+}
+
+/*
+Menu toggle and flyout commands.
+*/
+.win-menu-containstogglecommand button.win-command .win-menucommand-liner .win-toggleicon,
+.win-menu-containsflyoutcommand button.win-command .win-menucommand-liner .win-flyouticon {
+    display: inline-block;
+}
+.win-menu-containstogglecommand button.win-command-toggle[aria-checked=true] .win-menucommand-liner .win-toggleicon,
+.win-menu-containsflyoutcommand button.win-command-flyout .win-menucommand-liner .win-flyouticon {
+    visibility: visible;
+}
+
+/*
+Grippers in touch selection do not dissapear when focus moves to an element outside of the selection range and they are always drawn on a layer above all HTML elemements.
+When an _Overlay derived control such as AppBar/Flyout/Menu/SettingsFlyout is invoked and steals focus, if that _Overlay is laid out on top of the elements in the touch selection,
+the grippers can still be seen over the _Overlay and its contents. However, all grippers any where in the document will be hidden whenever the current active element has or inherits
+the style "-ms-touch-select: none;"
+*/
+.win-overlay {
+    -ms-touch-select: none;
+}
+
+/* For input elements we filter type using the :not selector to capture any unrecognized user specified types which would just default to the form and function of a textbox*/
+.win-overlay input:not([type="file"]),
+.win-overlay input:not([type="radio"]),
+.win-overlay input:not([type="checkbox"]),
+.win-overlay input:not([type="button"]),
+.win-overlay input:not([type="range"]),
+.win-overlay input:not([type="image"]),
+.win-overlay input:not([type="reset"]),
+.win-overlay input:not([type="hidden"]),
+.win-overlay input:not([type="submit"]),
+.win-overlay textarea,
+.win-overlay [contenteditable=true] {
+    -ms-touch-select: grippers;
+}
+
+/* Singleton element maintained by _Overlay, used for getting accurate floating point measurements of the total size of the visual viewport.
+    Floating point is necesary in high DPI resolutions. */
+.win-visualviewport-space {
+    position: fixed;
+    position: -ms-device-fixed;
+    height: 100%;
+    width: 100%;
+    visibility: hidden;
+}
+
+/*
+Settings Pane
+*/
+.win-settingsflyout {
+    z-index: 1004; /* above appbar and below flyouts */
+    border-left: 1px solid;
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 319px; /* 320px - border (1px) */
+
+    .RTL({
+        border-left: none;
+        border-right: 1px solid;
+    });
+
+    &.win-wide { /* .win-wide is deprecated in Windows 8.1 */
+        width: 645px; /* 646px - border (1px) */
+    }
+
+    /* Settings back button is slightly smaller. */
+    .win-backbutton,
+    .win-back {
+        width: 32px;
+        height: 32px;
+        font-size: 20px;
+        line-height: 32px;
+    }
+
+    .win-header {
+        padding-top: 6px;
+        padding-bottom: 10px;
+        padding-left: 52px; /* 40px for the backbutton */
+        padding-right: 12px;
+        height: 32px;
+        position: relative;
+
+        .win-label {
+            display: inline-block;
+            .win-type-title(32px);
+            white-space: nowrap;
+        }
+
+        .win-backbutton,
+        .win-navigation-backbutton {
+            position: absolute;
+            left: 12px;
+        }
+    }
+
+    .win-content {
+        overflow: auto;
+        padding: 0px 12px;
+
+        .win-label {
+            .win-type-subtitle();
+        }
+
+        .win-settings-section {
+            padding-top: 0;
+            padding-bottom: 39px;
+            margin: 0;
+            padding-top: 0;
+            padding-bottom: 20px;
+
+            p {
+                margin: 0;
+                padding-top: 0;
+                padding-bottom: 25px;
+            }
+
+            a {
+                margin: 0;
+                padding-top: 0;
+                padding-bottom: 25px;
+                display: inline-block;
+            }
+
+            label {
+                display: block;
+                padding-bottom: 7px;
+            }
+
+            button,
+            select,
+            input[type=button],
+            input[type=text] {
+                margin-bottom: 25px;
+                margin-left: 0;
+                margin-right: 20px;
+
+                .RTL({
+                    margin-bottom: 25px;
+                    margin-left: 20px;
+                    margin-right: 0;
+                });
+            }
+
+            input[type=radio] {
+                margin-top: 0;
+                margin-bottom: 0;
+                padding-bottom: 15px;
+            }
+        }
+    }
+}
+
+/*Flyout control animations*/
+@keyframes WinJS-showFlyoutTop               { from { transform: translateY(50px); } to { transform: none; } }
+@keyframes WinJS-showFlyoutBottom            { from { transform: translateY(-50px); } to { transform: none; } }
+@keyframes WinJS-showFlyoutLeft              { from { transform: translateX(50px); } to { transform: none; } }
+@keyframes WinJS-showFlyoutRight             { from { transform: translateX(-50px); } to { transform: none; } }
+@-webkit-keyframes -webkit-WinJS-showFlyoutTop               { from { -webkit-transform: translateY(50px); } to { -webkit-transform: none; } }
+@-webkit-keyframes -webkit-WinJS-showFlyoutBottom            { from { -webkit-transform: translateY(-50px); } to { -webkit-transform: none; } }
+@-webkit-keyframes -webkit-WinJS-showFlyoutLeft              { from { -webkit-transform: translateX(50px); } to { -webkit-transform: none; } }
+@-webkit-keyframes -webkit-WinJS-showFlyoutRight             { from { -webkit-transform: translateX(-50px); } to { -webkit-transform: none; } }

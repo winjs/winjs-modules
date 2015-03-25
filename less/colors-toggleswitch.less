@@ -1,0 +1,60 @@
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
+.Colors(@theme) {
+    .colorDefinitions(@theme);
+
+    // Rest styles
+    .win-toggleswitch-header {
+        color: @baseHigh;
+    }
+    .win-toggleswitch-value {
+        color: @baseHigh;
+    }
+    .win-toggleswitch-thumb {
+        background-color: @baseMediumHigh;
+    }
+    .win-toggleswitch-on .win-toggleswitch-track {
+        border-color: @accentColor;
+    }
+    .win-toggleswitch-off .win-toggleswitch-track {
+        border-color: @baseMediumHigh;
+    }
+
+    // Active styles
+    .win-toggleswitch-pressed .win-toggleswitch-track {
+        border-color: @baseMid;
+    }
+    .win-toggleswitch-pressed .win-toggleswitch-thumb {
+        background-color: @baseMid;
+    }
+
+    // Disabled styles
+    .win-toggleswitch-disabled .win-toggleswitch-track {
+        border-color: @baseLow;
+    }
+    .win-toggleswitch-disabled .win-toggleswitch-thumb {
+        background-color: @baseLow;
+    }
+    .win-toggleswitch-disabled .win-toggleswitch-header,
+    .win-toggleswitch-disabled .win-toggleswitch-value {
+        color: @baseLow;
+    }
+}
+
+.ColorsHover(@theme) {
+    .colorDefinitions(@theme);
+
+    // Hover styles
+    .win-toggleswitch-off:not(.win-toggleswitch-disabled):not(.win-toggleswitch-pressed) {
+        .win-toggleswitch-clickregion:hover .win-toggleswitch-track {
+            border-color: @baseHigh;
+        }
+    }
+
+    .win-toggleswitch:not(.win-toggleswitch-disabled):not(.win-toggleswitch-pressed) {
+        .win-toggleswitch-clickregion:hover .win-toggleswitch-thumb {
+            background-color: @baseHigh;
+        }
+    }
+
+}

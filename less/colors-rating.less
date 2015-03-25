@@ -1,0 +1,40 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+.Colors(@theme) {
+    .colorDefinitions(@theme);
+
+    .win-rating .win-star.win-user.win-full,
+    .win-rating .win-star.win-user.win-full.win-disabled {
+        color: @accentColor;
+    }
+    .win-rating .win-star.win-tentative.win-full {
+        color: @baseMediumHigh;
+    }
+    .win-rating .win-star.win-average.win-full,
+    .win-rating .win-star.win-average.win-full.win-disabled {
+        color: @baseMediumMid;
+    }
+    .win-rating .win-star.win-empty {
+        color: @baseLow;
+    }
+}
+
+@media (-ms-high-contrast) {
+    .win-rating .win-star:before {
+        content: "\E082" !important;
+    }
+    .win-rating .win-star.win-full {
+        color: HighLight;
+    }
+    .win-rating .win-star.win-tentative.win-full {
+        color: ButtonText;
+    }
+    .win-rating .win-star.win-empty {
+        color: ButtonFace;
+    }
+    .win-rating .win-star:after {
+        content: "\E224" !important;
+        position: relative;
+        top: -100%;
+        color: ButtonText;
+    }
+}

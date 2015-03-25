@@ -1,0 +1,51 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+.Colors(@theme) {
+    .colorDefinitions(@theme);
+    .win-flipview {
+        .win-navbutton {
+            background-color: @baseMediumMid;
+            color: @altMediumHigh;
+
+            &:hover:active {
+                background-color: @baseMediumHigh;
+            }
+        }
+    }
+    html.win-hoverable .win-flipview {
+        .win-navbutton:hover {
+            background-color: @baseMid;
+        }
+    }
+}
+
+@media (-ms-high-contrast) {
+    .win-flipview {
+        .win-navbottom {
+            left: 50%;
+            top: 100%;
+            margin-left: -35px;
+            margin-top: -35px;
+        }
+        .win-navbutton {
+            background-color: ButtonFace;
+            color: ButtonText;
+            border: 2px solid ButtonText;
+            width: 65px;
+            height: 35px;
+        }
+        .win-navbutton.win-navbutton:hover:active,
+        .win-navbutton.win-navbutton:active {
+            background-color: ButtonText;
+            color: ButtonFace;
+        }
+        .win-navright {
+            margin-left: -65px;
+        }
+    }
+    html.win-hoverable .win-flipview {
+        .win-navbutton:hover {
+            background-color: Highlight;
+            color: HighlightText;
+        }
+    }
+}

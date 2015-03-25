@@ -1,0 +1,154 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
+@import "base.less";
+@import "mixins.less";
+
+.win-hub {
+    height: 100%;
+    width: 100%;
+    position: relative;
+}
+.win-hub-progress {
+    position: absolute;
+    top: 10px;
+    width: 100%;
+    z-index: 1;
+}
+.win-hub-viewport {
+    height: 100%;
+    width: 100%;
+    -ms-scroll-snap-type: proximity;
+    -webkit-overflow-scrolling: touch;
+}
+.win-hub-horizontal .win-hub-viewport {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+}
+.win-hub-vertical .win-hub-viewport {
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.win-hub-surface {
+    display: inline-block;
+}
+.win-hub-vertical .win-hub-surface {
+    width: 100%;
+    padding: 15px 0;
+}
+.win-hub-horizontal .win-hub-surface {
+    height: 100%;
+    padding: 0 80px;
+}
+
+
+.win-hub-section {
+    display: inline-block;
+    padding: 0 40px;
+    vertical-align: top;
+    white-space: normal;
+}
+.win-hub-horizontal {
+    .win-hub-section {
+        height: 100%;
+    }
+
+    .win-hub-section-header {
+        margin-top: 129px;
+    }
+}
+.win-hub-vertical {
+    .win-hub-section {
+        width: ~"calc(100% - 80px)";
+        padding: 14px 40px;
+    }
+
+    .win-hub-section-header {
+        margin-top: 1px;
+    }
+}
+.win-hub-section-header {
+    margin: 4px 0;
+    font-size: 20px;
+    text-align: left;
+    height: 51px;
+
+    .RTL({
+        text-align: right;
+    });
+}
+
+// Override default button styles
+// Button is used so that both piece of UI change color. button:active becomes active if the children are pressed.
+button.win-hub-section-header-tabstop,
+html.win-hoverable button.win-hub-section-header-tabstop:hover,
+button.win-hub-section-header-tabstop:hover:active {
+    background-color: transparent;
+    border: 0;
+    padding: 0 3px 0 0;
+    min-height: 0;
+    min-width: 0;
+    max-width: ~"calc(100% - 3px)";
+    font-size: 20px;
+
+    .RTL({
+        padding: 0 0 0 3px;
+    });
+}
+button.win-hub-section-header-tabstop:focus {
+    outline: none;
+}
+
+// The "-ms-keyboard-active" pseudo is not always supported. When it is not supported
+// it will be treated as a CSS parse error and will throw out all rules in the current
+// CSS rule group. For this reason, never group it with other rules.
+button.win-hub-section-header-tabstop:-ms-keyboard-active {
+    background-color: transparent;
+}
+.win-hub-section-header-wrapper {
+    #flex > .display-inline-flex();
+    #flex > .flex-direction(row);
+    width: 100%;
+    outline: none;
+}
+.win-hub-section-header-content {
+    #flex > .flex(@grow: 1);
+}
+.win-hub-section-header-chevron {
+    display: none;
+}
+.win-hub-section-header-interactive .win-hub-section-header-chevron {
+    #flex > .flex(@shrink: 0);
+    display: inline-block;
+    margin-left: 7px;
+    font-size: 20px;
+    padding-top: 14px;
+
+    .RTL({
+        margin-left: 0;
+        margin-right: 7px;
+    });
+}
+.win-hub-section-header-chevron::before {
+    font-family: "Segoe MDL2 Assets", "Symbols";
+    content: "\E26B";
+}
+.win-hub-section-header-chevron {
+    .RTL({
+        font-family: "Segoe MDL2 Assets", "Symbols";
+        content: "\E26C";
+    });
+}
+.win-hub-section-content {
+}
+.win-hub-horizontal .win-hub-section-content {
+    // We want 44px of 'padding' between the bottom of section content and
+    // the bottom of the hub surface. 228px represents the 129px of margin
+    // above section header + 4px below + 51px of height of section header
+    // + the 44px.
+    height: ~"calc(100% - 228px)";
+}
+.win-hub-vertical .win-hub-section-content {
+    width: 100%;
+}

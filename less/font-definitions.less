@@ -1,0 +1,163 @@
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
+// Symbol font face
+@font-face {
+    font-family: "Segoe UI Command";
+    src: local("Segoe MDL2 Assets");
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Symbols";
+    src: url(../fonts/Symbols.ttf);
+}
+
+//
+// Font size mixins
+//
+.win-type-header(@lineHeight: 1.216) {
+    font-size: 46px;
+    font-weight: 200;
+    line-height: @lineHeight;
+    letter-spacing: 0px;
+}
+.win-type-subheader(@lineHeight: 1.176) {
+    font-size: 34px;
+    font-weight: 200;
+    line-height: @lineHeight;
+}
+.win-type-title(@lineHeight: 1.167) {
+    font-size: 24px;
+    font-weight: 300;
+    line-height: @lineHeight;
+}
+.win-type-subtitle(@lineHeight: 1.2) {
+    font-size: 20px;
+    font-weight: 400;
+    line-height: @lineHeight;
+}
+.win-type-base(@lineHeight: 1.333) {
+    font-size: 15px;
+    font-weight: 500;
+    line-height: @lineHeight;
+}
+.win-type-body(@lineHeight: 1.333) {
+    font-size: 15px;
+    font-weight: 400;
+    line-height: @lineHeight;
+}
+.win-type-caption(@lineHeight: 1.167) {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: @lineHeight;
+}
+.win-type-xx-large {
+    .win-type-header();
+}
+.win-type-x-large {
+    .win-type-subheader();
+}
+.win-type-large {
+    .win-type-title();
+}
+.win-type-medium {
+    .win-type-subtitle();
+}
+.win-type-small {
+    .win-type-body();
+}
+.win-type-x-small {
+    .win-type-base();
+}
+.win-type-xx-small {
+    .win-type-caption();
+}
+
+//
+// Explicitly define a Segoe UI font-family so that we can assign Segoe UI
+// Semilight to an appropriate font-weight.
+//
+@font-face {
+    font-family: "Segoe UI";
+    font-weight: 200;
+    src: local("Segoe UI Light");
+}
+@font-face {
+    font-family: "Segoe UI";
+    font-weight: 300;
+    src: local("Segoe UI Semilight");
+}
+@font-face {
+    font-family: "Segoe UI";
+    font-weight: 400;
+    src: local("Segoe UI");
+}
+@font-face {
+    font-family: "Segoe UI";
+    font-weight: 500;
+    src: local("Segoe UI Semibold");
+}
+@font-face {
+    font-family: "Segoe UI";
+    font-weight: 600;
+    src: local("Segoe UI Bold");
+}
+@font-face {
+    font-family: "Segoe UI";
+    font-style: italic;
+    font-weight: 400;
+    src: local("Segoe UI Italic");
+}
+@font-face {
+    font-family: "Segoe UI";
+    font-style: italic;
+    font-weight: 700;
+    src: local("Segoe UI Bold Italic");
+}
+
+// Same thing but for Segoe WP
+@font-face {
+    font-family: "Segoe WP";
+    font-weight: 300;
+    src: local("Segoe WP Light");
+}
+@font-face {
+    font-family: "Segoe WP";
+    font-weight: 600;
+    src: local("Segoe WP Semilight");
+}
+@font-face {
+    font-family: "Segoe WP";
+    font-weight: 500;
+    src: local("Segoe WP");
+}
+@font-face {
+    font-family: "Segoe WP";
+    font-weight: 400;
+    src: local("Segoe WP");
+}
+@font-face {
+    font-family: "Segoe WP";
+    font-weight: 700;
+    src: local("Segoe WP Bold");
+}
+@font-face {
+    font-family: "Segoe WP";
+    font-style: italic;
+    font-weight: 500;
+    src: local("Segoe WP Italic");
+}
+@font-face {
+    font-family: "Segoe WP";
+    font-style: italic;
+    font-weight: 700;
+    src: local("Segoe WP Bold Italic");
+}
+
+// Stub RTL mixin definition
+.RTL(@rules) {
+}
+
+// RTL language strings
+@rtl: ar, dv, fa, he, ku-Arab, pa-Arab, prs, ps, sd-Arab, syr, ug, ur, qps-plocm;

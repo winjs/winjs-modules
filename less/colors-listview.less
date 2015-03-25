@@ -1,0 +1,411 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
+.Colors(@theme) {
+    .colorDefinitions(@theme);
+
+    // Dark specific colors
+    .mixin(dark) {
+        .win-listview .win-itembox,
+        .win-itemcontainer .win-itembox {
+            background-color: rgb(29, 29, 29);
+        }
+        .win-listview .win-container.win-backdrop {
+            background-color: rgba(155,155,155,0.23);
+        }
+
+        .win-listview .win-groupheader {
+            outline-color: rgb(255, 255, 255);
+        }
+        .win-listview .win-focusedoutline,
+        .win-itemcontainer .win-focusedoutline {
+            outline: rgb(255, 255, 255) dashed 2px;
+        }
+        .win-listview .win-container.win-selected .win-selectionborder,
+        .win-itemcontainer.win-container.win-selected .win-selectionborder,
+        .win-listview.win-selectionstylefilled .win-selected .win-selectionbackground,
+        .win-itemcontainer.win-selectionstylefilled.win-selected .win-selectionbackground  {
+            opacity: 0.6;
+        }
+    }
+
+    // Light specific colors
+    .mixin(light) {
+        .win-listview .win-itembox,
+        .win-itemcontainer .win-itembox {
+            background-color: rgb(255, 255, 255);
+        }
+        .win-listview .win-container.win-backdrop {
+            background-color: rgba(155,155,155,0.23);
+        }
+
+        .win-listview .win-groupheader {
+            outline-color: rgb(0, 0, 0);
+        }
+        .win-listview .win-focusedoutline,
+        .win-itemcontainer .win-focusedoutline {
+            outline: rgb(0, 0, 0) dashed 2px;
+        }
+        .win-listview .win-container.win-selected .win-selectionborder,
+        .win-itemcontainer.win-container.win-selected .win-selectionborder,
+        .win-listview.win-selectionstylefilled .win-selected .win-selectionbackground,
+        .win-itemcontainer.win-selectionstylefilled.win-selected .win-selectionbackground {
+            opacity: 0.4;
+        }
+    }
+
+    // Theme independent colors
+    .win-selectionmode .win-itemcontainer.win-container .win-itembox::after,
+    .win-itemcontainer.win-selectionmode.win-container .win-itembox::after,
+    .win-listview .win-surface.win-selectionmode .win-itembox::after {
+        border-color: @baseHigh;
+        background-color: @chromeMid;
+    }
+    .win-selectioncheckmark {
+        color: @baseHigh;
+    }
+    .win-listview:not(.win-selectionstylefilled) .win-selectioncheckmarkbackground,
+    .win-itemcontainer:not(.win-selectionstylefilled) .win-selectioncheckmarkbackground {
+        border-color: @accentColor;
+        background-color: @accentColor;
+    }
+    .win-listview:not(.win-selectionstylefilled) .win-container.win-selected .win-selectionborder,
+    .win-itemcontainer:not(.win-selectionstylefilled).win-container.win-selected .win-selectionborder {
+        border-color: @accentColor;
+    }
+    .win-listview.win-selectionstylefilled .win-selected .win-selectionbackground,
+    .win-itemcontainer.win-selectionstylefilled.win-selected .win-selectionbackground {
+        background-color: @accentColor;
+    }
+    // We need to add html.win-hoverable to this class list to ensure that this selector wins out over the regular hover color selector defined in ColorsHover.
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container.win-pressed .win-itembox,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container .win-itembox,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container .win-itembox.win-pressed,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container .win-itembox.win-pressed {
+        background-color: @listPress;
+    }
+    .mixin(@theme);
+}
+.ColorsHover(@theme) {
+    .colorDefinitions(@theme);
+
+    // Dark specific colors
+    .mixin(dark) {
+        .win-listview .win-itembox:hover::before,
+        .win-itemcontainer .win-itembox:hover::before  {
+            border-color: rgb(255, 255, 255);
+        }
+        .win-listview .win-container.win-selected:hover .win-selectionborder,
+        .win-itemcontainer.win-container.win-selected:hover .win-selectionborder,
+        .win-listview.win-selectionstylefilled .win-selected:hover .win-selectionbackground,
+        .win-itemcontainer.win-selectionstylefilled.win-selected:hover .win-selectionbackground  {
+            opacity: 0.8;
+        }
+    }
+
+    // Light specific colors
+    .mixin(light) {
+        .win-listview .win-itembox:hover::before,
+        .win-itemcontainer .win-itembox:hover::before  {
+            border-color: rgb(0, 0, 0);
+        }
+        .win-listview .win-container.win-selected:hover .win-selectionborder,
+        .win-itemcontainer.win-container.win-selected:hover .win-selectionborder,
+        .win-listview.win-selectionstylefilled .win-selected:hover  .win-selectionbackground,
+        .win-itemcontainer.win-selectionstylefilled.win-selected:hover .win-selectionbackground  {
+            opacity: 0.6;
+        }
+    }
+
+    // Theme independent colors
+    .win-selectionstylefilled .win-container:hover .win-itembox,
+    .win-selectionstylefilled.win-container:hover .win-itembox {
+            background-color: @listHover;
+    }
+    .mixin(@theme);
+}
+
+// Theme indepedent colors
+html.win-hoverable .win-listview .win-itembox:hover::before,
+html.win-hoverable .win-itemcontainer .win-itembox:hover::before {
+    opacity: 0.4;
+}
+html.win-hoverable .win-listview .win-pressed .win-itembox:hover::before,
+html.win-hoverable .win-itemcontainer .win-pressed .win-itembox:hover::before,
+html.win-hoverable .win-listview .win-pressed.win-itembox:hover::before,
+html.win-hoverable .win-itemcontainer .win-pressed.win-itembox:hover::before {
+    opacity: 0.6;
+}
+html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover,
+html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover,
+html.win-hoverable .win-selectionstylefilled .win-itemcontainer.win-container:hover  {
+    outline: none;
+}
+.win-selectionstylefilled.win-itemcontainer .win-itembox,
+.win-selectionstylefilled .win-itemcontainer .win-itembox,
+.win-listview.win-selectionstylefilled .win-itembox {
+    background-color: transparent;
+}
+.win-listview.win-selectionstylefilled .win-selected,
+.win-itemcontainer.win-selectionstylefilled.win-selected {
+    color: rgb(255, 255, 255);
+}
+.win-listview.win-selectionstylefilled .win-container.win-selected .win-selectionborder,
+.win-itemcontainer.win-selectionstylefilled.win-container.win-selected .win-selectionborder {
+    border-color: transparent;
+}
+.win-listview.win-selectionstylefilled .win-surface.win-selectionmode .win-itembox::after {
+    background-color: transparent;
+}
+.win-listview.win-selectionstylefilled .win-selectioncheckmarkbackground,
+.win-itemcontainer.win-selectionstylefilled .win-selectioncheckmarkbackground {
+    border-color: transparent;
+}
+.win-listview.win-selectionstylefilled .win-selected a,
+.win-listview.win-selectionstylefilled .win-selected progress,
+.win-listview.win-selectionstylefilled .win-selected .win-rating .win-star.win-full,
+.win-itemcontainer.win-selectionstylefilled.win-selected a,
+.win-itemcontainer.win-selectionstylefilled.win-selected progress,
+.win-itemcontainer.win-selectionstylefilled.win-selected .win-rating .win-star.win-full {
+    color: rgb(255, 255, 255);
+}
+
+.win-listview.win-selectionstylefilled .win-selected.win-selected a:hover:active,
+.win-itemcontainer.win-selectionstylefilled.win-selected.win-selected a:hover:active {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+html.win-hoverable .win-listview.win-selectionstylefilled .win-selected a:hover,
+html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-selected a:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.win-listview.win-selectionstylefilled .win-selected button,
+.win-listview.win-selectionstylefilled .win-selected input[type=button],
+.win-listview.win-selectionstylefilled .win-selected input[type=reset],
+.win-listview.win-selectionstylefilled .win-selected input[type=text],
+.win-listview.win-selectionstylefilled .win-selected input[type=password],
+.win-listview.win-selectionstylefilled .win-selected input[type=email],
+.win-listview.win-selectionstylefilled .win-selected input[type=number],
+.win-listview.win-selectionstylefilled .win-selected input[type=tel],
+.win-listview.win-selectionstylefilled .win-selected input[type=url],
+.win-listview.win-selectionstylefilled .win-selected input[type=search],
+.win-listview.win-selectionstylefilled .win-selected input::-ms-check,
+.win-listview.win-selectionstylefilled .win-selected textarea,
+.win-listview.win-selectionstylefilled .win-selected .win-textarea,
+.win-listview.win-selectionstylefilled .win-selected select,
+.win-itemcontainer.win-selectionstylefilled.win-selected button,
+.win-itemcontainer.win-selectionstylefilled.win-selected input[type=button],
+.win-itemcontainer.win-selectionstylefilled.win-selected input[type=reset],
+.win-itemcontainer.win-selectionstylefilled.win-selected input[type=text],
+.win-itemcontainer.win-selectionstylefilled.win-selected input[type=password],
+.win-itemcontainer.win-selectionstylefilled.win-selected input[type=email],
+.win-itemcontainer.win-selectionstylefilled.win-selected input[type=number],
+.win-itemcontainer.win-selectionstylefilled.win-selected input[type=tel],
+.win-itemcontainer.win-selectionstylefilled.win-selected input[type=url],
+.win-itemcontainer.win-selectionstylefilled.win-selected input[type=search],
+.win-itemcontainer.win-selectionstylefilled.win-selected input::-ms-check,
+.win-itemcontainer.win-selectionstylefilled.win-selected textarea,
+.win-itemcontainer.win-selectionstylefilled.win-selected .win-textarea,
+.win-itemcontainer.win-selectionstylefilled.win-selected select {
+    background-clip: border-box;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-color: transparent;
+    color: rgb(0, 0, 0);
+}
+
+.win-listview.win-selectionstylefilled .win-selected button[type=submit],
+.win-listview.win-selectionstylefilled .win-selected input[type=submit],
+.win-itemcontainer.win-selectionstylefilled.win-selected button[type=submit],
+.win-itemcontainer.win-selectionstylefilled.win-selected input[type=submit] {
+    border-color: rgb(255, 255, 255);
+}
+
+.win-listview.win-selectionstylefilled .win-selected input[type=range]::-ms-fill-lower,
+.win-itemcontainer.win-selectionstylefilled.win-selected input[type=range]::-ms-fill-lower {
+    background-color: rgb(255, 255, 255);
+}
+
+.win-listview.win-selectionstylefilled .win-selected input[type=range]::-ms-thumb,
+.win-itemcontainer.win-selectionstylefilled.win-selected input[type=range]::-ms-thumb {
+    background-color: rgb(0,0,0);
+}
+
+.win-listview.win-selectionstylefilled .win-selected input[type=range]::-ms-fill-upper,
+.win-listview.win-selectionstylefilled .win-selected progress,
+.win-itemcontainer.win-selectionstylefilled.win-selected input[type=range]::-ms-fill-upper,
+.win-itemcontainer.win-selectionstylefilled.win-selected progress {
+    background-color: rgba(255, 255, 255, 0.16);
+}
+
+.win-listview.win-selectionstylefilled .win-selected progress:indeterminate,
+.win-itemcontainer.win-selectionstylefilled.win-selected progress:indeterminate {
+    background-color: transparent;
+}
+
+.win-listview.win-selectionstylefilled .win-selected .win-rating .win-star.win-empty,
+.win-itemcontainer.win-selectionstylefilled.win-selected .win-rating .win-star.win-empty {
+    color: rgba(255, 255, 255, 0.16);
+}
+
+.win-listview .win-viewport {
+    outline: none;
+}
+
+
+@media (-ms-high-contrast) {
+    .win-listview .win-groupheader {
+        color: WindowText;
+    }
+    .win-selectioncheckmark {
+        color: HighlightText;
+    }
+
+    .win-listview .win-focusedoutline,
+    .win-listview .win-groupheader,
+    .win-itemcontainer .win-focusedoutline {
+        outline-color: WindowText;
+    }
+
+    .win-listview.win-selectionstylefilled .win-itembox,
+    .win-itemcontainer.win-selectionstylefilled .win-itembox {
+        background-color: Window;
+        color: WindowText;
+    }
+
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover .win-itembox,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover .win-itembox {
+        background-color: Highlight;
+        color: HighlightText;
+    }
+
+    .win-listview.win-selectionstylefilled .win-container.win-selected .win-itembox,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container.win-selected:hover .win-itembox,
+    .win-itemcontainer.win-selectionstylefilled.win-container.win-selected .win-itembox,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container.win-selected:hover .win-itembox {
+        background-color: Highlight;
+        color: HighlightText;
+    }
+
+    .win-listview:not(.win-selectionstylefilled) .win-container.win-selected .win-selectionborder,
+    .win-itemcontainer:not(.win-selectionstylefilled).win-container.win-selected .win-selectionborder {
+        border-color: Highlight;
+    }
+
+    .win-listview.win-selectionstylefilled .win-container.win-selected .win-selectionborder,
+    .win-itemcontainer.win-selectionstylefilled.win-container.win-selected .win-selectionborder {
+        border-color: transparent;
+    }
+
+    html.win-hoverable .win-listview:not(.win-selectionstylefilled) .win-container.win-selected:hover .win-selectionborder,
+    html.win-hoverable .win-itemcontainer:not(.win-selectionstylefilled).win-container.win-selected:hover .win-selectionborder {
+        border-color: Highlight;
+    }
+
+    .win-listview.win-selectionstylefilled .win-selected .win-selectionbackground,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-selected:hover .win-selectionbackground,
+    .win-itemcontainer.win-selectionstylefilled.win-selected .win-selectionbackground,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-selected:hover .win-selectionbackground {
+        background-color: Highlight;
+        color: HighlightText;
+    }
+
+    .win-listview.win-selectionstylefilled .win-selectioncheckmarkbackground,
+    .win-itemcontainer.win-selectionstylefilled .win-selectioncheckmarkbackground {
+        border-color: transparent;
+    }
+
+    .win-listview.win-selectionstylefilled .win-selected a,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover a,
+    .win-listview.win-selectionstylefilled .win-selected progress,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover progress,
+    .win-listview.win-selectionstylefilled .win-selected .win-rating .win-star:after,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover .win-rating .win-star:after,
+    .win-itemcontainer.win-selectionstylefilled.win-selected a,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover a,
+    .win-itemcontainer.win-selectionstylefilled.win-selected progress,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover progress,
+    .win-itemcontainer.win-selectionstylefilled.win-selected .win-rating .win-star:after,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover .win-rating .win-star:after {
+        color: HighlightText;
+    }
+
+    .win-listview.win-selectionstylefilled .win-selected input,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover input,
+    .win-listview.win-selectionstylefilled .win-selected input::-ms-check,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover input::-ms-check,
+    .win-listview.win-selectionstylefilled .win-selected input::-ms-value,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover input::-ms-value,
+    .win-listview.win-selectionstylefilled .win-selected input::-ms-track,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover input::-ms-track,
+    .win-listview.win-selectionstylefilled .win-selected button,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover button,
+    .win-listview.win-selectionstylefilled .win-selected progress,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover progress,
+    .win-listview.win-selectionstylefilled .win-selected progress::-ms-fill,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover progress::-ms-fill,
+    .win-listview.win-selectionstylefilled .win-selected select,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover select,
+    .win-listview.win-selectionstylefilled .win-selected textarea,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover textarea,
+    .win-listview.win-selectionstylefilled.win-selected input,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover input,
+    .win-itemcontainer.win-selectionstylefilled.win-selected input::-ms-check,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover input::-ms-check,
+    .win-itemcontainer.win-selectionstylefilled.win-selected input::-ms-value,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover input::-ms-value,
+    .win-itemcontainer.win-selectionstylefilled.win-selected input::-ms-track,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover input::-ms-track,
+    .win-itemcontainer.win-selectionstylefilled.win-selected button,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover button,
+    .win-itemcontainer.win-selectionstylefilled.win-selected progress,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover progress,
+    .win-itemcontainer.win-selectionstylefilled.win-selected progress::-ms-fill,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover progress::-ms-fill,
+    .win-itemcontainer.win-selectionstylefilled.win-selected select,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover select,
+    .win-itemcontainer.win-selectionstylefilled.win-selected textarea,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover textarea {
+        border-color: HighlightText;
+    }
+
+    .win-listview.win-selectionstylefilled .win-selected input[type=range]::-ms-fill-lower,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover input[type=range]::-ms-fill-lower,
+    .win-listview.win-selectionstylefilled .win-selected progress::-ms-fill,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover progress::-ms-fill,
+    .win-itemcontainer.win-selectionstylefilled.win-selected input[type=range]::-ms-fill-lower,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover input[type=range]::-ms-fill-lower,
+    .win-itemcontainer.win-selectionstylefilled.win-selected progress::-ms-fill,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover progress::-ms-fill {
+        background-color: HighlightText;
+    }
+
+    .win-listview.win-selectionstylefilled .win-selected input[type=range]::-ms-fill-upper,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover input[type=range]::-ms-fill-upper,
+    .win-listview.win-selectionstylefilled .win-selected progress,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover progress,
+    .win-itemcontainer.win-selectionstylefilled.win-selected input[type=range]::-ms-fill-upper,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover input[type=range]::-ms-fill-upper,
+    .win-itemcontainer.win-selectionstylefilled.win-selected progress,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover progress {
+        background-color: Highlight;
+    }
+
+    .win-listview.win-selectionstylefilled .win-selected .win-rating .win-star.win-full:before,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover .win-rating .win-star.win-full:before,
+    .win-itemcontainer.win-selectionstylefilled.win-selected .win-rating .win-star.win-full:before,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover .win-rating .win-star.win-full:before {
+        color: ButtonFace;
+    }
+
+    .win-listview.win-selectionstylefilled .win-selected .win-rating .win-star.win-empty:before,
+    html.win-hoverable .win-listview.win-selectionstylefilled .win-container:hover .win-rating .win-star.win-empty:before,
+    .win-itemcontainer.win-selectionstylefilled.win-selected .win-rating .win-star.win-empty:before,
+    html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-container:hover .win-rating .win-star.win-empty:before {
+        color: Highlight;
+    }
+
+    html.win-hoverable .win-listview .win-container:hover,
+    html.win-hoverable .win-itemcontainer.win-container:hover {
+        outline: Highlight solid 3px;
+    }
+}

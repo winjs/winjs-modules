@@ -1,0 +1,75 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
+@import "base.less";
+@import "mixins.less";
+
+//
+// Date Picker
+//
+.win-datepicker {
+    #flex > .display-inline-flex();
+    height: auto;
+    width: auto;
+}
+.win-datepicker select {
+    min-width: 80px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+.win-datepicker .win-datepicker-month {
+    margin-right: 20px;
+}
+.win-datepicker .win-datepicker-date.win-order0,
+.win-datepicker .win-datepicker-date.win-order1 {
+    margin-right: 20px;
+}
+.win-datepicker .win-datepicker-year.win-order0 {
+    margin-right: 20px;
+}
+
+.RTL({
+    .win-datepicker .win-datepicker-month&,
+    .win-datepicker .win-datepicker-date.win-order0&,
+    .win-datepicker .win-datepicker-date.win-order1&,
+    .win-datepicker .win-datepicker-year.win-order0& {
+        margin-right: 0;
+        margin-left: 20px;
+    }
+});
+
+//
+// Time Picker
+//
+.win-timepicker {
+    #flex > .display-inline-flex();
+    height: auto;
+    width: auto;
+}
+.win-timepicker select {
+    min-width: 80px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+.win-timepicker .win-timepicker-hour {
+    margin-right: 20px;
+}
+.win-timepicker .win-timepicker-period.win-order0 {
+    margin-right: 20px;
+}
+.win-timepicker .win-timepicker-minute.win-order1 {
+    margin-right: 20px;
+}
+
+.RTL({
+    .win-timepicker .win-timepicker-period.win-order0&,
+    .win-timepicker .win-timepicker-hour& {
+        margin-right: 0;
+        margin-left: 20px;
+    }
+
+    .win-timepicker .win-timepicker-minute.win-order1&,
+    .win-timepicker .win-timepicker-minute.win-order0& {
+        margin-left: 20px;
+        margin-right: 0;
+    }
+});

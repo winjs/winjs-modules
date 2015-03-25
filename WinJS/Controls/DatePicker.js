@@ -1,9 +1,5 @@
-
-define('require-style!less/desktop/controls',[],function(){});
-
-define('require-style!less/phone/controls',[],function(){});
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-define('WinJS/Controls/DatePicker',[
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+define([
     '../Core/_Global',
     '../Core/_WinRT',
     '../Core/_Base',
@@ -14,8 +10,7 @@ define('WinJS/Controls/DatePicker',[
     '../Utilities/_ElementUtilities',
     '../Utilities/_Hoverable',
     '../Utilities/_Select',
-    'require-style!less/desktop/controls',
-    'require-style!less/phone/controls'
+    'require-style!less/styles-datetimepicker'
     ], function datePickerInit(_Global, _WinRT, _Base, _BaseUtils, _Events, _Resources, _Control, _ElementUtilities, _Hoverable, _Select) {
     "use strict";
 
@@ -29,9 +24,8 @@ define('WinJS/Controls/DatePicker',[
         /// <icon src="ui_winjs.ui.datepicker.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.DatePicker"></div>]]></htmlSnippet>
         /// <event name="change" locid="WinJS.UI.DatePicker_e:change">Occurs when the current date changes.</event>
-        /// <resource type="javascript" src="//WinJS.3.0/js/base.js" shared="true" />
-        /// <resource type="javascript" src="//WinJS.3.0/js/ui.js" shared="true" />
-        /// <resource type="css" src="//WinJS.3.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
         DatePicker: _Base.Namespace._lazy(function () {
             // Constants definition
             var DEFAULT_DAY_PATTERN = 'day',
@@ -758,4 +752,3 @@ define('WinJS/Controls/DatePicker',[
 
 
 });
-

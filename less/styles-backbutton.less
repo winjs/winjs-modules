@@ -1,0 +1,41 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
+@import "base.less";
+
+// Default positioning for a Navigation BackButton in the App Body
+body > .win-navigation-backbutton {
+    position: absolute;
+    top: 50px;
+    left: 20px;
+}
+
+.win-backbutton,
+.win-navigation-backbutton,
+.win-back {
+    display: inline-block;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    text-align: center;
+
+    // Normal sizing
+    width: 41px;
+    height: 41px;
+    font-size: 24px;
+    line-height: 41px; // line-height must match the content box height.
+    vertical-align: baseline;
+}
+
+.win-backbutton::before, .win-back::before {
+    font-family: "Segoe MDL2 Assets", "Symbols";
+    font-weight: normal;
+    content: "\E0D5";
+    vertical-align: 50%;
+}
+
+.RTL({
+    .win-backbutton&::before,
+    .win-back&::before {
+        content: "\E0AE";
+    }
+});

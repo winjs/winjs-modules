@@ -1,0 +1,45 @@
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
+@import "base.less";
+@import "mixins.less";
+
+.win-rating {
+    #flex > .display-inline-flex();
+    #flex > .justify-content(self);
+    #flex > .align-items(stretch);
+    height: auto;
+    width: auto;
+    white-space: normal;
+    outline: 0;
+}
+
+.win-rating .win-star {
+    #flex > .flex(1; 1; auto);
+    height:24px;
+    width: 24px;
+    padding: 9px 10px 11px 10px;
+    font-family: "Segoe MDL2 Assets", "Symbols";
+    font-size: 24px;
+    overflow: hidden;
+    text-indent: 0;
+    line-height: 1;
+    cursor: default;
+    position: relative;
+    letter-spacing: 0; // Use letter-spacing: 0 to make average star look like one glyph.
+    -ms-touch-action: none;
+    touch-action: none;
+}
+.win-rating.win-small .win-star {
+    width: 12px;
+    height: 12px;
+    font-size: 12px;
+    padding: 3px 4px 5px 4px;
+}
+.win-rating .win-star:before {
+    content: "\E082";
+}
+.win-rating .win-star.win-disabled {
+    cursor: default;
+    -ms-touch-action: auto;
+    touch-action: auto;
+}
